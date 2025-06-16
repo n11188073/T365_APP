@@ -38,7 +38,7 @@ https://cozy-mousse-7c2a8f.netlify.app/
 ## Setup Instructions
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/project-name
+   git clone https://github.com/n11188073/T365_APP
 2. Navigate into the project folder:
     cd t365app
 3. Install dependencies:
