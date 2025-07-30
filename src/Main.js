@@ -3,12 +3,12 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import App from './App';
 import Chat from './pages/Chat';
-import New from './pages/New';
+import New from './pages/Upload';
 import Calendar from './pages/Calendar';
 import Profile from './pages/Profile';
 import Login from './pages/Login';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faHome, faPlus, faUser, faCalendar, faComment } from '@fortawesome/free-solid-svg-icons';
+import { faHome, faPlus, faUser, faCalendar, faComment, faRightToBracket} from '@fortawesome/free-solid-svg-icons';
 
 import './App.css';
 
@@ -42,7 +42,7 @@ const Main = () => {
           <Routes>
             <Route path="/" element={<App />} />
             <Route path="/chat" element={<Chat />} />
-            <Route path="/new" element={<New />} />
+            <Route path="/upload" element={<New />} />
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/login" element={<Login />} />
@@ -53,10 +53,10 @@ const Main = () => {
         <div className="bottom-nav">
           <Link to="/" className="nav-icon"><FontAwesomeIcon icon={faHome} /></Link>
           <Link to="/chat" className="nav-icon"><FontAwesomeIcon icon={faComment} /></Link>
-          <Link to="/new" className="nav-icon"><FontAwesomeIcon icon={faPlus} /></Link>
+          <Link to="/upload" className="nav-icon"><FontAwesomeIcon icon={faPlus} /></Link>
           <Link to="/calendar" className="nav-icon"><FontAwesomeIcon icon={faCalendar} /></Link>
           <Link to="/profile" className="nav-icon"><FontAwesomeIcon icon={faUser} /></Link>
-          <Link to="/login" className="nav-icon"><FontAwesomeIcon icon={faPlus} /></Link>
+          <Link to="/login" className="nav-icon"><FontAwesomeIcon icon={faRightToBracket} /></Link>
         </div>
       </Router>
     </GoogleOAuthProvider>

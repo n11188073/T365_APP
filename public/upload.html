@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>New Post</title>
+  <link rel="stylesheet" href="Upload.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <button class="back">&larr;</button>
+      <h1>New Post</h1>
+    </header>
+
+    <div class="toggle-buttons">
+      <button class="toggle active">Post</button>
+      <button class="toggle">Video</button>
+    </div>
+
+    <div class="recents">
+      <span>Recents</span>
+      <span class="dropdown">&#9662;</span>
+    </div>
+
+    <div class="grid" id="grid">
+      <!-- Camera icon tile -->
+      <label class="tile camera">
+        <input type="file" multiple accept="image/*" hidden id="fileInput" />
+        <span class="icon">📷</span>
+      </label>
+    </div>
+  </div>
+
+  <script src="Upload.js"></script>
+</body>
+</html>
