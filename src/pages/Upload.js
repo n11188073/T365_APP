@@ -57,7 +57,7 @@ const New = () => {
             hidden
             onChange={handleFileChange}
           />
-          <span className="icon">📷</span>
+          <span className="icon">{mode === 'video' ? '🎥' : '📷'}</span>
         </label>
         {/* Media previews */}
         {previews.map((media, idx) => (

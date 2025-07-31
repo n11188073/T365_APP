@@ -21,13 +21,31 @@ html, body, #root {
 }
 
 .search {
+    background: rgba(250, 250, 250, 0.85) url('https://img.icons8.com/ios-filled/50/000000/search--v1.png') no-repeat right 20px center;
+    background-size: 35px 35px;
     outline: none;
     padding: 20px 7%;
-    border-radius: 20px;
+    border-radius: 30px; 
     border: none;
-    margin-bottom: 5%;
-    background: rgba(250, 250, 250, 0.85);
+    margin-top: 15px;
+    margin-bottom: 4%;
+    font-size: 1.4rem; 
+    height: 70px; 
+    width: 90%;
+    max-width: 600px; 
+    box-sizing: border-box;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
+
+
+@media only screen and (max-width: 600px) {
+    .search {
+        padding: 20px 10%;
+        font-size: 1rem;
+        height: 55px;
+    }
+}
+
 
 .city {
     display: flex;
