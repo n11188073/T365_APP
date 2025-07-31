@@ -1,6 +1,6 @@
 {
-    "short_name": "Weather App",
-    "name": "Weather App PWA",
+    "short_name": "T365 App",
+    "name": "T365 App PWA",
     "icons": [
         {
             "src": "/images/logo.png",
