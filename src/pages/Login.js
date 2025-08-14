@@ -2,6 +2,13 @@ import React, { useState, useEffect } from "react";
 import { GoogleLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
 
+// Automatically detect API URL
+const API_BASE =
+  process.env.NODE_ENV === "production"
+    ? "https://t365-app.onrender.com" // no trailing slash
+    : "http://localhost:5000"; // Express server port
+
+
 const Login = () => {
   const [user, setUser] = useState(null);
 
@@ -29,14 +36,18 @@ const Login = () => {
 
     // Save to backend
     try {
-      await fetch("http://localhost:3000/api/saveUser", {
+      const res = await fetch(`${API_BASE}/saveUser`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id, user_name })
+        body: JSON.stringify({ name: user_name, email: decoded.email })
       });
+
+      const data = await res.json();
+      console.log("Server response:", data);
     } catch (err) {
       console.error("Failed to save user:", err);
     }
+
   };
 
   // Handle login error
@@ -55,7 +66,9 @@ const Login = () => {
     <div style={{ padding: "2rem" }}>
       {user ? (
         <>
-          <h1>Welcome, <span style={{ color: "black" }}>{user.name}</span></h1>
+          <h1>
+            Welcome, <span style={{ color: "black" }}>{user.name}</span>
+          </h1>
           <button
             onClick={handleLogout}
             style={{

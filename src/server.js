@@ -2,7 +2,6 @@
 const express = require('express');
 const cors = require('cors');
 const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -12,7 +11,11 @@ app.use(cors());
 app.use(express.json());
 
 // Connect to SQLite
-const dbPath = path.join(__dirname, 't65sql.db');
+
+const path = require('path');
+const dbPath = path.join(__dirname, '..', 't65sql.db');
+console.log('Using DB at:', dbPath);
+
 const db = new sqlite3.Database(dbPath, (err) => {
     if (err) console.error('Database connection error:', err);
     else console.log('Connected to SQLite database.');
