@@ -60,9 +60,12 @@ const New = () => {
   try {
     const formData = new FormData();
     formData.append('post_name', postText);
+    formData.append('location', null);      // send null
+    formData.append('tags', null);          // send null
+    formData.append('tagPeople', null);     // send null
+    formData.append('user_id', null);       // send null
     mediaFiles.forEach(file => formData.append('files', file.file));
 
-    // Await the fetch response
     const response = await fetch('http://localhost:5000/create-post', {
       method: 'POST',
       body: formData
@@ -72,8 +75,6 @@ const New = () => {
 
     if (response.ok) {
       alert("Post and media created successfully!");
-
-      // Reset everything
       setStep(1);
       setPreviews([]);
       setSelected([]);
