@@ -139,3 +139,92 @@ header h1 {
   background-repeat: no-repeat;
   background-position: center;
 }
+
+.btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.3s;
+}
+
+.btn.primary {
+  background: #3897f0;
+  color: white;
+}
+
+.btn.primary:hover {
+  background: #1877f2;
+}
+
+.input-text,
+.input-textarea {
+  width: 100%;
+  padding: 12px;
+  margin: 8px 0;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+  resize: none;
+}
+
+.input-textarea {
+  height: 100px;
+}
+
+.arrow-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 12px 16px;
+  margin: 8px 0;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  background: #f0f0f0;
+  font-size: 16px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.arrow-btn::after {
+  content: '➡';
+  font-weight: bold;
+}
+
+.bottom-btn {
+  width: 100%;
+  margin-top: 16px;
+}
+
+.arrow-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 16px;
+  margin: 8px 0;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  background: #f0f0f0;
+  font-size: 16px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.bottom-btn {
+  width: 100%;
+  margin-top: 16px;
+}
+
+.input-textarea {
+  width: 100%;
+  padding: 12px;
+  margin: 8px 0;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+  resize: none;
+}
+
