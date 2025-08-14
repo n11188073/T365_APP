@@ -13,16 +13,14 @@ import { faHome, faPlus, faUser, faCalendar, faComment, faRightToBracket} from '
 import './App.css';
 
 const Main = () => {
-  const [userName, setUserName] = useState('');
+  const [user, setUser] = useState(null);
 
+  // Sync with localStorage on mount
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       try {
-        const user = JSON.parse(storedUser);
-        if (user?.name) {
-          setUserName(user.name);
-        }
+        setUser(JSON.parse(storedUser));
       } catch (e) {
         console.error("❌ Failed to parse user", e);
       }
@@ -35,7 +33,7 @@ const Main = () => {
       <Router>
         {/* Top bar showing login status */}
         <div style={{ padding: '10px', background: '#f2f2f2', textAlign: 'right', color: 'black' }}>
-          {userName ? `Logged in as: ${userName}` : 'Not logged in'}
+          {user?.name ? `Logged in as: ${user.name}` : 'Not logged in'}
         </div>
         {/* Routes */}
         <div style={{ minHeight: '90vh' }}>
@@ -45,7 +43,10 @@ const Main = () => {
             <Route path="/upload" element={<New />} />
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/profile" element={<Profile />} />
-            <Route path="/login" element={<Login />} />
+            <Route
+              path="/login"
+              element={<Login user={user} setUser={setUser} />}
+            />
           </Routes>
         </div>
 

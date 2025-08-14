@@ -1,64 +1,51 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { GoogleLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
 
 // Automatically detect API URL
 const API_BASE =
   process.env.NODE_ENV === "production"
-    ? "https://t365-app.onrender.com" // no trailing slash
-    : "http://localhost:5000"; // Express server port
+    ? "https://t365-app.onrender.com"
+    : "http://localhost:5000";
 
-
-const Login = () => {
-  const [user, setUser] = useState(null);
-
-  // Load stored user from localStorage when page loads
-  useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-  }, []);
+const Login = ({ user, setUser }) => {
 
   const handleSuccess = async (credentialResponse) => {
-  const token = credentialResponse.credential;
-  localStorage.setItem("google_token", token);
+    const token = credentialResponse.credential;
+    localStorage.setItem("google_token", token);
 
-  const decoded = jwtDecode(token);
-  const user_id = decoded.sub; // unique Google ID
-  const user_name = decoded.name || decoded.email;
+    const decoded = jwtDecode(token);
+    const user_id = decoded.sub;
+    const user_name = decoded.name || decoded.email;
 
-  const newUser = { id: user_id, name: user_name };
-  setUser(newUser);
+    const newUser = { id: user_id, name: user_name };
+    setUser(newUser);
 
-  localStorage.setItem("user", JSON.stringify(newUser));
+    localStorage.setItem("user", JSON.stringify(newUser));
 
-  // Save to backend
-  try {
-    const res = await fetch(`${API_BASE}/saveUser`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_id, user_name }) // corrected
-    });
+    // Save to backend
+    try {
+      const res = await fetch(`${API_BASE}/saveUser`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id, user_name })
+      });
 
-    const data = await res.json();
-    console.log("Server response:", data);
-  } catch (err) {
-    console.error("Failed to save user:", err);
-  }
-};
-
-
-  // Handle login error
-  const handleError = () => {
-    console.error("Google Login Failed");
+      const data = await res.json();
+      console.log("Server response:", data);
+    } catch (err) {
+      console.error("Failed to save user:", err);
+    }
   };
 
-  // Handle logout
   const handleLogout = () => {
     localStorage.removeItem("google_token");
     localStorage.removeItem("user");
-    setUser(null);
+    setUser(null); // updates top bar in Main.js
+  };
+
+  const handleError = () => {
+    console.error("Google Login Failed");
   };
 
   return (
