@@ -10,8 +10,7 @@ const New = () => {
   const [location, setLocation] = useState('');
   const [tags, setTags] = useState('');
   const [tagPeople, setTagPeople] = useState('');
-
-  const userId = 1;
+  const [userId] = useState(1); // keep userId as a fixed value for now
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
@@ -46,50 +45,67 @@ const New = () => {
   };
 
   const handleCreatePost = async () => {
-  if (!postText.trim()) {
-    alert("Post text is required");
-    return;
-  }
-
-  const mediaFiles = selected.map(i => previews[i]);
-  if (mediaFiles.length === 0) {
-    alert("Please select at least one image or video");
-    return;
-  }
-
-  try {
-    const formData = new FormData();
-    formData.append('post_name', postText);
-    formData.append('location', null);      // send null
-    formData.append('tags', null);          // send null
-    formData.append('tagPeople', null);     // send null
-    formData.append('user_id', null);       // send null
-    mediaFiles.forEach(file => formData.append('files', file.file));
-
-    const response = await fetch('http://localhost:5000/create-post', {
-      method: 'POST',
-      body: formData
-    });
-
-    const data = await response.json();
-
-    if (response.ok) {
-      alert("Post and media created successfully!");
-      setStep(1);
-      setPreviews([]);
-      setSelected([]);
-      setPostText('');
-      setLocation('');
-      setTags('');
-      setTagPeople('');
-    } else {
-      alert("Failed to create post: " + (data.message || "Unknown error"));
+    if (!postText.trim()) {
+      alert("Post text is required");
+      return;
     }
-  } catch (err) {
-    console.error("Error creating post:", err);
-    alert("Error creating post. See console for details.");
-  }
-};
+
+    const mediaFiles = selected.map(i => previews[i]);
+    if (mediaFiles.length === 0) {
+      alert("Please select at least one image or video");
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('post_name', postText);
+      formData.append('location', location || null);
+      formData.append('tags', tags || null);
+      formData.append('tagPeople', tagPeople || null);
+      formData.append('user_id', userId || null);
+      mediaFiles.forEach(file => formData.append('files', file.file));
+
+      const response = await fetch('http://localhost:5000/create-post', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert("Post and media created successfully!");
+        // reset form
+        setStep(1);
+        setPreviews([]);
+        setSelected([]);
+        setPostText('');
+        setLocation('');
+        setTags('');
+        setTagPeople('');
+      } else {
+        alert("Failed to create post: " + (data.message || "Unknown error"));
+      }
+    } catch (err) {
+      console.error("Error creating post:", err);
+      alert("Error creating post. See console for details.");
+    }
+  };
+
+  // Prompts for extra fields
+  const handleAddLocation = () => {
+    const value = prompt("Enter location:", location);
+    if (value !== null) setLocation(value);
+  };
+
+  const handleAddTags = () => {
+    const value = prompt("Enter hashtags (comma separated):", tags);
+    if (value !== null) setTags(value);
+  };
+
+  const handleTagPeople = () => {
+    const value = prompt("Enter people to tag (comma separated):", tagPeople);
+    if (value !== null) setTagPeople(value);
+  };
 
   return (
     <div className="container new-post-container">
@@ -148,22 +164,18 @@ const New = () => {
 
       {step === 2 && (
         <div className="post-form">
-          {/* Keep Share your experience as textarea */}
           <textarea
             className="input-textarea"
             placeholder="Share your experience..."
             value={postText}
             onChange={e => setPostText(e.target.value)}
           />
-
-          {/* Arrow buttons with relevant icons */}
-          <button className="arrow-btn">📍 Add location</button>
-          <button className="arrow-btn">#️⃣ Hashtags</button>
-          <button className="arrow-btn">👤 Tag people</button>
+          <button className="arrow-btn" onClick={handleAddLocation}>📍 Add location</button>
+          <button className="arrow-btn" onClick={handleAddTags}>#️⃣ Hashtags</button>
+          <button className="arrow-btn" onClick={handleTagPeople}>👤 Tag people</button>
         </div>
       )}
 
-      {/* Upload button at bottom */}
       {step === 2 && (
         <button className="btn primary bottom-btn" onClick={handleCreatePost}>
           Upload
