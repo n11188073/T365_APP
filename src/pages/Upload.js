@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Upload.css';
 
 const New = () => {
@@ -7,10 +7,25 @@ const New = () => {
   const [step, setStep] = useState(1);
   const [mode, setMode] = useState('post');
   const [postText, setPostText] = useState('');
-  const [location, setLocation] = useState('');
-  const [tags, setTags] = useState('');
-  const [tagPeople, setTagPeople] = useState('');
-  const [userId] = useState(1); // keep userId as a fixed value for now
+  const [posts, setPosts] = useState([]);
+
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+
+  // Fetch posts safely
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        const response = await fetch(`${BACKEND_URL}/posts`);
+        const data = await response.json();
+        // Ensure data.posts is an array
+        setPosts(Array.isArray(data.posts) ? data.posts : []);
+      } catch (err) {
+        console.error('Error fetching posts:', err);
+        setPosts([]);
+      }
+    };
+    fetchPosts();
+  }, [BACKEND_URL]);
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
@@ -59,13 +74,13 @@ const New = () => {
     try {
       const formData = new FormData();
       formData.append('post_name', postText);
-      formData.append('location', location || null);
-      formData.append('tags', tags || null);
-      formData.append('tagPeople', tagPeople || null);
-      formData.append('user_id', userId || null);
+      formData.append('location', null);
+      formData.append('tags', null);
+      formData.append('tagPeople', null);
+      formData.append('user_id', null);
       mediaFiles.forEach(file => formData.append('files', file.file));
 
-      const response = await fetch('http://localhost:5000/create-post', {
+      const response = await fetch(`${BACKEND_URL}/create-post`, {
         method: 'POST',
         body: formData
       });
@@ -74,14 +89,11 @@ const New = () => {
 
       if (response.ok) {
         alert("Post and media created successfully!");
-        // reset form
+        // Reset
         setStep(1);
         setPreviews([]);
         setSelected([]);
         setPostText('');
-        setLocation('');
-        setTags('');
-        setTagPeople('');
       } else {
         alert("Failed to create post: " + (data.message || "Unknown error"));
       }
@@ -89,22 +101,6 @@ const New = () => {
       console.error("Error creating post:", err);
       alert("Error creating post. See console for details.");
     }
-  };
-
-  // Prompts for extra fields
-  const handleAddLocation = () => {
-    const value = prompt("Enter location:", location);
-    if (value !== null) setLocation(value);
-  };
-
-  const handleAddTags = () => {
-    const value = prompt("Enter hashtags (comma separated):", tags);
-    if (value !== null) setTags(value);
-  };
-
-  const handleTagPeople = () => {
-    const value = prompt("Enter people to tag (comma separated):", tagPeople);
-    if (value !== null) setTagPeople(value);
   };
 
   return (
@@ -143,7 +139,7 @@ const New = () => {
           </label>
         )}
 
-        {previews.map((media, idx) => (
+        {(previews || []).map((media, idx) => (
           <div key={idx} className={`tile preview ${selected.includes(idx) ? 'selected' : ''}`}>
             {media.type.startsWith('image/') ? (
               <img src={media.src} alt={`media-${idx}`} />
@@ -170,9 +166,9 @@ const New = () => {
             value={postText}
             onChange={e => setPostText(e.target.value)}
           />
-          <button className="arrow-btn" onClick={handleAddLocation}>📍 Add location</button>
-          <button className="arrow-btn" onClick={handleAddTags}>#️⃣ Hashtags</button>
-          <button className="arrow-btn" onClick={handleTagPeople}>👤 Tag people</button>
+          <button className="arrow-btn">📍 Add location</button>
+          <button className="arrow-btn">#️⃣ Hashtags</button>
+          <button className="arrow-btn">👤 Tag people</button>
         </div>
       )}
 
