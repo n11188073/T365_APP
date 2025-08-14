@@ -74,12 +74,16 @@ function getAESTTimestamp() {
 }
 
 app.post('/create-post', upload.array('files'), async (req, res) => {
-  const post_name = req.body.post_name; // multer parses this correctly
-  const files = req.files;               // multer saves uploaded files in req.files
+  // Multer will parse the text fields in multipart/form-data
+  const post_name = req.body.post_name || null;
+  const location = req.body.location || null;
+  const tags = req.body.tags || null;
+  const tagPeople = req.body.tagPeople || null;
+  const user_id = req.body.user_id || null; // will be null for now
 
-  if (!post_name) {
-    return res.status(400).json({ message: 'Post name is required' });
-  }
+  const files = req.files; // array of uploaded files
+
+  if (!post_name) return res.status(400).json({ message: 'Post name is required' });
 
   try {
     const created_at = getAESTTimestamp();
@@ -87,9 +91,11 @@ app.post('/create-post', upload.array('files'), async (req, res) => {
     // Insert post
     const postId = await new Promise((resolve, reject) => {
       db.run(
-        `INSERT INTO posts (post_name) VALUES (?)`,
-        [post_name],
-        function (err) {
+        `INSERT INTO posts 
+          (post_name, user_id, location, tags, bookmark_itenerary, num_likes, comments) 
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [post_name, user_id, location, tags, null, null, null],
+        function(err) {
           if (err) reject(err);
           else resolve(this.lastID);
         }
@@ -104,10 +110,7 @@ app.post('/create-post', upload.array('files'), async (req, res) => {
           db.run(
             `INSERT INTO media (post_id, type, filename, data, created_at) VALUES (?, ?, ?, ?, ?)`,
             [postId, type, file.originalname, file.buffer, created_at],
-            function (err) {
-              if (err) reject(err);
-              else resolve();
-            }
+            function(err) { if(err) reject(err); else resolve(); }
           );
         });
       }
