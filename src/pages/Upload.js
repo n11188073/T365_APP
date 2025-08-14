@@ -7,7 +7,7 @@ const New = () => {
   const [step, setStep] = useState(1);
   const [mode, setMode] = useState('post');
   const [postText, setPostText] = useState('');
-  const [posts, setPosts] = useState([]);
+  //const [posts, setPosts] = useState([]);
 
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
 
