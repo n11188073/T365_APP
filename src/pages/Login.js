@@ -20,35 +20,34 @@ const Login = () => {
     }
   }, []);
 
-  // Handle login success
   const handleSuccess = async (credentialResponse) => {
-    const token = credentialResponse.credential;
-    localStorage.setItem("google_token", token);
+  const token = credentialResponse.credential;
+  localStorage.setItem("google_token", token);
 
-    const decoded = jwtDecode(token);
-    const user_id = decoded.sub;
-    const user_name = decoded.name || decoded.email;
+  const decoded = jwtDecode(token);
+  const user_id = decoded.sub; // unique Google ID
+  const user_name = decoded.name || decoded.email;
 
-    const newUser = { id: user_id, name: user_name };
-    setUser(newUser);
+  const newUser = { id: user_id, name: user_name };
+  setUser(newUser);
 
-    localStorage.setItem("user", JSON.stringify(newUser));
+  localStorage.setItem("user", JSON.stringify(newUser));
 
-    // Save to backend
-    try {
-      const res = await fetch(`${API_BASE}/saveUser`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: user_name, email: decoded.email })
-      });
+  // Save to backend
+  try {
+    const res = await fetch(`${API_BASE}/saveUser`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id, user_name }) // corrected
+    });
 
-      const data = await res.json();
-      console.log("Server response:", data);
-    } catch (err) {
-      console.error("Failed to save user:", err);
-    }
+    const data = await res.json();
+    console.log("Server response:", data);
+  } catch (err) {
+    console.error("Failed to save user:", err);
+  }
+};
 
-  };
 
   // Handle login error
   const handleError = () => {
