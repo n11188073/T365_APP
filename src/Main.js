@@ -42,7 +42,7 @@ const Main = () => {
             <Route path="/chat" element={<Chat />} />
             <Route path="/upload" element={<New />} />
             <Route path="/calendar" element={<Calendar />} />
-            <Route path="/profile" element={<Profile />} />
+            <Route path="/profile" element={<Profile user={user} />} />
             <Route
               path="/login"
               element={<Login user={user} setUser={setUser} />}
