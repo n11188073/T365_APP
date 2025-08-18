@@ -7,7 +7,7 @@ const New = () => {
   const [step, setStep] = useState(1);
   const [mode, setMode] = useState('post');
   const [postText, setPostText] = useState('');
-  //const [posts, setPosts] = useState([]);
+  const [posts, setPosts] = useState([]);
 
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
 
@@ -74,10 +74,7 @@ const New = () => {
     try {
       const formData = new FormData();
       formData.append('post_name', postText);
-      formData.append('location', null);
-      formData.append('tags', null);
-      formData.append('tagPeople', null);
-      formData.append('user_id', null);
+
       mediaFiles.forEach(file => formData.append('files', file.file));
 
       const response = await fetch(`${BACKEND_URL}/create-post`, {

@@ -1,66 +1,152 @@
-import React, { useState } from 'react';
-import { fetchWeather } from './api/fetchWeather';
+import React, { useState, useEffect } from 'react'; 
 import './App.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faHome, faPlus, faUser, faCalendar, faComment } from '@fortawesome/free-solid-svg-icons';
+import { faHome, faPlus, faUser, faCalendar, faComment, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
 
 const App = () => {
-    const [query, setQuery] = useState('');
-    const [weather, setWeather] = useState('');
+  const [posts, setPosts] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredPosts, setFilteredPosts] = useState([]);
+  const [carouselIndex, setCarouselIndex] = useState({});
 
-    const search = async (e) => {
-        if(e.key === 'Enter'){
-            const data = await fetchWeather(query)
-            setWeather(data);
-            setQuery('');
+  // Fetch posts from backend
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        const res = await fetch(`${BACKEND_URL}/posts`);
+        const data = await res.json();
+        if (Array.isArray(data.posts)) {
+          // Group media by post_id
+          const groupedPosts = data.posts.reduce((acc, item) => {
+            const postId = item.post_id;
+            if (!acc[postId]) acc[postId] = { ...item, media: [] };
+            if (item.media_id) acc[postId].media.push(item);
+            return acc;
+          }, {});
+          const postsArray = Object.values(groupedPosts);
+          setPosts(postsArray);
+          setFilteredPosts(postsArray);
+        } else {
+          setPosts([]);
+          setFilteredPosts([]);
         }
-    }
+      } catch (err) {
+        console.error('Error fetching posts:', err);
+        setPosts([]);
+        setFilteredPosts([]);
+      }
+    };
+    fetchPosts();
+  }, []);
 
-    return (
+  // Handle search
+  const handleSearch = (e) => {
+    const query = e.target.value.toLowerCase();
+    setSearchQuery(query);
+    const filtered = posts.filter(
+      (p) =>
+        (p.post_name && p.post_name.toLowerCase().includes(query)) ||
+        (p.tags && p.tags.toLowerCase().includes(query)) ||
+        (p.location && p.location.toLowerCase().includes(query))
+    );
+    setFilteredPosts(filtered);
+  };
+
+  const handlePrev = (postId) => {
+    setCarouselIndex(prev => {
+      const currentIndex = prev[postId] || 0;
+      const length = filteredPosts.find(p => p.post_id === postId)?.media.length || 1;
+      return { ...prev, [postId]: (currentIndex - 1 + length) % length };
+    });
+  };
+
+  const handleNext = (postId) => {
+    setCarouselIndex(prev => {
+      const currentIndex = prev[postId] || 0;
+      const length = filteredPosts.find(p => p.post_id === postId)?.media.length || 1;
+      return { ...prev, [postId]: (currentIndex + 1) % length };
+    });
+  };
+
+  return (
     <>
-  <div className="main-container">
-    <input
-      type="text"
-      className="search"
-      placeholder="Search..."
-      value={query}
-      onChange={(e) => setQuery(e.target.value)}
-      onKeyPress={search}
-    />
-    {weather.main && (
-      <div className="city">
-        <h2 className="city-name">
-          <span>{weather.name}</span>
-          <sup>{weather.sys.country}</sup>
-          <div className="city-temp">
-            {Math.round(weather.main.temp)}
-            <sup>&deg;C</sup>
-          </div>
-          <div className="info">
-            <img
-              src={`https://openweathermap.org/img/wn/${weather.weather[0].icon}@2x.png`}
-              alt="weather icon"
-              className="city-icon"
-            />
-            <p>{weather.weather[0].description}</p>
-          </div>
-        </h2>
+      <div className="main-container">
+        <input
+          type="text"
+          className="search"
+          placeholder="Search posts..."
+          value={searchQuery}
+          onChange={handleSearch}
+        />
+
+        <div className="posts-grid">
+          {filteredPosts.length === 0 && <p>No posts found.</p>}
+
+          {filteredPosts.map((p) => (
+            <div key={p.post_id} className="post-card">
+              <h3>{p.post_name}</h3>
+
+              {p.media && p.media.length > 0 && (
+                <div className="carousel">
+                  {p.media.length > 1 && (
+                    <button className="carousel-btn left" onClick={() => handlePrev(p.post_id)}>
+                      <FontAwesomeIcon icon={faChevronLeft} />
+                    </button>
+                  )}
+
+                  {p.media[carouselIndex[p.post_id] || 0].type === 'image' ? (
+                    <img
+                      src={`data:image/*;base64,${p.media[carouselIndex[p.post_id] || 0].data}`}
+                      alt={p.media[carouselIndex[p.post_id] || 0].filename}
+                      className="post-media"
+                    />
+                  ) : (
+                    <video
+                      controls
+                      src={`data:video/*;base64,${p.media[carouselIndex[p.post_id] || 0].data}`}
+                      className="post-media"
+                    />
+                  )}
+
+                  {p.media.length > 1 && (
+                    <button className="carousel-btn right" onClick={() => handleNext(p.post_id)}>
+                      <FontAwesomeIcon icon={faChevronRight} />
+                    </button>
+                  )}
+
+                  {/* Dots */}
+                  {p.media.length > 1 && (
+                    <div className="carousel-dots">
+                      {p.media.map((_, idx) => (
+                        <span
+                          key={idx}
+                          className={`dot ${carouselIndex[p.post_id] === idx ? 'active' : ''}`}
+                          onClick={() => setCarouselIndex(prev => ({ ...prev, [p.post_id]: idx }))}
+                        ></span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <p>Location: {p.location || 'N/A'}</p>
+              <p>Tags: {p.tags || 'N/A'}</p>
+            </div>
+          ))}
+        </div>
       </div>
-    )}
-  </div>
 
-  {/* Bottom Nav Bar */}
-<div className="bottom-nav">
-  <div className="nav-icon"><FontAwesomeIcon icon={faHome} /></div>
-  <div className="nav-icon"><FontAwesomeIcon icon={faComment} /></div>
-  <div className="nav-icon"><FontAwesomeIcon icon={faPlus} /></div>
-  <div className="nav-icon"><FontAwesomeIcon icon={faCalendar} /></div>
-  <div className="nav-icon"><FontAwesomeIcon icon={faUser} /></div>
-</div>
-</>
-
-
+      {/* Bottom Nav Bar */}
+      <div className="bottom-nav">
+        <div className="nav-icon"><FontAwesomeIcon icon={faHome} /></div>
+        <div className="nav-icon"><FontAwesomeIcon icon={faComment} /></div>
+        <div className="nav-icon"><FontAwesomeIcon icon={faPlus} /></div>
+        <div className="nav-icon"><FontAwesomeIcon icon={faCalendar} /></div>
+        <div className="nav-icon"><FontAwesomeIcon icon={faUser} /></div>
+      </div>
+    </>
   );
 };
 

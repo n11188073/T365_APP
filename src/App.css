@@ -1,23 +1,21 @@
 html, body, #root {
     font: 0.9rem sans-serif;
     background: #fff;
-    color: #fff;
+    color: #000;
     height: 100%;
     margin: 0;
 }
 
 .main-container {
-    background: linear-gradient( rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.418) );
+    background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.418));
     background-size: cover;
     background-position: center;
-}
-
-.main-container {
-    height: 100%;
+    min-height: 100vh;
     display: flex;
-    justify-content: center;
-    align-items: center;
     flex-direction: column;
+    align-items: center;
+    padding-top: 20px;
+    padding-bottom: 80px; /* space for bottom nav */
 }
 
 .search {
@@ -25,18 +23,16 @@ html, body, #root {
     background-size: 35px 35px;
     outline: none;
     padding: 20px 7%;
-    border-radius: 30px; 
+    border-radius: 30px;
     border: none;
-    margin-top: 15px;
-    margin-bottom: 4%;
-    font-size: 1.4rem; 
-    height: 70px; 
+    margin-bottom: 20px;
+    font-size: 1.4rem;
+    height: 70px;
     width: 90%;
-    max-width: 600px; 
+    max-width: 600px;
     box-sizing: border-box;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
-
 
 @media only screen and (max-width: 600px) {
     .search {
@@ -46,68 +42,68 @@ html, body, #root {
     }
 }
 
-
-.city {
+.posts-grid {
     display: flex;
-    align-items: center;
-    justify-content: center;
     flex-direction: column;
-    padding: 40px 8%;
-    border-radius: 20px;
-    background: rgba(250, 250, 250, 0.85);
-    box-shadow: 10px 10px 5px 0px rgba(15, 15, 15, 0.404);
+    gap: 20px;
+    width: 90%;
+    max-width: 700px;
 }
 
-p {
-    margin-top: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+.post-card {
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
-.city-temp {
-    font-size: 5rem;
+.post-card h3 {
+    padding: 10px;
     font-weight: bold;
-    margin-top: 10px;
-    color: #1e2432;
-    text-align: center;
+    margin: 0;
 }
 
-.city sup {
-    font-size: 0.5em;
+.carousel {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
 }
 
-.city-name {
-    font-size: 2em;
+.post-media {
+    width: 100%;
+    max-height: 400px;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
 }
 
-.city-name sup {
-    padding: 0.2em 0.6em;
-    margin-left: 0.2em;
-    border-radius: 30px;
+.carousel-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0,0,0,0.3);
+    border: none;
     color: #fff;
-    background: #ff8c00;
+    font-size: 1.5rem;
+    padding: 0.5rem;
+    cursor: pointer;
+    border-radius: 50%;
+    z-index: 10;
 }
 
-.city-icon {
-    margin-top: 10px;
-    width: 100px;
-    height: 100px;
+.carousel-btn.left {
+    left: 10px;
 }
 
-.info {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+.carousel-btn.right {
+    right: 10px;
 }
 
-@media only screen and (max-width: 600px) {
-    .search {
-        padding: 20px 15%;
-    }
-
-    .city {
-        padding: 40px 20%;
-    }
+.post-details {
+    padding: 10px;
+    font-size: 0.9rem;
+    color: #555;
 }
 
 .bottom-nav {
@@ -116,17 +112,16 @@ p {
     left: 0;
     width: 100%;
     height: 60px;
-    background: rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.9);
     display: flex;
     justify-content: space-around;
     align-items: center;
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    border-top: 1px solid rgba(0,0,0,0.1);
     border-top-left-radius: 20px;
     border-top-right-radius: 20px;
     z-index: 1000;
-    backdrop-filter: blur(10px); /* Optional: adds a modern blur effect */
+    backdrop-filter: blur(10px);
 }
-
 
 .nav-icon svg {
     font-size: 1.5rem;
@@ -138,10 +133,17 @@ p {
     transform: scale(1.2);
 }
 
-.page {
-  background-color: #f9f9f9;
-  color: #000;
-  min-height: 100vh;
-  padding: 2rem;
-  text-align: center;
+/* Optional horizontal scroll for multiple images in older posts style */
+.post-media-container {
+    display: flex;
+    overflow-x: auto;
+    gap: 5px;
+    padding: 5px;
+}
+
+.post-media-container img {
+    height: 250px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
 }
