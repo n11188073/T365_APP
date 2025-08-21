@@ -16,7 +16,7 @@ const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL ||
   (window.location.hostname === "localhost"
     ? "http://localhost:5000"
-    : "https://your-render-service.onrender.com"); // replace with your Render backend URL
+    : "https://t365-app.onrender.com");
 
 const App = () => {
   const [posts, setPosts] = useState([]);
