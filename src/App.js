@@ -1,9 +1,22 @@
-import React, { useState, useEffect } from 'react'; 
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faHome, faPlus, faUser, faCalendar, faComment, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import {
+  faHome,
+  faPlus,
+  faUser,
+  faCalendar,
+  faComment,
+  faChevronLeft,
+  faChevronRight
+} from '@fortawesome/free-solid-svg-icons';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+// Automatically picks API endpoint
+const BACKEND_URL =
+  process.env.REACT_APP_BACKEND_URL ||
+  (window.location.hostname === "localhost"
+    ? "http://localhost:5000"
+    : "https://your-render-service.onrender.com"); // replace with your Render backend URL
 
 const App = () => {
   const [posts, setPosts] = useState([]);
@@ -55,17 +68,17 @@ const App = () => {
   };
 
   const handlePrev = (postId) => {
-    setCarouselIndex(prev => {
+    setCarouselIndex((prev) => {
       const currentIndex = prev[postId] || 0;
-      const length = filteredPosts.find(p => p.post_id === postId)?.media.length || 1;
+      const length = filteredPosts.find((p) => p.post_id === postId)?.media.length || 1;
       return { ...prev, [postId]: (currentIndex - 1 + length) % length };
     });
   };
 
   const handleNext = (postId) => {
-    setCarouselIndex(prev => {
+    setCarouselIndex((prev) => {
       const currentIndex = prev[postId] || 0;
-      const length = filteredPosts.find(p => p.post_id === postId)?.media.length || 1;
+      const length = filteredPosts.find((p) => p.post_id === postId)?.media.length || 1;
       return { ...prev, [postId]: (currentIndex + 1) % length };
     });
   };
@@ -96,19 +109,24 @@ const App = () => {
                     </button>
                   )}
 
-                  {p.media[carouselIndex[p.post_id] || 0].type === 'image' ? (
-                    <img
-                      src={`data:image/*;base64,${p.media[carouselIndex[p.post_id] || 0].data}`}
-                      alt={p.media[carouselIndex[p.post_id] || 0].filename}
-                      className="post-media"
-                    />
-                  ) : (
-                    <video
-                      controls
-                      src={`data:video/*;base64,${p.media[carouselIndex[p.post_id] || 0].data}`}
-                      className="post-media"
-                    />
-                  )}
+                  {(() => {
+                    const currentIdx = carouselIndex[p.post_id] || 0;
+                    const media = p.media[currentIdx];
+                    if (!media) return null;
+                    return media.type === 'image' ? (
+                      <img
+                        src={`data:image/*;base64,${media.data}`}
+                        alt={media.filename}
+                        className="post-media"
+                      />
+                    ) : (
+                      <video
+                        controls
+                        src={`data:video/*;base64,${media.data}`}
+                        className="post-media"
+                      />
+                    );
+                  })()}
 
                   {p.media.length > 1 && (
                     <button className="carousel-btn right" onClick={() => handleNext(p.post_id)}>
@@ -123,7 +141,7 @@ const App = () => {
                         <span
                           key={idx}
                           className={`dot ${carouselIndex[p.post_id] === idx ? 'active' : ''}`}
-                          onClick={() => setCarouselIndex(prev => ({ ...prev, [p.post_id]: idx }))}
+                          onClick={() => setCarouselIndex((prev) => ({ ...prev, [p.post_id]: idx }))}
                         ></span>
                       ))}
                     </div>
