@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { GoogleLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
 
@@ -9,39 +9,64 @@ const API_BASE =
     : "http://localhost:5000";
 
 const Login = ({ user, setUser }) => {
+  // Check session when component mounts
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/me`, {
+          method: "GET",
+          credentials: "include", // send cookies
+        });
+        const data = await res.json();
+        if (data.loggedIn) {
+          setUser(data.user);
+        }
+      } catch (err) {
+        console.error("Failed to check session:", err);
+      }
+    };
+    checkSession();
+  }, [setUser]);
 
+  // Handle Google login success
   const handleSuccess = async (credentialResponse) => {
     const token = credentialResponse.credential;
-    localStorage.setItem("google_token", token);
-
     const decoded = jwtDecode(token);
     const user_id = decoded.sub;
     const user_name = decoded.name || decoded.email;
 
-    const newUser = { id: user_id, name: user_name };
-    setUser(newUser);
-
-    localStorage.setItem("user", JSON.stringify(newUser));
-
-    // Save to backend
     try {
       const res = await fetch(`${API_BASE}/saveUser`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id, user_name })
+        credentials: "include", // important for cookie
+        body: JSON.stringify({ user_id, user_name }),
       });
 
       const data = await res.json();
       console.log("Server response:", data);
+
+      if (data.user) {
+        setUser(data.user); // comes from session
+      }
     } catch (err) {
       console.error("Failed to save user:", err);
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("google_token");
-    localStorage.removeItem("user");
-    setUser(null); // updates top bar in Main.js
+  // Handle logout
+  const handleLogout = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/logout`, {
+        method: "POST",
+        credentials: "include", // send cookies
+      });
+      const data = await res.json();
+      console.log(data.message);
+      setUser(null);
+    } catch (err) {
+      console.error("Logout failed:", err);
+    }
   };
 
   const handleError = () => {
@@ -64,7 +89,7 @@ const Login = ({ user, setUser }) => {
               border: "none",
               padding: "0.5rem 1rem",
               borderRadius: "5px",
-              cursor: "pointer"
+              cursor: "pointer",
             }}
           >
             Logout

@@ -38,11 +38,11 @@ const Main = () => {
         {/* Routes */}
         <div style={{ minHeight: '90vh' }}>
           <Routes>
-            <Route path="/" element={<App />} />
+            <Route path="/" element={<App user={user} setUser={setUser} />} />
             <Route path="/chat" element={<Chat />} />
             <Route path="/upload" element={<New />} />
             <Route path="/calendar" element={<Calendar />} />
-            <Route path="/profile" element={<Profile user={user} />} />
+            <Route path="/profile" element={<Profile user={user} setUser={setUser} />} />
             <Route
               path="/login"
               element={<Login user={user} setUser={setUser} />}

@@ -2,23 +2,48 @@
 const express = require('express');
 const cors = require('cors');
 const sqlite3 = require('sqlite3').verbose();
+const path = require('path');   // keep path only once
+const session = require('express-session');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Allow requests from your Netlify site
-app.use(cors());
+// Allow requests from local + Netlify
+app.use(
+  cors({
+    origin: [
+      "http://localhost:3000",
+      "https://yourappname.netlify.app"
+    ],
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 
-// Connect to SQLite
+// Session middleware
+app.use(
+  session({
+    secret: "your_secret_key",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      maxAge: 1000 * 60, //24 * 60 * 60 * 1000, // 1 day in milliseconds
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "none",
+    },
+  })
+);
 
-const path = require('path');
+
+// Connect to SQLite
 const dbPath = path.join(__dirname, '..', 't365backend', 't65sql.db');
 console.log('Using DB at:', dbPath);
 
 const db = new sqlite3.Database(dbPath, (err) => {
-    if (err) console.error('Database connection error:', err);
-    else console.log('Connected to SQLite database.');
+  if (err) console.error('Database connection error:', err);
+  else console.log('Connected to SQLite database.');
 });
 
 // Save or update user
@@ -33,19 +58,37 @@ app.post('/saveUser', (req, res) => {
     [user_id, user_name],
     function (err) {
       if (err) return res.status(500).json({ error: err.message });
-      res.json({ message: 'User saved successfully', id: this.lastID });
+      // store session
+      req.session.user = { id: user_id, name: user_name };
+      res.json({ message: 'User saved & session started', id: user_id });
     }
   );
 });
 
+// Check current session
+app.get("/me", (req, res) => {
+  console.log("Session:", req.session);
+  if (req.session.user) {
+    res.json({ loggedIn: true, user: req.session.user });
+  } else {
+    res.json({ loggedIn: false });
+  }
+});
 
+
+// Logout route
+app.post("/logout", (req, res) => {
+  req.session.destroy(() => {
+    res.json({ message: "Logged out" });
+  });
+});
 
 // Fetch all users
 app.get('/users', (req, res) => {
-    db.all(`SELECT * FROM users`, [], (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json(rows);
-    });
+  db.all(`SELECT * FROM user_profiles`, [], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(rows);
+  });
 });
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

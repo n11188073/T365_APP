@@ -1,7 +1,50 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
-const Profile = ({ user }) => {
+const API_BASE =
+  process.env.NODE_ENV === "production"
+    ? "https://t365-app.onrender.com"
+    : "http://localhost:5000";
+
+const Profile = ({ user, setUser }) => {
+  const navigate = useNavigate();
+
+  // Function to check session
+  const checkSession = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/me`, {
+        method: "GET",
+        credentials: "include", // send cookies
+      });
+
+      console.log("✅ /me response status:", res.status);
+
+      const data = await res.json();
+      console.log("📄 /me response data:", data);
+
+      if (data.loggedIn) {
+        setUser(data.user);
+        console.log("🟢 User is logged in:", data.user);
+      } else {
+        setUser(null);
+        console.log("🔴 User is not logged in");
+      }
+    } catch (err) {
+      console.error("❌ Failed to check session:", err);
+      setUser(null);
+    }
+  };
+
+  // Check session on mount and poll every 30 seconds
+  useEffect(() => {
+    checkSession();
+    const interval = setInterval(() => {
+      checkSession();
+    }, 30000); // every 30 seconds
+
+    return () => clearInterval(interval);
+  }, [setUser]);
+
   if (!user) {
     return (
       <div className="page relative">
