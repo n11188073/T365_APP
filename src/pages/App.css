@@ -1,0 +1,188 @@
+html, body, #root {
+    font: 0.9rem sans-serif;
+    background: #fff;
+    color: #000;
+    height: 100%;
+    margin: 0;
+}
+
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+.main-container {
+    background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.418));
+    background-size: cover;
+    background-position: center;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 20px;
+    padding-bottom: 80px; /* space for bottom nav */
+}
+
+.search {
+    background: rgba(250, 250, 250, 0.85) url('https://img.icons8.com/ios-filled/50/000000/search--v1.png') no-repeat right 20px center;
+    background-size: 35px 35px;
+    outline: none;
+    padding: 20px 7%;
+    border-radius: 30px;
+    border: none;
+    margin-bottom: 20px;
+    font-size: 1.4rem;
+    height: 70px;
+    width: 90%;
+    max-width: 600px;
+    box-sizing: border-box;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+@media only screen and (max-width: 600px) {
+    .search {
+        padding: 20px 10%;
+        font-size: 1rem;
+        height: 55px;
+    }
+}
+
+.posts-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 90%;
+    max-width: 700px;
+}
+
+.post-card {
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.post-card h3 {
+    padding: 10px;
+    font-weight: bold;
+    margin: 0;
+}
+
+.carousel {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+}
+
+.post-media {
+    width: 100%;
+    max-height: 400px;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+}
+
+.carousel-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0,0,0,0.3);
+    border: none;
+    color: #fff;
+    font-size: 1.5rem;
+    padding: 0.5rem;
+    cursor: pointer;
+    border-radius: 50%;
+    z-index: 10;
+}
+
+.carousel-btn.left {
+    left: 10px;
+}
+
+.carousel-btn.right {
+    right: 10px;
+}
+
+.post-details {
+    padding: 10px;
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    border-top: 1px solid rgba(0,0,0,0.1);
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+}
+
+.nav-icon svg {
+    font-size: 1.5rem;
+    color: black;
+    transition: transform 0.2s ease;
+}
+
+.nav-icon:hover svg {
+    transform: scale(1.2);
+}
+
+/* Optional horizontal scroll for multiple images in older posts style */
+.post-media-container {
+    display: flex;
+    overflow-x: auto;
+    gap: 5px;
+    padding: 5px;
+}
+
+.post-media-container img {
+    height: 250px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -1,31 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import './Upload.css';
 
-const New = () => {
+const Upload = ({ onPostCreated }) => {
   const [previews, setPreviews] = useState([]);
   const [selected, setSelected] = useState([]);
   const [step, setStep] = useState(1);
   const [mode, setMode] = useState('post');
   const [postText, setPostText] = useState('');
-  const [posts, setPosts] = useState([]);
-
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
-
-  // Fetch posts safely
-  useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        const response = await fetch(`${BACKEND_URL}/posts`);
-        const data = await response.json();
-        // Ensure data.posts is an array
-        setPosts(Array.isArray(data.posts) ? data.posts : []);
-      } catch (err) {
-        console.error('Error fetching posts:', err);
-        setPosts([]);
-      }
-    };
-    fetchPosts();
-  }, [BACKEND_URL]);
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
@@ -85,12 +67,15 @@ const New = () => {
       const data = await response.json();
 
       if (response.ok) {
-        alert("Post and media created successfully!");
-        // Reset
+        alert("Post created successfully!");
+        // Reset form
         setStep(1);
         setPreviews([]);
         setSelected([]);
         setPostText('');
+
+        // Refresh home page posts
+        if (onPostCreated) onPostCreated();  // calls fetchPosts in App.js
       } else {
         alert("Failed to create post: " + (data.message || "Unknown error"));
       }
@@ -136,7 +121,7 @@ const New = () => {
           </label>
         )}
 
-        {(previews || []).map((media, idx) => (
+        {previews.map((media, idx) => (
           <div key={idx} className={`tile preview ${selected.includes(idx) ? 'selected' : ''}`}>
             {media.type.startsWith('image/') ? (
               <img src={media.src} alt={`media-${idx}`} />
@@ -178,4 +163,4 @@ const New = () => {
   );
 };
 
-export default New;
+export default Upload;

@@ -32,7 +32,7 @@ Research findings indicated that younger users value multimedia, user-generated 
 - Netlify – Hosting platform  
 - Visual Studio Code – Development environment  
 
-## Hosted on Nelify
+## Hosted on Netlify
 https://cozy-mousse-7c2a8f.netlify.app/
 
 ## Setup Instructions

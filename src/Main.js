@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+// Main.js
+import { useEffect, useState } from 'react';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import App from './App';
@@ -6,7 +7,7 @@ import Chat from './pages/Chat';
 import New from './pages/Upload';
 import Calendar from './pages/Calendar';
 import Profile from './pages/Profile';
-import Login from './pages/Login';
+import Login from './pages/Login'; 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHome, faPlus, faUser, faCalendar, faComment, faRightToBracket } from '@fortawesome/free-solid-svg-icons';
 import './App.css';
@@ -15,6 +16,7 @@ const Main = () => {
   const [userName, setUserName] = useState('');
   const [mediaList, setMediaList] = useState([]);
 
+  // Fetch user info and media
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
@@ -27,10 +29,24 @@ const Main = () => {
     }
 
     // Fetch media from backend
-    fetch('http://localhost:5000/media')
-      .then(res => res.json())
-      .then(data => setMediaList(data))
-      .catch(console.error);
+    const fetchMedia = async () => {
+      try {
+        const res = await fetch('http://localhost:5000/media');
+        const data = await res.json();
+        // Convert base64 if needed
+        if (data?.media) {
+          const formattedMedia = data.media.map(m => ({
+            ...m,
+            src: m.data ? `data:${m.type}/*;base64,${m.data}` : ''
+          }));
+          setMediaList(formattedMedia);
+        }
+      } catch (err) {
+        console.error("Failed to fetch media", err);
+      }
+    };
+
+    fetchMedia();
   }, []);
 
   return (
@@ -41,7 +57,7 @@ const Main = () => {
           {userName ? `Logged in as: ${userName}` : 'Not logged in'}
         </div>
 
-        {/* Routes */}
+        {/* Main routes */}
         <div style={{ minHeight: '90vh' }}>
           <Routes>
             <Route path="/" element={<App mediaList={mediaList} />} />
@@ -53,7 +69,7 @@ const Main = () => {
           </Routes>
         </div>
 
-        {/* Bottom Nav */}
+        {/* Bottom Navigation */}
         <div className="bottom-nav">
           <Link to="/" className="nav-icon"><FontAwesomeIcon icon={faHome} /></Link>
           <Link to="/chat" className="nav-icon"><FontAwesomeIcon icon={faComment} /></Link>
@@ -63,19 +79,14 @@ const Main = () => {
           <Link to="/login" className="nav-icon"><FontAwesomeIcon icon={faRightToBracket} /></Link>
         </div>
 
-        {/* Display media on homepage */}
+        {/* Media grid preview */}
         <div className="media-grid">
           {mediaList.map((m, idx) => (
             <div key={idx} className="tile">
               {m.type === 'image' ? (
-                <img src={m.src} alt={m.filename} />
+                <img src={m.src} alt={m.filename || `media-${idx}`} />
               ) : (
-                <video
-                  src={m.src}
-                  controls
-                  muted
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
+                <video src={m.src} controls muted style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               )}
             </div>
           ))}
