@@ -24,6 +24,13 @@ const App = () => {
   const [filteredPosts, setFilteredPosts] = useState([]);
   const [carouselIndex, setCarouselIndex] = useState({});
 
+  const fallbackImageForPost = (postId, idx = 0) =>
+    `https://picsum.photos/seed/${encodeURIComponent(postId)}_${idx}/800/800`;
+
+  const defaultFeedImages = Array.from({ length: 12 }).map((_, i) =>
+    `https://picsum.photos/seed/homefeed_${i}/800/800`
+  );
+
   // Fetch posts from backend
   useEffect(() => {
     const fetchPosts = async () => {
@@ -95,13 +102,26 @@ const App = () => {
         />
 
         <div className="posts-grid">
-          {filteredPosts.length === 0 && <p>No posts found.</p>}
+          {filteredPosts.length === 0 && (
+            <>
+              <p>No posts found. Showing some inspo…</p>
+              {defaultFeedImages.map((src, i) => (
+                <div key={`default_${i}`} className="post-card">
+                  <div className="carousel">
+                    <img src={src} alt={`default_${i}`} className="post-media" />
+                  </div>
+                  <p>Location: N/A</p>
+                  <p>Tags: #explore #inspo</p>
+                </div>
+              ))}
+            </>
+          )}
 
           {filteredPosts.map((p) => (
             <div key={p.post_id} className="post-card">
               <h3>{p.post_name}</h3>
 
-              {p.media && p.media.length > 0 && (
+              {(p.media && p.media.length > 0) ? (
                 <div className="carousel">
                   {p.media.length > 1 && (
                     <button className="carousel-btn left" onClick={() => handlePrev(p.post_id)}>
@@ -113,19 +133,38 @@ const App = () => {
                     const currentIdx = carouselIndex[p.post_id] || 0;
                     const media = p.media[currentIdx];
                     if (!media) return null;
-                    return media.type === 'image' ? (
-                      <img
-                        src={`data:image/*;base64,${media.data}`}
-                        alt={media.filename}
-                        className="post-media"
-                      />
-                    ) : (
-                      <video
-                        controls
-                        src={`data:video/*;base64,${media.data}`}
-                        className="post-media"
-                      />
-                    );
+
+                    const isImage = media.type === 'image';
+                    const hasData = Boolean(media.data);
+
+                    if (isImage) {
+                      return (
+                        <img
+                          src={
+                            hasData
+                              ? `data:image/*;base64,${media.data}`
+                              : fallbackImageForPost(p.post_id, currentIdx) 
+                          }
+                          alt={media.filename || 'post'}
+                          className="post-media"
+                        />
+                      );
+                    } else {
+                      // video
+                      return hasData ? (
+                        <video
+                          controls
+                          src={`data:video/*;base64,${media.data}`}
+                          className="post-media"
+                        />
+                      ) : (
+                        <img
+                          src={fallbackImageForPost(p.post_id, currentIdx)}
+                          alt="fallback"
+                          className="post-media"
+                        />
+                      );
+                    }
                   })()}
 
                   {p.media.length > 1 && (
@@ -146,6 +185,14 @@ const App = () => {
                       ))}
                     </div>
                   )}
+                </div>
+              ) : (
+                <div className="carousel">
+                  <img
+                    src={fallbackImageForPost(p.post_id)}
+                    alt="fallback"
+                    className="post-media"
+                  />
                 </div>
               )}
 
