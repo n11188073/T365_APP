@@ -12,7 +12,10 @@ const PORT = process.env.PORT || 5000;
 // Enable CORS for frontend
 app.use(
   cors({
-    origin: ["http://localhost:3000"],
+    origin: [
+      "http://localhost:3000", 
+      "https://cozy-mousse-7c2a8f.netlify.app"
+    ],
     credentials: true,
   })
 );
