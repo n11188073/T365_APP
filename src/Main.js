@@ -8,6 +8,7 @@ import New from './pages/Upload';
 import Calendar from './pages/Calendar';
 import Profile from './pages/Profile';
 import Login from './pages/Login'; 
+import DatabaseViewer from './pages/DatabaseViewer'; // adjust path as needed
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHome, faPlus, faUser, faCalendar, faComment, faRightToBracket } from '@fortawesome/free-solid-svg-icons';
 import './App.css';
@@ -66,10 +67,10 @@ const Main = () => {
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/DatabaseViewer" element={<DatabaseViewer />} />
           </Routes>
         </div>
 
-        {/* Bottom Navigation */}
         <div className="bottom-nav">
           <Link to="/" className="nav-icon"><FontAwesomeIcon icon={faHome} /></Link>
           <Link to="/chat" className="nav-icon"><FontAwesomeIcon icon={faComment} /></Link>
@@ -77,6 +78,7 @@ const Main = () => {
           <Link to="/calendar" className="nav-icon"><FontAwesomeIcon icon={faCalendar} /></Link>
           <Link to="/profile" className="nav-icon"><FontAwesomeIcon icon={faUser} /></Link>
           <Link to="/login" className="nav-icon"><FontAwesomeIcon icon={faRightToBracket} /></Link>
+          <Link to="/DatabaseViewer" className="nav-icon"><FontAwesomeIcon icon={faRightToBracket} /></Link>
         </div>
 
         {/* Media grid preview */}

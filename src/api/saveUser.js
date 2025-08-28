@@ -1,20 +1,23 @@
-// server.js
+// saveUser.js
 import express from "express";
 import sqlite3 from "sqlite3";
 import { open } from "sqlite";
+import path from "path";
 import cors from "cors";
 
 const app = express();
 app.use(cors());
 app.use(express.json()); // for JSON body parsing
 
-// Open database connection
+// Open database connection to t365backend/t65sql.db
 let db;
 (async () => {
+  const dbPath = path.resolve("t365backend", "t65sql.db"); // <- updated path
   db = await open({
-    filename: "./t65sql.db",
-    driver: sqlite3.Database
+    filename: dbPath,
+    driver: sqlite3.Database,
   });
+  console.log(`Connected to database at ${dbPath}`);
 })();
 
 // Save user API

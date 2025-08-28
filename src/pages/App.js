@@ -10,6 +10,7 @@ import Chat from './Chat';
 import Profile from './Profile';
 import Calendar from './Calendar';
 import Login from './Login';
+import DatabaseViewer from './DatabaseViewer';
 
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL ||
@@ -170,6 +171,7 @@ const App = () => {
         <Route path="/calendar" element={<Calendar />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/DatabaseViewer" element={<DatabaseViewer />} />
       </Routes>
 
       <div className="bottom-nav">
@@ -179,6 +181,7 @@ const App = () => {
         <Link className="nav-icon" to="/calendar"><FontAwesomeIcon icon={faCalendar} /></Link>
         <Link className="nav-icon" to="/profile"><FontAwesomeIcon icon={faUser} /></Link>
         <Link to="/login" className="nav-icon"><FontAwesomeIcon icon={faRightToBracket} /></Link>
+        <Link to="/DatabaseViewer" className="nav-icon"><FontAwesomeIcon icon={faRightToBracket} /></Link>
       </div>
     </Router>
   );

@@ -35,12 +35,11 @@ const Login = () => {
 
   // Save to backend
   try {
-    const res = await fetch(`${API_BASE}/saveUser`, {
+    const res = await fetch(`${API_BASE}/api/saveUser`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_id, user_name }) // corrected
+      body: JSON.stringify({ user_id, user_name })
     });
-
     const data = await res.json();
     console.log("Server response:", data);
   } catch (err) {
