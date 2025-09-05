@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import './App.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHome, faPlus, faUser, faCalendar, faComment, faRightToBracket, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
-import { Link, BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Link, BrowserRouter as Router, Routes, Route, useNavigate, useLocation, useParams } from 'react-router-dom';
 
 // Pages
 import Upload from './Upload';
@@ -18,12 +18,19 @@ const BACKEND_URL =
     ? "http://localhost:5000"
     : "https://t365-app.onrender.com");
 
+// Sample posts so home has something to show
+const SAMPLE_POSTS = [
+  { post_id: 'demo-1', post_name: 'London', imageUrl: 'https://images.unsplash.com/photo-1505761671935-60b3a7427bad?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80' },
+  { post_id: 'demo-2', post_name: 'Shibuya crossing',  imageUrl: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80' },
+  { post_id: 'demo-3', post_name: 'Matcha Café',      imageUrl: 'https://images.unsplash.com/photo-1575853121743-60c24f0a7502?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80' },
+];
+
 const Home = ({ filteredPosts, carouselIndex, handlePrev, handleNext, setCarouselIndex, handleSearch, searchQuery }) => (
   <div className="main-container">
     <input
       type="text"
       className="search"
-      placeholder="Search posts..."
+      placeholder="Search posts"
       value={searchQuery}
       onChange={handleSearch}
     />
@@ -90,6 +97,113 @@ const Home = ({ filteredPosts, carouselIndex, handlePrev, handleNext, setCarouse
   </div>
 );
 
+// Very simple HomeBasic with a search box that routes to /search?q=...
+const HomeBasic = ({ posts }) => { 
+  const navigate = useNavigate(); 
+  const [q, setQ] = useState(''); 
+
+  const onSubmit = (e) => { 
+    e.preventDefault();      
+    navigate(`/search?q=${encodeURIComponent(q)}`); 
+  }; 
+
+  return ( 
+    <div className="main-container"> 
+      <form onSubmit={onSubmit} style={{ marginBottom: 12 }}> 
+        <input
+          type="text"
+          className="search"
+          placeholder="Search"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
+      </form>
+      
+    <div className="posts-grid">
+      {posts.map(p => (
+        <div key={p.post_id} className="post-card">
+          <Link to={`/post/${p.post_id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+            {p.imageUrl && (
+              <img
+                src={p.imageUrl}
+                alt={p.post_name}
+                className="post-media"
+              />
+            )}
+            <h3>{p.post_name}</h3>
+          </Link>
+        </div>
+      ))}
+    </div>
+    </div>
+  );
+};
+
+// Minimal SearchPage,list matching SAMPLE_POSTS by title
+const SearchPage = () => {
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const q = (params.get('q') || '').trim();
+
+  const filtered = SAMPLE_POSTS.filter(p =>
+    p.post_name.toLowerCase().includes(q.toLowerCase())
+  );
+
+  return (
+    <div className="main-container">
+      <h2>Search</h2>
+      <p>Query: {q || '—'}</p>
+
+      <div className="posts-grid">
+        {filtered.map(p => (
+          <div key={p.post_id} className="post-card">
+            <h3>{p.post_name}</h3>
+          </div>
+        ))}
+
+        {filtered.length === 0 && (
+          <div className="post-card">
+            <p>No results found.</p>
+          </div>
+        )}
+      </div>
+
+      <div style={{ marginTop: 12 }}>
+        <Link to="/">Back to Home</Link>
+      </div>
+    </div>
+  );
+};
+
+// Post page: shows details for a single post
+const PostPage = ({ posts }) => {
+  const { id } = useParams(); // get post id from URL
+  const post = posts.find(p => p.post_id === id);
+
+  if (!post) {
+    return (
+      <div className="main-container">
+        <h2>Post not found</h2>
+        <Link to="/">Back to Home</Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="main-container">
+      <h2>{post.post_name}</h2>
+      {post.imageUrl && (
+        <img src={post.imageUrl} alt={post.post_name} className="post-media" />
+      )}
+      <p><strong>ID:</strong> {post.post_id}</p>
+      <div style={{ marginTop: 12 }}>
+        <Link to="/">← Back to Home</Link>
+      </div>
+    </div>
+  );
+};
+
+
 const App = () => {
   const [posts, setPosts] = useState([]);
   const [filteredPosts, setFilteredPosts] = useState([]);
@@ -149,20 +263,10 @@ const App = () => {
   return (
     <Router>
       <Routes>
-        <Route
-          path="/"
-          element={
-            <Home
-              filteredPosts={filteredPosts}
-              carouselIndex={carouselIndex}
-              handlePrev={handlePrev}
-              handleNext={handleNext}
-              setCarouselIndex={setCarouselIndex}
-              handleSearch={handleSearch}
-              searchQuery={searchQuery}
-            />
-          }
-        />
+        <Route path="/" element={<HomeBasic posts={SAMPLE_POSTS} />} /> 
+        <Route path="/search" element={<SearchPage />} /> 
+        <Route path="/post/:id" element={<PostPage posts={SAMPLE_POSTS} />} />
+
         <Route
           path="/upload"
           element={<Upload onPostCreated={fetchPosts} />} // reload posts after upload
