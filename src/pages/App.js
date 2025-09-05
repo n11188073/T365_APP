@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import './App.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHome, faPlus, faUser, faCalendar, faComment, faRightToBracket, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
-import { Link, BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Link, BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom'; // Changed
 
 // Pages
 import Upload from './Upload';
@@ -18,7 +18,7 @@ const BACKEND_URL =
     ? "http://localhost:5000"
     : "https://t365-app.onrender.com");
 
-// Added: sample posts so we can see something on the home page
+// Sample posts so home has something to show
 const SAMPLE_POSTS = [
   { post_id: 'demo-1', post_name: 'Shibuya Crossing' },
   { post_id: 'demo-2', post_name: 'Mount Fuji View' },
@@ -30,7 +30,7 @@ const Home = ({ filteredPosts, carouselIndex, handlePrev, handleNext, setCarouse
     <input
       type="text"
       className="search"
-      placeholder="Search posts..."
+      placeholder="Search posts"
       value={searchQuery}
       onChange={handleSearch}
     />
@@ -41,24 +41,116 @@ const Home = ({ filteredPosts, carouselIndex, handlePrev, handleNext, setCarouse
       {filteredPosts.map((p) => (
         <div key={p.post_id} className="post-card">
           <h3>{p.post_name}</h3>
+
+          {p.media && p.media.length > 0 && (
+            <div className="carousel">
+              {p.media.length > 1 && (
+                <button className="carousel-btn left" onClick={() => handlePrev(p.post_id)}>
+                  <FontAwesomeIcon icon={faChevronLeft} />
+                </button>
+              )}
+
+              {(() => {
+                const currentIdx = carouselIndex[p.post_id] || 0;
+                const media = p.media[currentIdx];
+                if (!media) return null;
+                return media.type === 'image' ? (
+                  <img
+                    src={`data:image/*;base64,${media.data}`}
+                    alt={media.filename}
+                    className="post-media"
+                  />
+                ) : (
+                  <video
+                    controls
+                    src={`data:video/*;base64,${media.data}`}
+                    className="post-media"
+                  />
+                );
+              })()}
+
+              {p.media.length > 1 && (
+                <button className="carousel-btn right" onClick={() => handleNext(p.post_id)}>
+                  <FontAwesomeIcon icon={faChevronRight} />
+                </button>
+              )}
+
+              {p.media.length > 1 && (
+                <div className="carousel-dots">
+                  {p.media.map((_, idx) => (
+                    <span
+                      key={idx}
+                      className={`dot ${carouselIndex[p.post_id] === idx ? 'active' : ''}`}
+                      onClick={() => setCarouselIndex(prev => ({ ...prev, [p.post_id]: idx }))}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          <p>Location: {p.location || 'N/A'}</p>
+          <p>Tags: {p.tags || 'N/A'}</p>
         </div>
       ))}
     </div>
   </div>
 );
 
-// Added: very simple HomeBasic component to only show titles
-const HomeBasic = ({ posts }) => (
-  <div className="main-container">
-    <div className="posts-grid">
-      {posts.map(p => (
-        <div key={p.post_id} className="post-card">
-          <h3>{p.post_name}</h3>
-        </div>
-      ))}
+// Added: very simple HomeBasic with a search box that routes to /search?q=...
+const HomeBasic = ({ posts }) => { 
+  const navigate = useNavigate(); 
+  const [q, setQ] = useState(''); 
+
+  const onSubmit = (e) => { 
+    e.preventDefault();      
+    navigate(`/search?q=${encodeURIComponent(q)}`); 
+  }; 
+
+  return ( 
+    <div className="main-container"> 
+      <form onSubmit={onSubmit} style={{ marginBottom: 12 }}> 
+        <input
+          type="text"
+          className="search"
+          placeholder="Search"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
+      </form>
+
+      <div className="posts-grid">
+        {posts.map(p => (
+          <div key={p.post_id} className="post-card">
+            <h3>{p.post_name}</h3>
+          </div>
+        ))}
+      </div>
     </div>
-  </div>
-);
+  );
+}; 
+
+// Minimal SearchPage that reads ?q= and shows a placeholder list
+const SearchPage = () => { 
+  const location = useLocation(); 
+  const params = new URLSearchParams(location.search); 
+  const q = params.get('q') || ''; 
+
+  return (
+    <div className="main-container">
+      <h2>Search</h2>
+      <p>Search: {q || '—'}</p>
+      <div className="posts-grid">
+        <div className="post-card">
+          <p>Placeholder search page</p>
+        </div>
+      </div>
+      <div style={{ marginTop: 12 }}>
+        <Link to="/">Back to Home</Link>
+      </div>
+    </div>
+  );
+}; 
 
 const App = () => {
   const [posts, setPosts] = useState([]);
@@ -119,9 +211,16 @@ const App = () => {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<HomeBasic posts={SAMPLE_POSTS} />} /> //added
+        {/* Home shows titles and has a search box that routes to /search */}
+        <Route path="/" element={<HomeBasic posts={SAMPLE_POSTS} />} /> 
 
-        <Route path="/upload" element={<Upload onPostCreated={fetchPosts} />} />
+        {/* Search page route */}
+        <Route path="/search" element={<SearchPage />} /> 
+
+        <Route
+          path="/upload"
+          element={<Upload onPostCreated={fetchPosts} />} // reload posts after upload
+        />
         <Route path="/chat" element={<Chat />} />
         <Route path="/calendar" element={<Calendar />} />
         <Route path="/profile" element={<Profile />} />
