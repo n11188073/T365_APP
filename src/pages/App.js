@@ -119,9 +119,10 @@ const HomeBasic = ({ posts }) => {
         />
       </form>
       
-<div className="posts-grid">
-        {posts.map(p => (
-          <div key={p.post_id} className="post-card">
+    <div className="posts-grid">
+      {posts.map(p => (
+        <div key={p.post_id} className="post-card">
+          <Link to={`/post/${p.post_id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
             {p.imageUrl && (
               <img
                 src={p.imageUrl}
@@ -130,9 +131,10 @@ const HomeBasic = ({ posts }) => {
               />
             )}
             <h3>{p.post_name}</h3>
-          </div>
-        ))}
-      </div>
+          </Link>
+        </div>
+      ))}
+    </div>
     </div>
   );
 };
