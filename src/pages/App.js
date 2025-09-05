@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import './App.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHome, faPlus, faUser, faCalendar, faComment, faRightToBracket, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
-import { Link, BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom'; // Changed
+import { Link, BrowserRouter as Router, Routes, Route, useNavigate, useLocation, useParams } from 'react-router-dom';
 
 // Pages
 import Upload from './Upload';
@@ -97,7 +97,7 @@ const Home = ({ filteredPosts, carouselIndex, handlePrev, handleNext, setCarouse
   </div>
 );
 
-// Added: very simple HomeBasic with a search box that routes to /search?q=...
+// Very simple HomeBasic with a search box that routes to /search?q=...
 const HomeBasic = ({ posts }) => { 
   const navigate = useNavigate(); 
   const [q, setQ] = useState(''); 
@@ -175,6 +175,35 @@ const SearchPage = () => {
   );
 };
 
+// Post page: shows details for a single post
+const PostPage = ({ posts }) => {
+  const { id } = useParams(); // get post id from URL
+  const post = posts.find(p => p.post_id === id);
+
+  if (!post) {
+    return (
+      <div className="main-container">
+        <h2>Post not found</h2>
+        <Link to="/">Back to Home</Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="main-container">
+      <h2>{post.post_name}</h2>
+      {post.imageUrl && (
+        <img src={post.imageUrl} alt={post.post_name} className="post-media" />
+      )}
+      <p><strong>ID:</strong> {post.post_id}</p>
+      <div style={{ marginTop: 12 }}>
+        <Link to="/">← Back to Home</Link>
+      </div>
+    </div>
+  );
+};
+
+
 const App = () => {
   const [posts, setPosts] = useState([]);
   const [filteredPosts, setFilteredPosts] = useState([]);
@@ -234,11 +263,9 @@ const App = () => {
   return (
     <Router>
       <Routes>
-        {/* Home shows titles and has a search box that routes to /search */}
         <Route path="/" element={<HomeBasic posts={SAMPLE_POSTS} />} /> 
-
-        {/* Search page route */}
         <Route path="/search" element={<SearchPage />} /> 
+        <Route path="/post/:id" element={<PostPage posts={SAMPLE_POSTS} />} />
 
         <Route
           path="/upload"
