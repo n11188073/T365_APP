@@ -20,9 +20,9 @@ const BACKEND_URL =
 
 // Sample posts so home has something to show
 const SAMPLE_POSTS = [
-  { post_id: 'demo-1', post_name: 'Shibuya Crossing' },
-  { post_id: 'demo-2', post_name: 'Mount Fuji View' },
-  { post_id: 'demo-3', post_name: 'Matcha Café' },
+  { post_id: 'demo-1', post_name: 'London', imageUrl: 'https://images.unsplash.com/photo-1505761671935-60b3a7427bad?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80' },
+  { post_id: 'demo-2', post_name: 'Shibuya crossing',  imageUrl: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80' },
+  { post_id: 'demo-3', post_name: 'Matcha Café',      imageUrl: 'https://images.unsplash.com/photo-1575853121743-60c24f0a7502?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80' },
 ];
 
 const Home = ({ filteredPosts, carouselIndex, handlePrev, handleNext, setCarouselIndex, handleSearch, searchQuery }) => (
@@ -118,17 +118,24 @@ const HomeBasic = ({ posts }) => {
           onChange={(e) => setQ(e.target.value)}
         />
       </form>
-
-      <div className="posts-grid">
+      
+<div className="posts-grid">
         {posts.map(p => (
           <div key={p.post_id} className="post-card">
+            {p.imageUrl && (
+              <img
+                src={p.imageUrl}
+                alt={p.post_name}
+                className="post-media"
+              />
+            )}
             <h3>{p.post_name}</h3>
           </div>
         ))}
       </div>
     </div>
   );
-}; 
+};
 
 // Minimal SearchPage,list matching SAMPLE_POSTS by title
 const SearchPage = () => {
