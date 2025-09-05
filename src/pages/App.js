@@ -130,27 +130,41 @@ const HomeBasic = ({ posts }) => {
   );
 }; 
 
-// Minimal SearchPage that reads ?q= and shows a placeholder list
-const SearchPage = () => { 
-  const location = useLocation(); 
-  const params = new URLSearchParams(location.search); 
-  const q = params.get('q') || ''; 
+// Minimal SearchPage,list matching SAMPLE_POSTS by title
+const SearchPage = () => {
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const q = (params.get('q') || '').trim();
+
+  const filtered = SAMPLE_POSTS.filter(p =>
+    p.post_name.toLowerCase().includes(q.toLowerCase())
+  );
 
   return (
     <div className="main-container">
       <h2>Search</h2>
-      <p>Search: {q || '—'}</p>
+      <p>Query: {q || '—'}</p>
+
       <div className="posts-grid">
-        <div className="post-card">
-          <p>Placeholder search page</p>
-        </div>
+        {filtered.map(p => (
+          <div key={p.post_id} className="post-card">
+            <h3>{p.post_name}</h3>
+          </div>
+        ))}
+
+        {filtered.length === 0 && (
+          <div className="post-card">
+            <p>No results found.</p>
+          </div>
+        )}
       </div>
+
       <div style={{ marginTop: 12 }}>
         <Link to="/">Back to Home</Link>
       </div>
     </div>
   );
-}; 
+};
 
 const App = () => {
   const [posts, setPosts] = useState([]);
