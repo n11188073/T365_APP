@@ -18,6 +18,13 @@ const BACKEND_URL =
     ? "http://localhost:5000"
     : "https://t365-app.onrender.com");
 
+// Added: sample posts so we can see something on the home page
+const SAMPLE_POSTS = [
+  { post_id: 'demo-1', post_name: 'Shibuya Crossing' },
+  { post_id: 'demo-2', post_name: 'Mount Fuji View' },
+  { post_id: 'demo-3', post_name: 'Matcha Café' },
+];
+
 const Home = ({ filteredPosts, carouselIndex, handlePrev, handleNext, setCarouselIndex, handleSearch, searchQuery }) => (
   <div className="main-container">
     <input
@@ -34,56 +41,19 @@ const Home = ({ filteredPosts, carouselIndex, handlePrev, handleNext, setCarouse
       {filteredPosts.map((p) => (
         <div key={p.post_id} className="post-card">
           <h3>{p.post_name}</h3>
+        </div>
+      ))}
+    </div>
+  </div>
+);
 
-          {p.media && p.media.length > 0 && (
-            <div className="carousel">
-              {p.media.length > 1 && (
-                <button className="carousel-btn left" onClick={() => handlePrev(p.post_id)}>
-                  <FontAwesomeIcon icon={faChevronLeft} />
-                </button>
-              )}
-
-              {(() => {
-                const currentIdx = carouselIndex[p.post_id] || 0;
-                const media = p.media[currentIdx];
-                if (!media) return null;
-                return media.type === 'image' ? (
-                  <img
-                    src={`data:image/*;base64,${media.data}`}
-                    alt={media.filename}
-                    className="post-media"
-                  />
-                ) : (
-                  <video
-                    controls
-                    src={`data:video/*;base64,${media.data}`}
-                    className="post-media"
-                  />
-                );
-              })()}
-
-              {p.media.length > 1 && (
-                <button className="carousel-btn right" onClick={() => handleNext(p.post_id)}>
-                  <FontAwesomeIcon icon={faChevronRight} />
-                </button>
-              )}
-
-              {p.media.length > 1 && (
-                <div className="carousel-dots">
-                  {p.media.map((_, idx) => (
-                    <span
-                      key={idx}
-                      className={`dot ${carouselIndex[p.post_id] === idx ? 'active' : ''}`}
-                      onClick={() => setCarouselIndex(prev => ({ ...prev, [p.post_id]: idx }))}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          <p>Location: {p.location || 'N/A'}</p>
-          <p>Tags: {p.tags || 'N/A'}</p>
+// Added: very simple HomeBasic component to only show titles
+const HomeBasic = ({ posts }) => (
+  <div className="main-container">
+    <div className="posts-grid">
+      {posts.map(p => (
+        <div key={p.post_id} className="post-card">
+          <h3>{p.post_name}</h3>
         </div>
       ))}
     </div>
@@ -149,24 +119,9 @@ const App = () => {
   return (
     <Router>
       <Routes>
-        <Route
-          path="/"
-          element={
-            <Home
-              filteredPosts={filteredPosts}
-              carouselIndex={carouselIndex}
-              handlePrev={handlePrev}
-              handleNext={handleNext}
-              setCarouselIndex={setCarouselIndex}
-              handleSearch={handleSearch}
-              searchQuery={searchQuery}
-            />
-          }
-        />
-        <Route
-          path="/upload"
-          element={<Upload onPostCreated={fetchPosts} />} // reload posts after upload
-        />
+        <Route path="/" element={<HomeBasic posts={SAMPLE_POSTS} />} /> //added
+
+        <Route path="/upload" element={<Upload onPostCreated={fetchPosts} />} />
         <Route path="/chat" element={<Chat />} />
         <Route path="/calendar" element={<Calendar />} />
         <Route path="/profile" element={<Profile />} />
