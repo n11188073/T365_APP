@@ -18,6 +18,8 @@ import {
   Routes,
   Route,
 } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
+import SearchPage from "./SearchPage";
 
 // Pages
 import Upload from './Upload';
@@ -63,102 +65,113 @@ const Home = ({
   setCarouselIndex,
   handleSearch,
   searchQuery,
-}) => (
-  <div className="main-container">
-    <input
-      type="text"
-      className="search"
-      placeholder="Search posts..."
-      value={searchQuery}
-      onChange={handleSearch}
-    />
+}) => {
+  
+  const navigate = useNavigate();
 
-    <div className="posts-grid">
-      {/* DB posts */}
-      {filteredPosts.length === 0 && <p>No posts found.</p>}
+  const goToSearch = () => {
+    const q = (searchQuery || "").trim();
+    navigate(`/search?q=${encodeURIComponent(q)}`);
+  };
 
-      {filteredPosts.map((p) => (
-        <div key={p.post_id} className="post-card">
-          <h3>{p.post_name}</h3>
+  return (
+    <div className="main-container">
+      <input
+        type="text"
+        className="search"
+        placeholder="Search posts..."
+        value={searchQuery}
+        onChange={handleSearch}
+        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); goToSearch(); } }}
+      />
 
-          {p.media && p.media.length > 0 && (
-            <div className="carousel">
-              {p.media.length > 1 && (
-                <button
-                  className="carousel-btn left"
-                  onClick={() => handlePrev(p.post_id)}
-                >
-                  <FontAwesomeIcon icon={faChevronLeft} />
-                </button>
-              )}
+      <div className="posts-grid">
+        {/* DB posts */}
+        {filteredPosts.length === 0 && <p>No posts found.</p>}
 
-              {(() => {
-                const currentIdx = carouselIndex[p.post_id] || 0;
-                const media = p.media[currentIdx];
-                if (!media) return null;
-                return media.type === 'image' ? (
-                  <img
-                    src={`data:image/*;base64,${media.data}`}
-                    alt={media.filename}
-                    className="post-media"
-                  />
-                ) : (
-                  <video
-                    controls
-                    src={`data:video/*;base64,${media.data}`}
-                    className="post-media"
-                  />
-                );
-              })()}
+        {filteredPosts.map((p) => (
+          <div key={p.post_id} className="post-card">
+            <h3>{p.post_name}</h3>
 
-              {p.media.length > 1 && (
-                <button
-                  className="carousel-btn right"
-                  onClick={() => handleNext(p.post_id)}
-                >
-                  <FontAwesomeIcon icon={faChevronRight} />
-                </button>
-              )}
+            {p.media && p.media.length > 0 && (
+              <div className="carousel">
+                {p.media.length > 1 && (
+                  <button
+                    className="carousel-btn left"
+                    onClick={() => handlePrev(p.post_id)}
+                  >
+                    <FontAwesomeIcon icon={faChevronLeft} />
+                  </button>
+                )}
 
-              {p.media.length > 1 && (
-                <div className="carousel-dots">
-                  {p.media.map((_, idx) => (
-                    <span
-                      key={idx}
-                      className={`dot ${
-                        carouselIndex[p.post_id] === idx ? 'active' : ''
-                      }`}
-                      onClick={() =>
-                        setCarouselIndex((prev) => ({
-                          ...prev,
-                          [p.post_id]: idx,
-                        }))
-                      }
+                {(() => {
+                  const currentIdx = carouselIndex[p.post_id] || 0;
+                  const media = p.media[currentIdx];
+                  if (!media) return null;
+                  return media.type === 'image' ? (
+                    <img
+                      src={`data:image/*;base64,${media.data}`}
+                      alt={media.filename}
+                      className="post-media"
                     />
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+                  ) : (
+                    <video
+                      controls
+                      src={`data:video/*;base64,${media.data}`}
+                      className="post-media"
+                    />
+                  );
+                })()}
 
-          <p>Location: {p.location || 'N/A'}</p>
-          <p>Tags: {p.tags || 'N/A'}</p>
-        </div>
-      ))}
+                {p.media.length > 1 && (
+                  <button
+                    className="carousel-btn right"
+                    onClick={() => handleNext(p.post_id)}
+                  >
+                    <FontAwesomeIcon icon={faChevronRight} />
+                  </button>
+                )}
 
-      {/* Sample demo posts below DB posts */}
-      <h3 style={{ marginTop: '20px' }}>Sample Posts</h3>
-      {SAMPLE_POSTS.map((p) => (
-        <div key={p.post_id} className="post-card">
-          <h3>{p.post_name}</h3>
-          {p.imageUrl && (
-            <img src={p.imageUrl} alt={p.post_name} className="post-media" />
-          )}
-        </div>
-      ))}
+                {p.media.length > 1 && (
+                  <div className="carousel-dots">
+                    {p.media.map((_, idx) => (
+                      <span
+                        key={idx}
+                        className={`dot ${
+                          carouselIndex[p.post_id] === idx ? 'active' : ''
+                        }`}
+                        onClick={() =>
+                          setCarouselIndex((prev) => ({
+                            ...prev,
+                            [p.post_id]: idx,
+                          }))
+                        }
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <p>Location: {p.location || 'N/A'}</p>
+            <p>Tags: {p.tags || 'N/A'}</p>
+          </div>
+        ))}
+
+        {/* Sample demo posts below DB posts */}
+        <h3 style={{ marginTop: '20px' }}>Sample Posts</h3>
+        {SAMPLE_POSTS.map((p) => (
+          <div key={p.post_id} className="post-card">
+            <h3>{p.post_name}</h3>
+            {p.imageUrl && (
+              <img src={p.imageUrl} alt={p.post_name} className="post-media" />
+            )}
+          </div>
+        ))}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const App = () => {
   const [posts, setPosts] = useState([]);
@@ -243,6 +256,7 @@ const App = () => {
         <Route path="/profile" element={<Profile />} />
         <Route path="/login" element={<Login />} />
         <Route path="/DatabaseViewer" element={<DatabaseViewer />} />
+        <Route path="/search" element={<SearchPage />} />
       </Routes>
 
       <div className="bottom-nav">
