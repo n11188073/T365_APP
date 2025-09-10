@@ -12,6 +12,7 @@ import DatabaseViewer from './pages/DatabaseViewer'; // adjust path as needed
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHome, faPlus, faUser, faCalendar, faComment, faRightToBracket } from '@fortawesome/free-solid-svg-icons';
 import './App.css';
+import 'leaflet/dist/leaflet.css';
 
 const Main = () => {
   const [userName, setUserName] = useState('');
