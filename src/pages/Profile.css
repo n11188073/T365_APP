@@ -4,9 +4,10 @@
   padding: 16px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial;
   background: #fafafa;
+  overflow-x: hidden; /* prevent horizontal scroll */
 }
 
-/* Card */
+/* Cards */
 .profile-card, .points-card {
   background: #fff;
   border-radius: 16px;
@@ -86,96 +87,10 @@
 }
 .share-btn { max-width:48px; }
 
-/* Ticket stamps (no backgrounds now) */
+/* Ticket stamps */
 .points-stamps {
   display: flex;
-  justify-content: center;
-  gap: 12px;
-  margin-bottom: 8px;
-}
-
-.stamp {
-  font-size: 28px;
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  color: #111;      /* neutral text color */
-  background: none; /* no background */
-  box-shadow: none; /* remove shadows */
-}
-
-/* view button */
-.view-btn {
-  padding:8px 16px;
-  border-radius:20px;
-  border:none;
-  background:#f3f4f6;
-  cursor:pointer;
-}
-
-/* posts grid */
-.posts-grid {
-  display:grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap:4px;
-}
-
-.post-img {
-  width:100%;
-  aspect-ratio:1/1;
-  object-fit:cover;
-  display:block;
-  border-radius:6px;
-}
-
-/* small screens */
-@media (max-width: 480px) {
-  .profile-container { padding: 12px; }
-  .profile-card, .points-card { padding: 12px; }
-  .post-img { aspect-ratio: 1/1; }
-}
-
-/* Icon row placed under "View Points" */
-.points-actions {
-  display: flex;
-  justify-content: space-evenly; /* spread evenly */
-  margin: 14px 0 20px;
-  align-items: center;
-}
-
-/* each icon button */
-.icon-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 6px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  color: #6b7280;
-  transition: transform 0.12s ease, color 0.12s ease;
-  flex: 1; /* equal space each */
-}
-
-.icon-btn:hover {
-  transform: translateY(-3px);
-  color: #111827;
-}
-
-/* small label beneath icon */
-.icon-label {
-  font-size: 11px;
-  margin-top: 4px;
-  color: #6b7280;
-}
-
-/* Ticket stamps (spaced out evenly) */
-.points-stamps {
-  display: flex;
-  justify-content: space-evenly; /* spread evenly across */
+  justify-content: space-evenly; /* evenly spaced */
   align-items: center;
   margin-bottom: 12px;
   width: 100%;
@@ -189,7 +104,73 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  color: #111;      
-  background: none; 
-  box-shadow: none; 
+  color: #111;
+  background: none;
+  box-shadow: none;
+}
+
+/* view button */
+.view-btn {
+  padding:8px 16px;
+  border-radius:20px;
+  border:none;
+  background:#f3f4f6;
+  cursor:pointer;
+}
+
+/* posts grid */
+.posts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); /* wider images */
+  gap: 4px;
+  width: 100%;
+}
+
+/* each post image */
+.post-img {
+  width: 100%;
+  aspect-ratio: 1 / 1; 
+  object-fit: cover;  
+  border-radius: 6px;
+  display: block;
+}
+
+/* small screens */
+@media (max-width: 480px) {
+  .posts-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px;
+  }
+}
+
+/* Icons under "View Points" */
+.points-actions {
+  display: flex;
+  justify-content: space-evenly; 
+  margin: 14px 0 20px;
+  align-items: center;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #6b7280;
+  transition: transform 0.12s ease, color 0.12s ease;
+  flex: 1; /* equal space */
+}
+
+.icon-btn:hover {
+  transform: translateY(-3px);
+  color: #111827;
+}
+
+.icon-label {
+  font-size: 11px;
+  margin-top: 4px;
+  color: #6b7280;
 }
