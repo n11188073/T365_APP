@@ -225,5 +225,28 @@ app.get('/media', (req, res) => {
   });
 });
 
+
+// --- Save itinerary API ---
+app.post('/api/saveItinerary', (req, res) => {
+  const { owner_id, title } = req.body;
+
+  db.run(
+  `INSERT INTO itineraries (owner_id, title) VALUES (?, ?)`,
+  [owner_id, title || ""],
+  function (err) {
+    if (err) {
+      console.error("Error saving itinerary:", err);
+      return res.status(500).json({ error: "Database error" });
+    }
+    res.json({
+      message: "Itinerary created successfully",
+      itinerary_id: this.lastID,
+    });
+  }
+);
+
+});
+
+
 // Start server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
