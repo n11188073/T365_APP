@@ -1,7 +1,7 @@
 // src/pages/Calendar.js
 import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus } from "@fortawesome/free-solid-svg-icons";
+import { faPlus, faArrowUpWideShort } from "@fortawesome/free-solid-svg-icons";
 
 const API_BASE =
   process.env.NODE_ENV === "production"
@@ -72,85 +72,151 @@ const Calendar = () => {
 
   return (
     <div className="page" style={{ padding: "20px", height: "100vh", overflowY: "auto" }}>
+
+      {/* Page header with centered title and right-aligned plus icon */}
       <div
-        className="page-header"
-        style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" }}
+        style={{
+          width: "85vw",
+          margin: "0 auto",
+          position: "relative",
+          marginTop: "3%",
+          marginBottom: "3%",
+          display: "flex",
+          justifyContent: "center",
+        }}
       >
-        <h1>Itineraries</h1>
+        <h1 style={{ margin: 0, textAlign: "center" }}>Itineraries</h1>
         <FontAwesomeIcon
           icon={faPlus}
-          style={{ cursor: "pointer", fontSize: "1.5rem" }}
+          style={{
+            cursor: "pointer",
+            fontSize: "1.5rem",
+            position: "absolute",
+            right: 0,
+            top: "50%",
+            transform: "translateY(-50%)",
+          }}
           onClick={handleAddItinerary}
           title="Add new itinerary"
         />
       </div>
 
-      {loading && <p>Loading itineraries...</p>}
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {/* Main container for cards */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "15px",
+        }}
+      >
 
-      {!loading && !error && (
+        {/* Toggle boxes */}
         <div
           style={{
             display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: "15px",
+            width: "85vw",
+            gap: "10px",
           }}
         >
-          {itineraries.length === 0 ? (
-            <p>No itineraries yet.</p>
-          ) : (
-            itineraries.map((it) => (
+          <div
+            style={{
+              flex: 1,
+              backgroundColor: "lightblue",
+              borderRadius: "12px",
+              boxShadow: "0px 4px 8px rgba(0,0,0,0.2)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              padding: "1%",
+            }}
+          >
+            <h3 style={{ margin: 0, fontSize: "1rem" }}>My Itineraries</h3>
+          </div>
+
+          <div
+            style={{
+              flex: 1,
+              backgroundColor: "white",
+              borderRadius: "12px",
+              boxShadow: "0px 4px 8px rgba(0,0,0,0.2)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              padding: "1%",
+            }}
+          >
+            <h3 style={{ margin: 0, fontSize: "1rem" }}>Saved Itineraries</h3>
+          </div>
+        </div>
+
+        {/* Sort By card */}
+        <div
+          style={{
+            width: "85vw",
+            backgroundColor: "white",
+            borderRadius: "12px",
+            boxShadow: "0px 4px 8px rgba(0,0,0,0.2)",
+            padding: "1%",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            gap: "10px",
+          }}
+        >
+          <h3 style={{ margin: 0 }}>Sort By</h3>
+          <FontAwesomeIcon
+            icon={faArrowUpWideShort}
+            style={{ fontSize: "1.5rem", cursor: "pointer" }}
+            title="Sort"
+          />
+        </div>
+
+        {loading && <p>Loading itineraries...</p>}
+        {error && <p style={{ color: "red" }}>{error}</p>}
+
+        {/* Itinerary cards */}
+        {itineraries.length === 0 ? (
+          <p>No itineraries yet.</p>
+        ) : (
+          itineraries.map((it) => (
+            <div
+              key={it.itinerary_id}
+              style={{
+                width: "85vw",
+                height: "10vh",
+                backgroundColor: "white",
+                borderRadius: "12px",
+                boxShadow: "0px 4px 8px rgba(0,0,0,0.2)",
+                display: "flex",
+                padding: "10px",
+                gap: "10px",
+              }}
+            >
+              <div
+                style={{
+                  width: "20%",
+                  height: "90%",
+                  backgroundColor: "lightblue",
+                  borderRadius: "8px",
+                  alignSelf: "center",
+                }}
+              ></div>
 
               <div
-                key={it.itinerary_id}
                 style={{
-                  width: "85vw", // fixed width
-                  height: "10vh", // 10% of viewport height
-                  backgroundColor: "white",
-                  borderRadius: "12px",
-                  boxShadow: "0px 4px 8px rgba(0, 0, 0, 0.2)",
+                  flex: 1,
                   display: "flex",
-                  padding: "10px",
-                  gap: "10px", // spacing between left and right
+                  justifyContent: "center",
+                  alignItems: "center",
                 }}
               >
-                {/* Left side: blue square (vertically centered by itself) */}
-                <div
-                  style={{
-                    width: "20%",
-                    height: "90%",
-                    backgroundColor: "lightblue",
-                    borderRadius: "8px",
-                    alignSelf: "center", // keep this vertically centered
-                  }}
-                ></div>
-
-                {/* Right side: itinerary title (aligned top-left) */}
-                <div
-                  style={{
-                    flex: 1,
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "flex-start", // top
-                    alignItems: "flex-start",     // left
-                  }}
-                >
-                  <h3 style={{ margin: 0, fontSize: "1rem" }}>{it.title}</h3>
-                </div>
+                <h3 style={{ margin: 0, fontSize: "1rem" }}>{it.title}</h3>
               </div>
-
-
-
-
-
-
-              
-
-            ))
-          )}
-        </div>
-      )}
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 };
