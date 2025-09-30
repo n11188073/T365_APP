@@ -1,5 +1,5 @@
-// Profile.js
-import React, { useState, useEffect } from "react";
+// src/pages/Profile.js
+import React, { useEffect, useState } from "react";
 import "./Profile.css";
 import { FiVideo, FiTag, FiBookmark } from "react-icons/fi";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -17,46 +17,44 @@ function ImageWithFallback({ src, alt, className, style }) {
       className={className}
       style={style}
       loading="lazy"
-      onError={() => { if (imgSrc !== FALLBACK_SVG) setImgSrc(FALLBACK_SVG); }}
+      onError={() => {
+        if (imgSrc !== FALLBACK_SVG) setImgSrc(FALLBACK_SVG);
+      }}
     />
   );
 }
 
-const BACKEND_URL =
-  process.env.REACT_APP_BACKEND_URL ||
-  (window.location.hostname === "localhost"
-    ? "http://localhost:5000"
-    : "https://t365-app.onrender.com");
-
-const Profile = ({ refreshProfile }) => {
+const Profile = () => {
   const [userPosts, setUserPosts] = useState([]);
   const [carouselIndex, setCarouselIndex] = useState({});
 
-  const userId = localStorage.getItem("user_id"); // assumes you store user id in localStorage
+  // Get logged-in user info
+  const storedUser = localStorage.getItem("user");
+  const user = storedUser ? JSON.parse(storedUser) : null;
+  const userId = user?.id;
 
-  // Fetch only current user's posts
-  const fetchUserPosts = async () => {
-    try {
-      const res = await fetch(`${BACKEND_URL}/posts?user_id=${userId}`);
-      const data = await res.json();
-      if (Array.isArray(data.posts)) {
-        const groupedPosts = data.posts.reduce((acc, item) => {
-          const postId = item.post_id;
-          if (!acc[postId]) acc[postId] = { ...item, media: [] };
-          if (item.media_id) acc[postId].media.push(item);
-          return acc;
-        }, {});
-        setUserPosts(Object.values(groupedPosts));
-      }
-    } catch (err) {
-      console.error("Failed to fetch user posts", err);
-    }
-  };
-
+  // Fetch posts of the logged-in user
   useEffect(() => {
+    const fetchUserPosts = async () => {
+      if (!userId) return;
+      try {
+        const res = await fetch(`http://localhost:5000/posts?user_id=${userId}`);
+        const data = await res.json();
+        if (Array.isArray(data.posts)) {
+          const grouped = data.posts.reduce((acc, item) => {
+            const postId = item.post_id;
+            if (!acc[postId]) acc[postId] = { ...item, media: [] };
+            if (item.media_id) acc[postId].media.push(item);
+            return acc;
+          }, {});
+          setUserPosts(Object.values(grouped));
+        }
+      } catch (err) {
+        console.error("Failed to fetch user posts", err);
+      }
+    };
     fetchUserPosts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refreshProfile]);
+  }, [userId]);
 
   const handlePrev = (postId) => {
     setCarouselIndex((prev) => {
@@ -81,31 +79,29 @@ const Profile = ({ refreshProfile }) => {
         <div className="profile-header">
           <div className="avatar">
             <ImageWithFallback
-              src="https://i.pravatar.cc/80?img=32"
+              src={user?.avatar || "https://i.pravatar.cc/80?img=32"}
               alt="avatar"
               style={{ width: 80, height: 80, borderRadius: "50%" }}
             />
           </div>
           <div className="profile-info">
             <h2>
-              Jane Doe <span className="username">@janedoe101</span>
+              {user?.name || "Anonymous"} <span className="username">@{user?.username || "user"}</span>
             </h2>
             <div className="badges">
-              <span className="badge">Gold Coast</span>
-              <span className="badge">12 Trips</span>
+              <span className="badge">{user?.location || "Unknown"}</span>
+              <span className="badge">{userPosts.length} Posts</span>
             </div>
           </div>
           <button className="menu-btn" aria-label="menu">☰</button>
         </div>
 
-        <p className="bio">
-          I love travelling with my family, follow along to see my travel experiences
-        </p>
+        <p className="bio">{user?.bio || "No bio yet."}</p>
 
         <div className="profile-stats">
           <div><strong>{userPosts.length}</strong><span>posts</span></div>
-          <div><strong>80</strong><span>followers</span></div>
-          <div><strong>120</strong><span>following</span></div>
+          <div><strong>{user?.followers || 0}</strong><span>followers</span></div>
+          <div><strong>{user?.following || 0}</strong><span>following</span></div>
         </div>
 
         <div className="profile-actions">
@@ -125,7 +121,7 @@ const Profile = ({ refreshProfile }) => {
         <button className="view-btn">View Points</button>
       </div>
 
-      {/* Icons row under View Points */}
+      {/* Icons row */}
       <div className="points-actions">
         <button className="icon-btn" aria-label="video">
           <FiVideo size={22} />
@@ -141,15 +137,13 @@ const Profile = ({ refreshProfile }) => {
         </button>
       </div>
 
-      {/* Posts Grid */}
+      {/* User Posts Grid */}
       <div className="posts-grid">
         {userPosts.length === 0 && <p>No posts yet.</p>}
-
         {userPosts.map((p) => (
           <div key={p.post_id} className="post-card">
             <h3>{p.post_name}</h3>
-
-            {p.media && p.media.length > 0 && (
+            {p.media.length > 0 && (
               <div className="carousel">
                 {p.media.length > 1 && (
                   <button className="carousel-btn left" onClick={() => handlePrev(p.post_id)}>
@@ -162,9 +156,9 @@ const Profile = ({ refreshProfile }) => {
                   const media = p.media[currentIdx];
                   if (!media) return null;
                   return media.type === "image" ? (
-                    <ImageWithFallback
+                    <img
                       src={`data:image/*;base64,${media.data}`}
-                      alt={media.filename}
+                      alt={media.filename || `post-${p.post_id}`}
                       className="post-media"
                     />
                   ) : (
@@ -188,14 +182,15 @@ const Profile = ({ refreshProfile }) => {
                       <span
                         key={idx}
                         className={`dot ${carouselIndex[p.post_id] === idx ? "active" : ""}`}
-                        onClick={() => setCarouselIndex((prev) => ({ ...prev, [p.post_id]: idx }))}
+                        onClick={() =>
+                          setCarouselIndex((prev) => ({ ...prev, [p.post_id]: idx }))
+                        }
                       />
                     ))}
                   </div>
                 )}
               </div>
             )}
-
             <p>Location: {p.location || "N/A"}</p>
             <p>Tags: {p.tags || "N/A"}</p>
           </div>
