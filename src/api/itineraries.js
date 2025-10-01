@@ -104,5 +104,20 @@ module.exports = (db) => {
     }
   });
 
+  // Delete itinerary card
+  router.delete('/deleteItineraryCard/:card_id', authenticate, async (req, res) => {
+    const { card_id } = req.params;
+    if (!card_id) return res.status(400).json({ error: 'card_id is required' });
+    try {
+      const sql = `DELETE FROM itinerary_cards WHERE card_id = ?`;
+      await dbRun(sql, [card_id]);
+      res.json({ message: 'Card deleted successfully', card_id });
+    } catch (err) {
+      console.error("Delete card error:", err);
+      res.status(500).json({ error: 'Database error' });
+    }
+  });
+
+
   return router;
 };

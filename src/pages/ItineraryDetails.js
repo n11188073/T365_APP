@@ -14,6 +14,7 @@ import {
   faKeyboard,
   faMap,
   faFileLines,
+  faCircleXmark,
 } from "@fortawesome/free-regular-svg-icons";
 
 const API_BASE =
@@ -44,9 +45,9 @@ const ItineraryDetails = () => {
         });
         const data = await res.json();
         if (data.cards) {
-          const sortedCards = data.cards.sort((a, b) => {
-            return a.card_time.localeCompare(b.card_time); // sorts "HH:MM" strings
-          });
+          const sortedCards = data.cards.sort((a, b) =>
+            a.card_time.localeCompare(b.card_time)
+          );
           setActivities(sortedCards);
         }
       } catch (err) {
@@ -61,24 +62,21 @@ const ItineraryDetails = () => {
     try {
       const res = await fetch(`${API_BASE}/saveItineraryCard`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
           itinerary_id: id,
           location_name: locationName,
           location_address: locationAddress,
           notes,
-          order_index: activities.length, // append to end
+          order_index: activities.length,
           card_time: cardTime,
         }),
       });
 
       const data = await res.json();
       if (data.card_id) {
-        // Refresh cards after saving
-        setActivities(prev => {
+        setActivities((prev) => {
           const updated = [
             ...prev,
             {
@@ -91,11 +89,10 @@ const ItineraryDetails = () => {
               card_time: cardTime,
             },
           ];
-          // Sort by time
           return updated.sort((a, b) => a.card_time.localeCompare(b.card_time));
         });
+
         setShowAddEventModal(false);
-        // Reset form
         setCardTime("");
         setLocationName("");
         setLocationAddress("");
@@ -108,9 +105,32 @@ const ItineraryDetails = () => {
     }
   };
 
+  // Delete card handler
+  const handleDeleteCard = async (card_id) => {
+    try {
+      const res = await fetch(
+        `${API_BASE}/deleteItineraryCard/${card_id}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
+      const data = await res.json();
+      if (res.ok) {
+        setActivities((prev) =>
+          prev.filter((activity) => activity.card_id !== card_id)
+        );
+      } else {
+        console.error("Failed to delete card:", data);
+      }
+    } catch (err) {
+      console.error("Error deleting card:", err);
+    }
+  };
+
   return (
     <div style={{ padding: "20px", height: "100vh", overflowY: "auto" }}>
-      {/* Header row */}
+      {/* Header */}
       <div
         style={{
           width: "85vw",
@@ -136,14 +156,7 @@ const ItineraryDetails = () => {
           onClick={() => navigate(-1)}
           title="Back"
         />
-
-        <h1
-          style={{
-            margin: 0,
-            textAlign: "center",
-            flex: 1,
-          }}
-        >
+        <h1 style={{ margin: 0, textAlign: "center", flex: 1 }}>
           {isEditing ? `Edit Itinerary ${id}` : `Itinerary ${id}`}
         </h1>
 
@@ -198,7 +211,7 @@ const ItineraryDetails = () => {
         )}
       </div>
 
-      {/* Edit mode: Add Event button */}
+      {/* Add Event */}
       {isEditing && (
         <div
           onClick={() => setShowAddEventModal(true)}
@@ -219,15 +232,8 @@ const ItineraryDetails = () => {
         </div>
       )}
 
-      {/* Timeline wrapper */}
-      <div
-        style={{
-          width: "85vw",
-          margin: "0 auto",
-          position: "relative",
-        }}
-      >
-        {/* Vertical timeline line */}
+      {/* Timeline */}
+      <div style={{ width: "85vw", margin: "0 auto", position: "relative" }}>
         {activities.length > 0 && (
           <div
             style={{
@@ -238,22 +244,13 @@ const ItineraryDetails = () => {
               height: "100%",
               backgroundColor: "#ccc",
             }}
-          ></div>
+          />
         )}
 
         {activities.map((activity) => (
-          <div
-            key={activity.card_id}
-            style={{ marginBottom: "30px", position: "relative" }}
-          >
-            {/* Time + circle row */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                marginBottom: "8px",
-              }}
-            >
+          <div key={activity.card_id} style={{ marginBottom: "30px", position: "relative" }}>
+            {/* Time + circle */}
+            <div style={{ display: "flex", alignItems: "center", marginBottom: "8px" }}>
               <div
                 style={{
                   width: "16px",
@@ -278,9 +275,24 @@ const ItineraryDetails = () => {
                 backgroundColor: "white",
                 borderRadius: "12px",
                 boxShadow: "0px 4px 8px rgba(0,0,0,0.2)",
+                position: "relative",
               }}
             >
-              <h2 style={{ marginTop: 0 }}>{activity.location_name}</h2>
+              <h2 style={{ marginTop: 0, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span>{activity.location_name}</span>
+                {isEditing && (
+                  <FontAwesomeIcon
+                    icon={faCircleXmark}
+                    style={{
+                      cursor: "pointer",
+                      color: "red",
+                      fontSize: "1.2rem",
+                    }}
+                    title="Delete card"
+                    onClick={() => handleDeleteCard(activity.card_id)}
+                  />
+                )}
+              </h2>
               <p>{activity.location_address}</p>
               <p>{activity.notes}</p>
             </div>
@@ -288,7 +300,7 @@ const ItineraryDetails = () => {
         ))}
       </div>
 
-      {/* Modal for Add Event */}
+      {/* Add Event Modal */}
       {showAddEventModal && (
         <div
           style={{
@@ -363,13 +375,7 @@ const ItineraryDetails = () => {
                   type="time"
                   value={cardTime}
                   onChange={(e) => setCardTime(e.target.value)}
-                  style={{
-                    border: "none",
-                    outline: "none",
-                    background: "transparent",
-                    fontSize: "1.2rem",
-                    flex: 1,
-                  }}
+                  style={{ border: "none", outline: "none", background: "transparent", fontSize: "1.2rem", flex: 1 }}
                 />
               </div>
 
@@ -393,13 +399,7 @@ const ItineraryDetails = () => {
                   placeholder="Location Name"
                   value={locationName}
                   onChange={(e) => setLocationName(e.target.value)}
-                  style={{
-                    border: "none",
-                    outline: "none",
-                    background: "transparent",
-                    fontSize: "1.2rem",
-                    flex: 1,
-                  }}
+                  style={{ border: "none", outline: "none", background: "transparent", fontSize: "1.2rem", flex: 1 }}
                 />
               </div>
 
@@ -423,13 +423,7 @@ const ItineraryDetails = () => {
                   placeholder="Location Address"
                   value={locationAddress}
                   onChange={(e) => setLocationAddress(e.target.value)}
-                  style={{
-                    border: "none",
-                    outline: "none",
-                    background: "transparent",
-                    fontSize: "1.2rem",
-                    flex: 1,
-                  }}
+                  style={{ border: "none", outline: "none", background: "transparent", fontSize: "1.2rem", flex: 1 }}
                 />
               </div>
 
@@ -452,14 +446,7 @@ const ItineraryDetails = () => {
                   placeholder="Notes"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  style={{
-                    border: "none",
-                    outline: "none",
-                    background: "transparent",
-                    fontSize: "1.2rem",
-                    flex: 1,
-                    resize: "none",
-                  }}
+                  style={{ border: "none", outline: "none", background: "transparent", fontSize: "1.2rem", flex: 1, resize: "none" }}
                 />
               </div>
             </div>

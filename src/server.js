@@ -238,9 +238,9 @@ app.get('/media', (req, res) => {
 // -------------------------
 // Itineraries (Protected)
 // -------------------------
+
 const itinerariesRouter = require('./api/itineraries')(db);
 app.use('/api/itineraries', itinerariesRouter);
-
 
 // -------------------------
 // Health check
