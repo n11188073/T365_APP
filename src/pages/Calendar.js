@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faArrowUpWideShort } from "@fortawesome/free-solid-svg-icons";
+import { useNavigate } from "react-router-dom";
 
 const API_BASE =
   process.env.NODE_ENV === "production"
@@ -12,6 +13,7 @@ const Calendar = () => {
   const [itineraries, setItineraries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const fetchItineraries = async () => {
     setLoading(true);
@@ -180,8 +182,10 @@ const Calendar = () => {
           <p>No itineraries yet.</p>
         ) : (
           itineraries.map((it) => (
+
             <div
               key={it.itinerary_id}
+              onClick={() => navigate(`/itinerary/${it.itinerary_id}`)} // navigate on click
               style={{
                 width: "85vw",
                 height: "10vh",
@@ -191,6 +195,7 @@ const Calendar = () => {
                 display: "flex",
                 padding: "10px",
                 gap: "10px",
+                cursor: "pointer", // make it look clickable
               }}
             >
               <div
@@ -214,6 +219,7 @@ const Calendar = () => {
                 <h3 style={{ margin: 0, fontSize: "1rem" }}>{it.title}</h3>
               </div>
             </div>
+
           ))
         )}
       </div>

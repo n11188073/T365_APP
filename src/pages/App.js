@@ -1,4 +1,5 @@
 // src/App.js
+import React from "react";
 import { useState, useEffect } from 'react';
 import './App.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -24,8 +25,11 @@ import Upload from './Upload';
 import Chat from './Chat';
 import Profile from './Profile';
 import Calendar from './Calendar';
+import ItineraryDetails from "./ItineraryDetails";
 import Login from './Login';
 import DatabaseViewer from './DatabaseViewer';
+
+
 
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL ||
@@ -240,6 +244,7 @@ const App = () => {
         <Route path="/upload" element={<Upload onPostCreated={fetchPosts} />} />
         <Route path="/chat" element={<Chat />} />
         <Route path="/calendar" element={<Calendar />} />
+        <Route path="/itinerary/:id" element={<ItineraryDetails />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/login" element={<Login />} />
         <Route path="/DatabaseViewer" element={<DatabaseViewer />} />
