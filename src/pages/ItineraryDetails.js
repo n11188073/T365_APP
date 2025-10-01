@@ -44,7 +44,10 @@ const ItineraryDetails = () => {
         });
         const data = await res.json();
         if (data.cards) {
-          setActivities(data.cards);
+          const sortedCards = data.cards.sort((a, b) => {
+            return a.card_time.localeCompare(b.card_time); // sorts "HH:MM" strings
+          });
+          setActivities(sortedCards);
         }
       } catch (err) {
         console.error("Error fetching cards:", err);
@@ -75,18 +78,22 @@ const ItineraryDetails = () => {
       const data = await res.json();
       if (data.card_id) {
         // Refresh cards after saving
-        setActivities([
-          ...activities,
-          {
-            card_id: data.card_id,
-            itinerary_id: id,
-            location_name: locationName,
-            location_address: locationAddress,
-            notes,
-            order_index: activities.length,
-            card_time: cardTime,
-          },
-        ]);
+        setActivities(prev => {
+          const updated = [
+            ...prev,
+            {
+              card_id: data.card_id,
+              itinerary_id: id,
+              location_name: locationName,
+              location_address: locationAddress,
+              notes,
+              order_index: prev.length,
+              card_time: cardTime,
+            },
+          ];
+          // Sort by time
+          return updated.sort((a, b) => a.card_time.localeCompare(b.card_time));
+        });
         setShowAddEventModal(false);
         // Reset form
         setCardTime("");
