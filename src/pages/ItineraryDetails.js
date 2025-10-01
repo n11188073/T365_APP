@@ -1,5 +1,5 @@
 // src/pages/ItineraryDetails.js
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -8,11 +8,18 @@ import {
   faBookmark,
   faPenToSquare,
   faCircleDot,
+} from "@fortawesome/free-solid-svg-icons";
+import {
   faClock,
   faKeyboard,
   faMap,
   faFileLines,
-} from "@fortawesome/free-solid-svg-icons";
+} from "@fortawesome/free-regular-svg-icons";
+
+const API_BASE =
+  process.env.NODE_ENV === "production"
+    ? "https://t365-app.onrender.com/api/itineraries"
+    : "http://localhost:5000/api/itineraries";
 
 const ItineraryDetails = () => {
   const { id } = useParams();
@@ -20,11 +27,79 @@ const ItineraryDetails = () => {
 
   const [isEditing, setIsEditing] = useState(false);
   const [showAddEventModal, setShowAddEventModal] = useState(false);
+  const [activities, setActivities] = useState([]);
 
-  const activities = [
-    { time: "12:00pm", title: "Lunch at Cafe" },
-    { time: "1:30pm", title: "Visit Museum" },
-  ];
+  // Form state for new card
+  const [cardTime, setCardTime] = useState("");
+  const [locationName, setLocationName] = useState("");
+  const [locationAddress, setLocationAddress] = useState("");
+  const [notes, setNotes] = useState("");
+
+  // Fetch itinerary cards from backend
+  useEffect(() => {
+    const fetchCards = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/itineraryCards/${id}`, {
+          credentials: "include",
+        });
+        const data = await res.json();
+        if (data.cards) {
+          setActivities(data.cards);
+        }
+      } catch (err) {
+        console.error("Error fetching cards:", err);
+      }
+    };
+    fetchCards();
+  }, [id]);
+
+  // Save card handler
+  const handleSaveCard = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/saveItineraryCard`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          itinerary_id: id,
+          location_name: locationName,
+          location_address: locationAddress,
+          notes,
+          order_index: activities.length, // append to end
+          card_time: cardTime,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.card_id) {
+        // Refresh cards after saving
+        setActivities([
+          ...activities,
+          {
+            card_id: data.card_id,
+            itinerary_id: id,
+            location_name: locationName,
+            location_address: locationAddress,
+            notes,
+            order_index: activities.length,
+            card_time: cardTime,
+          },
+        ]);
+        setShowAddEventModal(false);
+        // Reset form
+        setCardTime("");
+        setLocationName("");
+        setLocationAddress("");
+        setNotes("");
+      } else {
+        console.error("Error saving card:", data);
+      }
+    } catch (err) {
+      console.error("Error saving card:", err);
+    }
+  };
 
   return (
     <div style={{ padding: "20px", height: "100vh", overflowY: "auto" }}>
@@ -159,8 +234,11 @@ const ItineraryDetails = () => {
           ></div>
         )}
 
-        {activities.map((activity, index) => (
-          <div key={index} style={{ marginBottom: "30px", position: "relative" }}>
+        {activities.map((activity) => (
+          <div
+            key={activity.card_id}
+            style={{ marginBottom: "30px", position: "relative" }}
+          >
             {/* Time + circle row */}
             <div
               style={{
@@ -183,7 +261,7 @@ const ItineraryDetails = () => {
                 }}
               ></div>
               <span style={{ fontSize: "1.2rem", color: "#555" }}>
-                {activity.time}
+                {activity.card_time}
               </span>
             </div>
 
@@ -195,8 +273,9 @@ const ItineraryDetails = () => {
                 boxShadow: "0px 4px 8px rgba(0,0,0,0.2)",
               }}
             >
-              <h2 style={{ marginTop: 0 }}>{activity.title}</h2>
-              <p>Details for {activity.time}</p>
+              <h2 style={{ marginTop: 0 }}>{activity.location_name}</h2>
+              <p>{activity.location_address}</p>
+              <p>{activity.notes}</p>
             </div>
           </div>
         ))}
@@ -229,7 +308,6 @@ const ItineraryDetails = () => {
               overflowY: "auto",
             }}
           >
-            {/* Cancel + Save */}
             <span
               style={{
                 position: "absolute",
@@ -237,7 +315,7 @@ const ItineraryDetails = () => {
                 left: "20px",
                 cursor: "pointer",
                 color: "black",
-                fontSize: "1.2rem",
+                fontSize: "1rem",
               }}
               onClick={() => setShowAddEventModal(false)}
             >
@@ -250,97 +328,100 @@ const ItineraryDetails = () => {
                 right: "20px",
                 cursor: "pointer",
                 color: "blue",
-                fontSize: "1.2rem",
+                fontSize: "1rem",
               }}
-              onClick={() => setShowAddEventModal(false)} // placeholder
+              onClick={handleSaveCard}
             >
               Save
             </span>
 
-            {/* Input boxes */}
-            <div
-              style={{
-                marginTop: "60px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "25px",
-              }}
-            >
+            {/* Input fields */}
+            <div style={{ marginTop: "50px", display: "grid", gap: "20px" }}>
               {/* Time */}
               <div
                 style={{
                   display: "flex",
                   alignItems: "center",
                   backgroundColor: "#f9f9f9",
-                  borderRadius: "8px",
-                  boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-                  padding: "16px",
-                  fontSize: "1.5rem", // 150% size
+                  borderRadius: "12px",
+                  padding: "15px",
+                  boxShadow: "0px 2px 6px rgba(0,0,0,0.15)",
                 }}
-                onClick={() => document.getElementById("event-time").focus()}
               >
-                <FontAwesomeIcon icon={faClock} style={{ marginRight: "15px", color: "#555" }} />
+                <FontAwesomeIcon
+                  icon={faClock}
+                  style={{ marginRight: "10px", fontSize: "150%" }}
+                />
                 <input
-                  id="event-time"
                   type="time"
+                  value={cardTime}
+                  onChange={(e) => setCardTime(e.target.value)}
                   style={{
                     border: "none",
                     outline: "none",
                     background: "transparent",
+                    fontSize: "1.2rem",
                     flex: 1,
-                    fontSize: "1.5rem", // bigger text
                   }}
                 />
               </div>
 
-              {/* Title */}
+              {/* Location Name */}
               <div
                 style={{
                   display: "flex",
                   alignItems: "center",
                   backgroundColor: "#f9f9f9",
-                  borderRadius: "8px",
-                  boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-                  padding: "16px",
-                  fontSize: "1.5rem",
+                  borderRadius: "12px",
+                  padding: "15px",
+                  boxShadow: "0px 2px 6px rgba(0,0,0,0.15)",
                 }}
               >
-                <FontAwesomeIcon icon={faKeyboard} style={{ marginRight: "15px", color: "#555" }} />
+                <FontAwesomeIcon
+                  icon={faKeyboard}
+                  style={{ marginRight: "10px", fontSize: "150%" }}
+                />
                 <input
                   type="text"
-                  placeholder="Activity Title"
+                  placeholder="Location Name"
+                  value={locationName}
+                  onChange={(e) => setLocationName(e.target.value)}
                   style={{
                     border: "none",
                     outline: "none",
                     background: "transparent",
+                    fontSize: "1.2rem",
                     flex: 1,
-                    fontSize: "1.5rem",
                   }}
                 />
               </div>
 
-              {/* Location */}
+              {/* Location Address */}
               <div
                 style={{
                   display: "flex",
                   alignItems: "center",
                   backgroundColor: "#f9f9f9",
-                  borderRadius: "8px",
-                  boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-                  padding: "16px",
-                  fontSize: "1.5rem",
+                  borderRadius: "12px",
+                  padding: "15px",
+                  boxShadow: "0px 2px 6px rgba(0,0,0,0.15)",
                 }}
               >
-                <FontAwesomeIcon icon={faMap} style={{ marginRight: "15px", color: "#555" }} />
+                <FontAwesomeIcon
+                  icon={faMap}
+                  style={{ marginRight: "10px", fontSize: "150%" }}
+                />
                 <input
                   type="text"
-                  placeholder="Location"
+                  placeholder="Location Address"
+                  value={locationAddress}
+                  onChange={(e) => setLocationAddress(e.target.value)}
                   style={{
                     border: "none",
                     outline: "none",
                     background: "transparent",
+                    fontSize: "1.2rem",
                     flex: 1,
-                    fontSize: "1.5rem",
                   }}
                 />
               </div>
@@ -349,27 +430,30 @@ const ItineraryDetails = () => {
               <div
                 style={{
                   display: "flex",
-                  alignItems: "flex-start",
+                  alignItems: "center",
                   backgroundColor: "#f9f9f9",
-                  borderRadius: "8px",
-                  boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-                  padding: "16px",
-                  fontSize: "1.5rem",
+                  borderRadius: "12px",
+                  padding: "15px",
+                  boxShadow: "0px 2px 6px rgba(0,0,0,0.15)",
                 }}
               >
-                <FontAwesomeIcon icon={faFileLines} style={{ marginRight: "15px", marginTop: "6px", color: "#555" }} />
+                <FontAwesomeIcon
+                  icon={faFileLines}
+                  style={{ marginRight: "10px", fontSize: "150%" }}
+                />
                 <textarea
                   placeholder="Notes"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
                   style={{
                     border: "none",
                     outline: "none",
                     background: "transparent",
+                    fontSize: "1.2rem",
                     flex: 1,
-                    fontSize: "1.5rem",
                     resize: "none",
-                    minHeight: "80px",
                   }}
-                ></textarea>
+                />
               </div>
             </div>
           </div>
