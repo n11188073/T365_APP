@@ -12,12 +12,7 @@ import {
   faChevronLeft,
   faChevronRight,
 } from '@fortawesome/free-solid-svg-icons';
-import {
-  Link,
-  BrowserRouter as Router,
-  Routes,
-  Route,
-} from 'react-router-dom';
+import { Link, BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
 // Pages
 import Upload from './Upload';
@@ -55,15 +50,7 @@ const SAMPLE_POSTS = [
   },
 ];
 
-const Home = ({
-  filteredPosts,
-  carouselIndex,
-  handlePrev,
-  handleNext,
-  setCarouselIndex,
-  handleSearch,
-  searchQuery,
-}) => (
+const Home = ({ filteredPosts, carouselIndex, setCarouselIndex, handlePrev, handleNext, handleSearch, searchQuery }) => (
   <div className="main-container">
     <input
       type="text"
@@ -74,7 +61,6 @@ const Home = ({
     />
 
     <div className="posts-grid">
-      {/* DB posts */}
       {filteredPosts.length === 0 && <p>No posts found.</p>}
 
       {filteredPosts.map((p) => (
@@ -84,38 +70,24 @@ const Home = ({
           {p.media && p.media.length > 0 && (
             <div className="carousel">
               {p.media.length > 1 && (
-                <button
-                  className="carousel-btn left"
-                  onClick={() => handlePrev(p.post_id)}
-                >
+                <button className="carousel-btn left" onClick={() => handlePrev(p.post_id)}>
                   <FontAwesomeIcon icon={faChevronLeft} />
                 </button>
               )}
 
               {(() => {
-                const currentIdx = carouselIndex[p.post_id] || 0;
-                const media = p.media[currentIdx];
+                const idx = carouselIndex[p.post_id] || 0;
+                const media = p.media[idx];
                 if (!media) return null;
                 return media.type === 'image' ? (
-                  <img
-                    src={`data:image/*;base64,${media.data}`}
-                    alt={media.filename}
-                    className="post-media"
-                  />
+                  <img src={`data:image/*;base64,${media.data}`} alt={media.filename} className="post-media" />
                 ) : (
-                  <video
-                    controls
-                    src={`data:video/*;base64,${media.data}`}
-                    className="post-media"
-                  />
+                  <video controls src={`data:video/*;base64,${media.data}`} className="post-media" />
                 );
               })()}
 
               {p.media.length > 1 && (
-                <button
-                  className="carousel-btn right"
-                  onClick={() => handleNext(p.post_id)}
-                >
+                <button className="carousel-btn right" onClick={() => handleNext(p.post_id)}>
                   <FontAwesomeIcon icon={faChevronRight} />
                 </button>
               )}
@@ -125,15 +97,8 @@ const Home = ({
                   {p.media.map((_, idx) => (
                     <span
                       key={idx}
-                      className={`dot ${
-                        carouselIndex[p.post_id] === idx ? 'active' : ''
-                      }`}
-                      onClick={() =>
-                        setCarouselIndex((prev) => ({
-                          ...prev,
-                          [p.post_id]: idx,
-                        }))
-                      }
+                      className={`dot ${carouselIndex[p.post_id] === idx ? 'active' : ''}`}
+                      onClick={() => setCarouselIndex((prev) => ({ ...prev, [p.post_id]: idx }))}
                     />
                   ))}
                 </div>
@@ -146,14 +111,11 @@ const Home = ({
         </div>
       ))}
 
-      {/* Sample demo posts below DB posts */}
       <h3 style={{ marginTop: '20px' }}>Sample Posts</h3>
       {SAMPLE_POSTS.map((p) => (
         <div key={p.post_id} className="post-card">
           <h3>{p.post_name}</h3>
-          {p.imageUrl && (
-            <img src={p.imageUrl} alt={p.post_name} className="post-media" />
-          )}
+          {p.imageUrl && <img src={p.imageUrl} alt={p.post_name} className="post-media" />}
         </div>
       ))}
     </div>
@@ -166,24 +128,17 @@ const App = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [carouselIndex, setCarouselIndex] = useState({});
 
-  // Fetch posts from backend
   const fetchPosts = async () => {
     try {
       const res = await fetch(`${BACKEND_URL}/posts`);
       const data = await res.json();
       if (Array.isArray(data.posts)) {
-        const groupedPosts = data.posts.reduce((acc, item) => {
-          const postId = item.post_id;
-          if (!acc[postId]) acc[postId] = { ...item, media: [] };
-          if (item.media_id) acc[postId].media.push(item);
-          return acc;
-        }, {});
-        const postsArray = Object.values(groupedPosts);
-        setPosts(postsArray);
-        setFilteredPosts(postsArray);
+        // Use backend posts directly
+        setPosts(data.posts);
+        setFilteredPosts(data.posts);
       }
     } catch (err) {
-      console.error(err);
+      console.error('Error fetching posts:', err);
     }
   };
 
@@ -229,9 +184,9 @@ const App = () => {
             <Home
               filteredPosts={filteredPosts}
               carouselIndex={carouselIndex}
+              setCarouselIndex={setCarouselIndex}
               handlePrev={handlePrev}
               handleNext={handleNext}
-              setCarouselIndex={setCarouselIndex}
               handleSearch={handleSearch}
               searchQuery={searchQuery}
             />
@@ -246,27 +201,13 @@ const App = () => {
       </Routes>
 
       <div className="bottom-nav">
-        <Link className="nav-icon" to="/">
-          <FontAwesomeIcon icon={faHome} />
-        </Link>
-        <Link className="nav-icon" to="/chat">
-          <FontAwesomeIcon icon={faComment} />
-        </Link>
-        <Link className="nav-icon" to="/upload">
-          <FontAwesomeIcon icon={faPlus} />
-        </Link>
-        <Link className="nav-icon" to="/calendar">
-          <FontAwesomeIcon icon={faCalendar} />
-        </Link>
-        <Link className="nav-icon" to="/profile">
-          <FontAwesomeIcon icon={faUser} />
-        </Link>
-        <Link to="/login" className="nav-icon">
-          <FontAwesomeIcon icon={faRightToBracket} />
-        </Link>
-        <Link to="/DatabaseViewer" className="nav-icon">
-          <FontAwesomeIcon icon={faRightToBracket} />
-        </Link>
+        <Link className="nav-icon" to="/"><FontAwesomeIcon icon={faHome} /></Link>
+        <Link className="nav-icon" to="/chat"><FontAwesomeIcon icon={faComment} /></Link>
+        <Link className="nav-icon" to="/upload"><FontAwesomeIcon icon={faPlus} /></Link>
+        <Link className="nav-icon" to="/calendar"><FontAwesomeIcon icon={faCalendar} /></Link>
+        <Link className="nav-icon" to="/profile"><FontAwesomeIcon icon={faUser} /></Link>
+        <Link to="/login" className="nav-icon"><FontAwesomeIcon icon={faRightToBracket} /></Link>
+        <Link to="/DatabaseViewer" className="nav-icon"><FontAwesomeIcon icon={faRightToBracket} /></Link>
       </div>
     </Router>
   );

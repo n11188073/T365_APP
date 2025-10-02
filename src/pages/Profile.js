@@ -1,4 +1,3 @@
-// src/pages/Profile.js
 import React, { useEffect, useState } from "react";
 import "./Profile.css";
 import { FiVideo, FiTag, FiBookmark } from "react-icons/fi";
@@ -33,7 +32,7 @@ const Profile = () => {
   const user = storedUser ? JSON.parse(storedUser) : null;
   const userId = user?.id;
 
-  // Fetch posts of the logged-in user
+  // ✅ Fetch posts of the logged-in user (already grouped in backend)
   useEffect(() => {
     const fetchUserPosts = async () => {
       if (!userId) return;
@@ -41,13 +40,7 @@ const Profile = () => {
         const res = await fetch(`http://localhost:5000/posts?user_id=${userId}`);
         const data = await res.json();
         if (Array.isArray(data.posts)) {
-          const grouped = data.posts.reduce((acc, item) => {
-            const postId = item.post_id;
-            if (!acc[postId]) acc[postId] = { ...item, media: [] };
-            if (item.media_id) acc[postId].media.push(item);
-            return acc;
-          }, {});
-          setUserPosts(Object.values(grouped));
+          setUserPosts(data.posts); // no need to regroup
         }
       } catch (err) {
         console.error("Failed to fetch user posts", err);
@@ -143,7 +136,7 @@ const Profile = () => {
         {userPosts.map((p) => (
           <div key={p.post_id} className="post-card">
             <h3>{p.post_name}</h3>
-            {p.media.length > 0 && (
+            {p.media && p.media.length > 0 && (
               <div className="carousel">
                 {p.media.length > 1 && (
                   <button className="carousel-btn left" onClick={() => handlePrev(p.post_id)}>
@@ -171,23 +164,20 @@ const Profile = () => {
                 })()}
 
                 {p.media.length > 1 && (
-                  <button className="carousel-btn right" onClick={() => handleNext(p.post_id)}>
-                    <FontAwesomeIcon icon={faChevronRight} />
-                  </button>
-                )}
-
-                {p.media.length > 1 && (
-                  <div className="carousel-dots">
-                    {p.media.map((_, idx) => (
-                      <span
-                        key={idx}
-                        className={`dot ${carouselIndex[p.post_id] === idx ? "active" : ""}`}
-                        onClick={() =>
-                          setCarouselIndex((prev) => ({ ...prev, [p.post_id]: idx }))
-                        }
-                      />
-                    ))}
-                  </div>
+                  <>
+                    <button className="carousel-btn right" onClick={() => handleNext(p.post_id)}>
+                      <FontAwesomeIcon icon={faChevronRight} />
+                    </button>
+                    <div className="carousel-dots">
+                      {p.media.map((_, idx) => (
+                        <span
+                          key={idx}
+                          className={`dot ${carouselIndex[p.post_id] === idx ? "active" : ""}`}
+                          onClick={() => setCarouselIndex((prev) => ({ ...prev, [p.post_id]: idx }))}
+                        />
+                      ))}
+                    </div>
+                  </>
                 )}
               </div>
             )}
