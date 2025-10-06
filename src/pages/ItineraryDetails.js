@@ -191,6 +191,7 @@ const ItineraryDetails = () => {
               icon={faCircleDot}
               style={{ fontSize: "1.2rem", cursor: "pointer" }}
               title="Options"
+              onClick={() => navigate(`/ItineraryInfo/${id}`)} 
             />
           </div>
         ) : (
