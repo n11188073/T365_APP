@@ -17,6 +17,8 @@ import {
   faCircleXmark,
 } from "@fortawesome/free-regular-svg-icons";
 
+import { fetchWeather } from "../api/fetchWeather";
+
 const API_BASE =
   process.env.NODE_ENV === "production"
     ? "https://t365-app.onrender.com/api/itineraries"
@@ -35,6 +37,37 @@ const ItineraryDetails = () => {
   const [locationName, setLocationName] = useState("");
   const [locationAddress, setLocationAddress] = useState("");
   const [notes, setNotes] = useState("");
+
+  //fetch Singapore weather
+
+  const [weather, setWeather] = useState(null);
+  const getWeatherColor = (main) => {
+    switch (main) {
+      case "Clear": return "#87CEEB";
+      case "Clouds": return "#B0C4DE";
+      case "Rain": return "#778899";
+      case "Thunderstorm": return "#4B0082";
+      case "Drizzle": return "#A9A9A9";
+      case "Snow": return "#E0FFFF";
+      case "Mist":
+      case "Fog":
+      case "Haze": return "#C0C0C0";
+      default: return "#90cdf4";
+    }
+  };
+
+  useEffect(() => {
+    const loadWeather = async () => {
+      try {
+        const data = await fetchWeather("Singapore");
+        setWeather(data);
+      } catch (err) {
+        console.error("Error fetching weather:", err);
+      }
+    };
+    loadWeather();
+  }, []);
+
 
   // Fetch itinerary cards from backend
   useEffect(() => {
@@ -211,6 +244,54 @@ const ItineraryDetails = () => {
           </span>
         )}
       </div>
+
+      {/* Weather Box */}
+      {weather && (
+          <div
+            style={{
+              width: "85vw",
+              margin: "0 auto",
+              marginBottom: "20px",
+              padding: "15px 20px",
+              backgroundColor: getWeatherColor(weather.weather[0].main),
+              borderRadius: "12px",
+              color: "#fff",
+              boxShadow: "0px 2px 6px rgba(0,0,0,0.15)",
+              display: "flex",
+              flexDirection: "column",
+              gap: "8px",
+            }}
+          >
+            {/* Top Row: Location + Icon */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                fontSize: "1.2rem",
+                fontWeight: "bold",
+              }}
+            >
+              <span>{weather.name}</span>
+              <img
+                src={`https://openweathermap.org/img/wn/${weather.weather[0].icon}@2x.png`}
+                alt={weather.weather[0].description}
+                style={{ width: "40px", height: "40px" }}
+              />
+            </div>
+
+            {/* Bottom Row: Temp + Description */}
+            <div
+              style={{
+                textAlign: "left",
+                fontSize: "1.8rem",
+                fontWeight: "bold",
+              }}
+            >
+              {Math.round(weather.main.temp)}°C — {weather.weather[0].description}
+            </div>
+          </div>
+        )}
 
       {/* Add Event */}
       {isEditing && (
