@@ -1,4 +1,3 @@
-// api/itineraries.js
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
@@ -31,7 +30,6 @@ module.exports = (db) => {
     }
   };
 
-  // Save itinerary
   router.post('/saveItinerary', authenticate, async (req, res) => {
     const { title } = req.body;
     try {
@@ -46,7 +44,6 @@ module.exports = (db) => {
     }
   });
 
-  // Save itinerary card (✅ only one version)
   router.post('/saveItineraryCard', authenticate, async (req, res) => {
     const { itinerary_id, location_name, location_address, notes, order_index, card_time } = req.body;
 
@@ -76,7 +73,6 @@ module.exports = (db) => {
     }
   });
 
-  // Get itineraries
   router.get('/myItineraries', authenticate, async (req, res) => {
     try {
       const rows = await dbAll(
@@ -90,7 +86,6 @@ module.exports = (db) => {
     }
   });
 
-  // Get cards (✅ only one version)
   router.get('/itineraryCards/:itinerary_id', authenticate, async (req, res) => {
     try {
       const rows = await dbAll(
@@ -104,7 +99,6 @@ module.exports = (db) => {
     }
   });
 
-  // Delete itinerary card
   router.delete('/deleteItineraryCard/:card_id', authenticate, async (req, res) => {
     const { card_id } = req.params;
     if (!card_id) return res.status(400).json({ error: 'card_id is required' });
@@ -118,14 +112,11 @@ module.exports = (db) => {
     }
   });
 
-  // Update itinerary title
   router.post('/updateItineraryTitle', authenticate, async (req, res) => {
     const { itinerary_id, title } = req.body;
-
     if (!itinerary_id || !title) {
       return res.status(400).json({ error: 'Missing itinerary_id or title' });
     }
-
     try {
       await dbRun(
         `UPDATE itineraries SET title = ? WHERE itinerary_id = ? AND owner_id = ?`,
@@ -138,24 +129,17 @@ module.exports = (db) => {
     }
   });
 
-  // Delete itinerary
   router.delete('/deleteItinerary/:itinerary_id', authenticate, async (req, res) => {
     const { itinerary_id } = req.params;
-
     if (!itinerary_id) {
       return res.status(400).json({ error: 'Missing itinerary_id' });
     }
-
     try {
-      // First delete all cards belonging to that itinerary (to maintain integrity)
       await dbRun(`DELETE FROM itinerary_cards WHERE itinerary_id = ?`, [itinerary_id]);
-
-      // Then delete the itinerary itself
       await dbRun(
         `DELETE FROM itineraries WHERE itinerary_id = ? AND owner_id = ?`,
         [itinerary_id, req.user.id]
       );
-
       res.json({ success: true, message: 'Itinerary deleted successfully' });
     } catch (err) {
       console.error("Delete itinerary error:", err);
@@ -163,11 +147,9 @@ module.exports = (db) => {
     }
   });
 
-  // Update destination for an itinerary
   router.post('/updateDestination', authenticate, async (req, res) => {
     const { itinerary_id, destination } = req.body;
     if (!itinerary_id || !destination) return res.status(400).json({ error: 'Missing itinerary_id or destination' });
-
     try {
       await dbRun(
         `UPDATE itineraries SET destination = ? WHERE itinerary_id = ? AND owner_id = ?`,
@@ -177,6 +159,25 @@ module.exports = (db) => {
     } catch (err) {
       console.error("Update destination error:", err);
       res.status(500).json({ success: false, error: 'Database error' });
+    }
+  });
+
+  router.get('/:id', authenticate, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const itinerary = await dbAll(
+        'SELECT * FROM itineraries WHERE itinerary_id = ? AND owner_id = ?',
+        [id, req.user.id]
+      );
+
+      if (!itinerary || itinerary.length === 0) {
+        return res.status(404).json({ error: 'Itinerary not found' });
+      }
+
+      res.json({ itinerary: itinerary[0] });
+    } catch (err) {
+      console.error('Error fetching itinerary:', err);
+      res.status(500).json({ error: 'Internal server error' });
     }
   });
 

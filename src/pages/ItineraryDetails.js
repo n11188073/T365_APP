@@ -32,6 +32,8 @@ const ItineraryDetails = () => {
   const [showAddEventModal, setShowAddEventModal] = useState(false);
   const [activities, setActivities] = useState([]);
 
+  const [itinerary, setItinerary] = useState(null);
+
   // Form state for new card
   const [cardTime, setCardTime] = useState("");
   const [locationName, setLocationName] = useState("");
@@ -58,16 +60,16 @@ const ItineraryDetails = () => {
 
   useEffect(() => {
     const loadWeather = async () => {
+      if (!itinerary || !itinerary.destination) return;
       try {
-        const data = await fetchWeather("Singapore");
+        const data = await fetchWeather(itinerary.destination);
         setWeather(data);
       } catch (err) {
         console.error("Error fetching weather:", err);
       }
     };
     loadWeather();
-  }, []);
-
+  }, [itinerary]);
 
   // Fetch itinerary cards from backend
   useEffect(() => {
@@ -89,6 +91,24 @@ const ItineraryDetails = () => {
     };
     fetchCards();
   }, [id]);
+
+  useEffect(() => {
+  const fetchItinerary = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/${id}`, { credentials: "include" });
+      const data = await res.json();
+      if (res.ok && data.itinerary) {
+        setItinerary(data.itinerary);
+      } else {
+        console.error("Failed to fetch itinerary:", data);
+      }
+    } catch (err) {
+      console.error("Error fetching itinerary:", err);
+    }
+  };
+  fetchItinerary();
+  }, [id]);
+
 
   // Save card handler
   const handleSaveCard = async () => {
