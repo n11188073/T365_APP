@@ -163,5 +163,22 @@ module.exports = (db) => {
     }
   });
 
+  // Update destination for an itinerary
+  router.post('/updateDestination', authenticate, async (req, res) => {
+    const { itinerary_id, destination } = req.body;
+    if (!itinerary_id || !destination) return res.status(400).json({ error: 'Missing itinerary_id or destination' });
+
+    try {
+      await dbRun(
+        `UPDATE itineraries SET destination = ? WHERE itinerary_id = ? AND owner_id = ?`,
+        [destination, itinerary_id, req.user.id]
+      );
+      res.json({ success: true, message: 'Destination updated successfully' });
+    } catch (err) {
+      console.error("Update destination error:", err);
+      res.status(500).json({ success: false, error: 'Database error' });
+    }
+  });
+
   return router;
 };

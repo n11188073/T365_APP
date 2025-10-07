@@ -26,6 +26,8 @@ const ItineraryInfo = () => {
   const [isPrivate, setIsPrivate] = useState(false);
   const [showEditTitle, setShowEditTitle] = useState(false);
   const [title, setTitle] = useState("");
+  const [showEditLocation, setShowEditLocation] = useState(false);
+  const [location, setLocation] = useState("");
 
   const handleTogglePrivate = () => {
     setIsPrivate((prev) => !prev);
@@ -79,6 +81,24 @@ const ItineraryInfo = () => {
     } catch (err) {
       console.error("Delete itinerary error:", err);
       alert("An error occurred while deleting the itinerary.");
+    }
+  };
+
+  // Update destination API call
+  const handleSaveLocation = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/itineraries/updateDestination`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ itinerary_id: id, destination: location }),
+      });
+      const data = await res.json();
+      if (res.ok) setShowEditLocation(false);
+      else alert(`Error: ${data.error || "Something went wrong"}`);
+    } catch (err) {
+      console.error("Error updating location:", err);
+      alert("Could not update location");
     }
   };
 
@@ -149,7 +169,10 @@ const ItineraryInfo = () => {
 
       {/* First Box: Trip Info */}
       <div style={boxStyle}>
-        <div style={rowStyle} onClick={() => setShowEditTitle(true)}>
+        <div style={rowStyle}
+        onClick={() => setShowEditTitle(true)}
+        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#e5f9ff")}
+        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}>
           <div style={iconTextStyle}>
             <FontAwesomeIcon
               icon={faPenToSquare}
@@ -158,6 +181,7 @@ const ItineraryInfo = () => {
             <span>Edit Title</span>
           </div>
           <FontAwesomeIcon icon={faChevronRight} style={arrowStyle} />
+
         </div>
 
         <div style={rowStyle}>
@@ -171,16 +195,15 @@ const ItineraryInfo = () => {
           <FontAwesomeIcon icon={faChevronRight} style={arrowStyle} />
         </div>
 
-        <div style={rowStyle}>
+        {/* Edit Location */}
+        <div style={rowStyle} onClick={() => setShowEditLocation(true)} onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#e5f9ff")} onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}>
           <div style={iconTextStyle}>
-            <FontAwesomeIcon
-              icon={faMapMarkerAlt}
-              style={{ fontSize: "1.5rem", color: "#3e3e3eff" }}
-            />
+            <FontAwesomeIcon icon={faMapMarkerAlt} style={{ fontSize: "1.5rem", color: "#3e3e3eff" }} />
             <span>Location</span>
           </div>
           <FontAwesomeIcon icon={faChevronRight} style={arrowStyle} />
         </div>
+
       </div>
 
       {/* Second Box: Members & Management */}
@@ -258,7 +281,7 @@ const ItineraryInfo = () => {
           style={{
             ...rowStyle,
             cursor: "pointer",
-            color: "red",
+            color: "black",
             transition: "background-color 0.2s",
           }}
           onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#ffe5e5")}
@@ -268,7 +291,7 @@ const ItineraryInfo = () => {
           <div style={iconTextStyle}>
             <FontAwesomeIcon
               icon={faTrash}
-              style={{ fontSize: "1.5rem", color: "red" }}
+              style={{ fontSize: "1.5rem", color: "#3e3e3eff" }}
             />
             <span>Delete Itinerary</span>
           </div>
@@ -348,6 +371,21 @@ const ItineraryInfo = () => {
           </div>
         </div>
       )}
+
+      {/* Edit Location Modal */}
+      {showEditLocation && (
+        <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", backgroundColor: "rgba(0,0,0,0.5)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000 }}>
+          <div style={{ backgroundColor: "white", borderRadius: "12px", width: "85%", maxWidth: "400px", padding: "25px", textAlign: "center", boxShadow: "0px 4px 10px rgba(0,0,0,0.2)" }}>
+            <h2 style={{ marginBottom: "20px" }}>Edit Location</h2>
+            <input type="text" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Enter destination" style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #ccc", fontSize: "1rem", marginBottom: "20px" }} />
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <button onClick={() => setShowEditLocation(false)} style={{ backgroundColor: "#ccc", padding: "10px 20px", borderRadius: "8px", fontSize: "1rem", cursor: "pointer" }}>Cancel</button>
+              <button onClick={handleSaveLocation} style={{ backgroundColor: "#3182ce", color: "white", padding: "10px 20px", borderRadius: "8px", fontSize: "1rem", cursor: "pointer" }}>Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

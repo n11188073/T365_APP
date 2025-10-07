@@ -30,31 +30,32 @@ const ItineraryDetails = () => {
   const [showAddEventModal, setShowAddEventModal] = useState(false);
   const [activities, setActivities] = useState([]);
 
-  const [title, setTitle] = useState("");
-
   // Form state for new card
   const [cardTime, setCardTime] = useState("");
   const [locationName, setLocationName] = useState("");
   const [locationAddress, setLocationAddress] = useState("");
   const [notes, setNotes] = useState("");
 
-  // Fetch itinerary title
+  // Fetch itinerary cards from backend
   useEffect(() => {
-    const fetchTitle = async () => {
+    const fetchCards = async () => {
       try {
-        const res = await fetch(`${API_BASE}/myItineraries`, { credentials: "include" });
+        const res = await fetch(`${API_BASE}/itineraryCards/${id}`, {
+          credentials: "include",
+        });
         const data = await res.json();
-        if (data.itineraries) {
-          const found = data.itineraries.find((it) => it.itinerary_id === Number(id));
-          if (found) setTitle(found.title || "");
+        if (data.cards) {
+          const sortedCards = data.cards.sort((a, b) =>
+            a.card_time.localeCompare(b.card_time)
+          );
+          setActivities(sortedCards);
         }
       } catch (err) {
-        console.error("Error fetching itinerary title:", err);
+        console.error("Error fetching cards:", err);
       }
     };
-    fetchTitle();
+    fetchCards();
   }, [id]);
-
 
   // Save card handler
   const handleSaveCard = async () => {
@@ -156,7 +157,7 @@ const ItineraryDetails = () => {
           title="Back"
         />
         <h1 style={{ margin: 0, textAlign: "center", flex: 1 }}>
-          {title ? title : `Itinerary ${id}`}
+          {isEditing ? `Edit Itinerary ${id}` : `Itinerary ${id}`}
         </h1>
 
         {!isEditing ? (
