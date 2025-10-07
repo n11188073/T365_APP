@@ -138,7 +138,30 @@ module.exports = (db) => {
     }
   });
 
+  // Delete itinerary
+  router.delete('/deleteItinerary/:itinerary_id', authenticate, async (req, res) => {
+    const { itinerary_id } = req.params;
 
+    if (!itinerary_id) {
+      return res.status(400).json({ error: 'Missing itinerary_id' });
+    }
+
+    try {
+      // First delete all cards belonging to that itinerary (to maintain integrity)
+      await dbRun(`DELETE FROM itinerary_cards WHERE itinerary_id = ?`, [itinerary_id]);
+
+      // Then delete the itinerary itself
+      await dbRun(
+        `DELETE FROM itineraries WHERE itinerary_id = ? AND owner_id = ?`,
+        [itinerary_id, req.user.id]
+      );
+
+      res.json({ success: true, message: 'Itinerary deleted successfully' });
+    } catch (err) {
+      console.error("Delete itinerary error:", err);
+      res.status(500).json({ success: false, error: 'Database error' });
+    }
+  });
 
   return router;
 };

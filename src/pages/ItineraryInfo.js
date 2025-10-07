@@ -54,6 +54,35 @@ const ItineraryInfo = () => {
     }
   };
 
+  const handleDeleteClick = async () => {
+    if (
+      !window.confirm(
+        "Are you sure you want to delete this itinerary? This action cannot be undone."
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/api/itineraries/deleteItinerary/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        navigate("/calendar");
+      } else {
+        alert("Failed to delete itinerary: " + (data.error || "Unknown error"));
+      }
+    } catch (err) {
+      console.error("Delete itinerary error:", err);
+      alert("An error occurred while deleting the itinerary.");
+    }
+  };
+
+
   const rowStyle = {
     display: "flex",
     alignItems: "center",
@@ -225,15 +254,26 @@ const ItineraryInfo = () => {
           </div>
         </div>
 
-        <div style={rowStyle}>
+        <div
+          style={{
+            ...rowStyle,
+            cursor: "pointer",
+            color: "red",
+            transition: "background-color 0.2s",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#ffe5e5")}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+          onClick={handleDeleteClick}
+        >
           <div style={iconTextStyle}>
             <FontAwesomeIcon
               icon={faTrash}
-              style={{ fontSize: "1.5rem", color: "#3e3e3eff" }}
+              style={{ fontSize: "1.5rem", color: "red" }}
             />
-            <span>Delete</span>
+            <span>Delete Itinerary</span>
           </div>
         </div>
+
       </div>
 
       {/* Edit Title Modal */}
