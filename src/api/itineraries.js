@@ -31,21 +31,61 @@ module.exports = (db) => {
   };
 
   router.post('/saveItinerary', authenticate, async (req, res) => {
-    const { title } = req.body;
     try {
-      const itinerary_id = await dbRun(
-        `INSERT INTO itineraries (owner_id, title) VALUES (?, ?)`,
-        [req.user.id, title || ""]
+      const { title, collaborative, date_start, date_end } = req.body;
+      // Check authentication
+      if (!req.user?.id) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      // Normalize title and collaborative flag
+      const safeTitle = title || "New Itinerary";
+      const safeCollaborative = collaborative ? 1 : 0;
+      // Date normalization logic
+      let start = date_start || null;
+      let end = date_end || null;
+      if (start && end) {
+        // Convert both to Date objects and sort
+        const startDate = new Date(start);
+        const endDate = new Date(end);
+        if (startDate > endDate) {
+          // Swap if out of order
+          [start, end] = [end, start];
+        }
+      } else if (start || end) {
+        // If only one date exists, use it for both
+        const single = start || end;
+        start = single;
+        end = single;
+      } else {
+        // No dates at all — leave empty
+        start = "";
+        end = "";
+      }
+      // Insert into database
+      const result = await dbRun(
+        `
+        INSERT INTO itineraries (owner_id, title, collaborative, date_start, date_end)
+        VALUES (?, ?, ?, ?, ?)
+        `,
+        [req.user.id, safeTitle, safeCollaborative, start, end]
       );
-      res.json({ message: 'Itinerary created successfully', itinerary_id });
+      const itinerary_id = result?.lastID || null;
+      res.json({ message: "Itinerary created successfully", itinerary_id });
     } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: 'Database error' });
+      res.status(500).json({ error: "Database error" });
     }
   });
 
   router.post('/saveItineraryCard', authenticate, async (req, res) => {
-    const { itinerary_id, location_name, location_address, notes, order_index, card_time } = req.body;
+    const {
+      itinerary_id,
+      location_name,
+      location_address,
+      notes,
+      order_index,
+      card_time,
+      card_date, // <-- added
+    } = req.body;
 
     if (!itinerary_id) {
       return res.status(400).json({ error: 'itinerary_id is required' });
@@ -54,15 +94,16 @@ module.exports = (db) => {
     try {
       const card_id = await dbRun(
         `INSERT INTO itinerary_cards 
-          (itinerary_id, location_name, location_address, notes, order_index, created_at, card_time) 
-         VALUES (?, ?, ?, ?, ?, datetime('now'), ?)`,
+          (itinerary_id, location_name, location_address, notes, order_index, created_at, card_time, card_date) 
+        VALUES (?, ?, ?, ?, ?, datetime('now'), ?, ?)`,
         [
           itinerary_id,
           location_name || "",
           location_address || "",
           notes || "",
           order_index || 0,
-          card_time || ""
+          card_time || "",
+          card_date || null, // <-- pass null if no date provided
         ]
       );
 

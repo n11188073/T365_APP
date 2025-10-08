@@ -8,6 +8,7 @@ import {
   faBookmark,
   faPenToSquare,
   faCircleDot,
+  faCalendarAlt,
 } from "@fortawesome/free-solid-svg-icons";
 import {
   faClock,
@@ -24,6 +25,8 @@ const API_BASE =
     ? "https://t365-app.onrender.com/api/itineraries"
     : "http://localhost:5000/api/itineraries";
 
+const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
 const ItineraryDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -31,32 +34,58 @@ const ItineraryDetails = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [showAddEventModal, setShowAddEventModal] = useState(false);
   const [activities, setActivities] = useState([]);
-
+  const [filteredActivities, setFilteredActivities] = useState([]);
   const [itinerary, setItinerary] = useState(null);
 
-  // Form state for new card
   const [cardTime, setCardTime] = useState("");
+  const [cardDate, setCardDate] = useState("");
   const [locationName, setLocationName] = useState("");
   const [locationAddress, setLocationAddress] = useState("");
   const [notes, setNotes] = useState("");
 
-  //fetch Singapore weather
+  const [selectedDate, setSelectedDate] = useState(null);
 
   const [weather, setWeather] = useState(null);
+
   const getWeatherColor = (main) => {
     switch (main) {
-      case "Clear": return "#87CEEB";
-      case "Clouds": return "#B0C4DE";
-      case "Rain": return "#778899";
-      case "Thunderstorm": return "#4B0082";
-      case "Drizzle": return "#A9A9A9";
-      case "Snow": return "#E0FFFF";
+      case "Clear":
+        return "#87CEEB";
+      case "Clouds":
+        return "#B0C4DE";
+      case "Rain":
+        return "#778899";
+      case "Thunderstorm":
+        return "#4B0082";
+      case "Drizzle":
+        return "#A9A9A9";
+      case "Snow":
+        return "#E0FFFF";
       case "Mist":
       case "Fog":
-      case "Haze": return "#C0C0C0";
-      default: return "#90cdf4";
+      case "Haze":
+        return "#C0C0C0";
+      default:
+        return "#90cdf4";
     }
   };
+
+  // Load itinerary and weather
+  useEffect(() => {
+    const fetchItinerary = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/${id}`, { credentials: "include" });
+        const data = await res.json();
+        if (res.ok && data.itinerary) {
+          setItinerary(data.itinerary);
+          if (data.itinerary.date_start) setSelectedDate(data.itinerary.date_start);
+        }
+      } catch (err) {
+        console.error("Error fetching itinerary:", err);
+      }
+    };
+    fetchItinerary();
+  }, [id]);
 
   useEffect(() => {
     const loadWeather = async () => {
@@ -71,7 +100,7 @@ const ItineraryDetails = () => {
     loadWeather();
   }, [itinerary]);
 
-  // Fetch itinerary cards from backend
+  // Fetch itinerary cards
   useEffect(() => {
     const fetchCards = async () => {
       try {
@@ -80,10 +109,10 @@ const ItineraryDetails = () => {
         });
         const data = await res.json();
         if (data.cards) {
-          const sortedCards = data.cards.sort((a, b) =>
+          const sorted = data.cards.sort((a, b) =>
             a.card_time.localeCompare(b.card_time)
           );
-          setActivities(sortedCards);
+          setActivities(sorted);
         }
       } catch (err) {
         console.error("Error fetching cards:", err);
@@ -92,25 +121,19 @@ const ItineraryDetails = () => {
     fetchCards();
   }, [id]);
 
+  // Filter activities for selected date
   useEffect(() => {
-  const fetchItinerary = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/${id}`, { credentials: "include" });
-      const data = await res.json();
-      if (res.ok && data.itinerary) {
-        setItinerary(data.itinerary);
-      } else {
-        console.error("Failed to fetch itinerary:", data);
-      }
-    } catch (err) {
-      console.error("Error fetching itinerary:", err);
+    if (!selectedDate) {
+      setFilteredActivities(activities);
+      return;
     }
-  };
-  fetchItinerary();
-  }, [id]);
+    const filtered = activities.filter(
+      (a) => !a.card_date || a.card_date === selectedDate
+    );
+    setFilteredActivities(filtered);
+  }, [selectedDate, activities]);
 
-
-  // Save card handler
+  // Save card
   const handleSaveCard = async () => {
     try {
       const res = await fetch(`${API_BASE}/saveItineraryCard`, {
@@ -124,9 +147,9 @@ const ItineraryDetails = () => {
           notes,
           order_index: activities.length,
           card_time: cardTime,
+          card_date: cardDate || null,
         }),
       });
-
       const data = await res.json();
       if (data.card_id) {
         setActivities((prev) => {
@@ -140,13 +163,14 @@ const ItineraryDetails = () => {
               notes,
               order_index: prev.length,
               card_time: cardTime,
+              card_date: cardDate || null,
             },
           ];
           return updated.sort((a, b) => a.card_time.localeCompare(b.card_time));
         });
-
         setShowAddEventModal(false);
         setCardTime("");
+        setCardDate("");
         setLocationName("");
         setLocationAddress("");
         setNotes("");
@@ -158,21 +182,16 @@ const ItineraryDetails = () => {
     }
   };
 
-  // Delete card handler
+  // Delete card
   const handleDeleteCard = async (card_id) => {
     try {
-      const res = await fetch(
-        `${API_BASE}/deleteItineraryCard/${card_id}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        }
-      );
+      const res = await fetch(`${API_BASE}/deleteItineraryCard/${card_id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
       const data = await res.json();
       if (res.ok) {
-        setActivities((prev) =>
-          prev.filter((activity) => activity.card_id !== card_id)
-        );
+        setActivities((prev) => prev.filter((a) => a.card_id !== card_id));
       } else {
         console.error("Failed to delete card:", data);
       }
@@ -180,6 +199,20 @@ const ItineraryDetails = () => {
       console.error("Error deleting card:", err);
     }
   };
+
+  // Generate array of dates for the itinerary
+  const generateDates = () => {
+    if (!itinerary?.date_start || !itinerary?.date_end) return [];
+    const start = new Date(itinerary.date_start);
+    const end = new Date(itinerary.date_end);
+    const dates = [];
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      dates.push(new Date(d));
+    }
+    return dates;
+  };
+
+  const dates = generateDates();
 
   return (
     <div style={{ padding: "20px", height: "100vh", overflowY: "auto" }}>
@@ -210,7 +243,9 @@ const ItineraryDetails = () => {
           title="Back"
         />
         <h1 style={{ margin: 0, textAlign: "center", flex: 1 }}>
-          {isEditing ? `Edit Itinerary ${id}` : `Itinerary ${id}`}
+          {isEditing
+            ? `Edit ${itinerary?.title || `Itinerary ${id}`}`
+            : itinerary?.title || `Itinerary ${id}`}
         </h1>
 
         {!isEditing ? (
@@ -244,7 +279,7 @@ const ItineraryDetails = () => {
               icon={faCircleDot}
               style={{ fontSize: "1.2rem", cursor: "pointer" }}
               title="Options"
-              onClick={() => navigate(`/ItineraryInfo/${id}`)} 
+              onClick={() => navigate(`/ItineraryInfo/${id}`)}
             />
           </div>
         ) : (
@@ -265,53 +300,91 @@ const ItineraryDetails = () => {
         )}
       </div>
 
+      {/* Dates Row */}
+      {dates.length > 0 && (
+        <div
+          style={{
+            display: "flex",
+            overflowX: "auto",
+            gap: "20px",
+            marginBottom: "20px",
+            width: "85vw",
+            margin: "0 auto",
+            padding: "20px",
+          }}
+        >
+          {dates.map((d) => {
+            const dateStr = d.toISOString().split("T")[0];
+            const isSelected = dateStr === selectedDate;
+            return (
+              <div key={dateStr} style={{ textAlign: "center" }}>
+                <div>{weekdays[d.getDay()]}</div>
+                <div
+                  onClick={() => setSelectedDate(dateStr)}
+                  style={{
+                    width: "50px",
+                    height: "50px",
+                    lineHeight: "50px",
+                    backgroundColor: isSelected ? "#90cdf4" : "#fff",
+                    boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                    marginTop: "5px",
+                    userSelect: "none",
+                  }}
+                >
+                  {d.getDate()}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {/* Weather Box */}
       {weather && (
+        <div
+          style={{
+            width: "85vw",
+            margin: "0 auto",
+            marginBottom: "20px",
+            padding: "15px 20px",
+            backgroundColor: getWeatherColor(weather.weather[0].main),
+            borderRadius: "12px",
+            color: "#fff",
+            boxShadow: "0px 2px 6px rgba(0,0,0,0.15)",
+            display: "flex",
+            flexDirection: "column",
+            gap: "8px",
+          }}
+        >
           <div
             style={{
-              width: "85vw",
-              margin: "0 auto",
-              marginBottom: "20px",
-              padding: "15px 20px",
-              backgroundColor: getWeatherColor(weather.weather[0].main),
-              borderRadius: "12px",
-              color: "#fff",
-              boxShadow: "0px 2px 6px rgba(0,0,0,0.15)",
               display: "flex",
-              flexDirection: "column",
-              gap: "8px",
+              justifyContent: "space-between",
+              alignItems: "center",
+              fontSize: "1.2rem",
+              fontWeight: "bold",
             }}
           >
-            {/* Top Row: Location + Icon */}
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                fontSize: "1.2rem",
-                fontWeight: "bold",
-              }}
-            >
-              <span>{weather.name}</span>
-              <img
-                src={`https://openweathermap.org/img/wn/${weather.weather[0].icon}@2x.png`}
-                alt={weather.weather[0].description}
-                style={{ width: "40px", height: "40px" }}
-              />
-            </div>
-
-            {/* Bottom Row: Temp + Description */}
-            <div
-              style={{
-                textAlign: "left",
-                fontSize: "1.8rem",
-                fontWeight: "bold",
-              }}
-            >
-              {Math.round(weather.main.temp)}°C — {weather.weather[0].description}
-            </div>
+            <span>{weather.name}</span>
+            <img
+              src={`https://openweathermap.org/img/wn/${weather.weather[0].icon}@2x.png`}
+              alt={weather.weather[0].description}
+              style={{ width: "40px", height: "40px" }}
+            />
           </div>
-        )}
+          <div
+            style={{
+              textAlign: "left",
+              fontSize: "1.8rem",
+              fontWeight: "bold",
+            }}
+          >
+            {Math.round(weather.main.temp)}°C — {weather.weather[0].description}
+          </div>
+        </div>
+      )}
 
       {/* Add Event */}
       {isEditing && (
@@ -336,7 +409,7 @@ const ItineraryDetails = () => {
 
       {/* Timeline */}
       <div style={{ width: "85vw", margin: "0 auto", position: "relative" }}>
-        {activities.length > 0 && (
+        {filteredActivities.length > 0 && (
           <div
             style={{
               position: "absolute",
@@ -349,10 +422,18 @@ const ItineraryDetails = () => {
           />
         )}
 
-        {activities.map((activity) => (
-          <div key={activity.card_id} style={{ marginBottom: "30px", position: "relative" }}>
-            {/* Time + circle */}
-            <div style={{ display: "flex", alignItems: "center", marginBottom: "8px" }}>
+        {filteredActivities.map((activity) => (
+          <div
+            key={activity.card_id}
+            style={{ marginBottom: "30px", position: "relative" }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                marginBottom: "8px",
+              }}
+            >
               <div
                 style={{
                   width: "16px",
@@ -380,7 +461,14 @@ const ItineraryDetails = () => {
                 position: "relative",
               }}
             >
-              <h2 style={{ marginTop: 0, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h2
+                style={{
+                  marginTop: 0,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
                 <span>{activity.location_name}</span>
                 {isEditing && (
                   <FontAwesomeIcon
@@ -477,7 +565,42 @@ const ItineraryDetails = () => {
                   type="time"
                   value={cardTime}
                   onChange={(e) => setCardTime(e.target.value)}
-                  style={{ border: "none", outline: "none", background: "transparent", fontSize: "1.2rem", flex: 1 }}
+                  style={{
+                    border: "none",
+                    outline: "none",
+                    background: "transparent",
+                    fontSize: "1.2rem",
+                    flex: 1,
+                  }}
+                />
+              </div>
+
+              {/* Date */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  backgroundColor: "#f9f9f9",
+                  borderRadius: "12px",
+                  padding: "15px",
+                  boxShadow: "0px 2px 6px rgba(0,0,0,0.15)",
+                }}
+              >
+                <FontAwesomeIcon
+                  icon={faCalendarAlt}
+                  style={{ marginRight: "10px", fontSize: "150%" }}
+                />
+                <input
+                  type="date"
+                  value={cardDate || selectedDate || ""}
+                  onChange={(e) => setCardDate(e.target.value)}
+                  style={{
+                    border: "none",
+                    outline: "none",
+                    background: "transparent",
+                    fontSize: "1.2rem",
+                    flex: 1,
+                  }}
                 />
               </div>
 
@@ -501,7 +624,13 @@ const ItineraryDetails = () => {
                   placeholder="Location Name"
                   value={locationName}
                   onChange={(e) => setLocationName(e.target.value)}
-                  style={{ border: "none", outline: "none", background: "transparent", fontSize: "1.2rem", flex: 1 }}
+                  style={{
+                    border: "none",
+                    outline: "none",
+                    background: "transparent",
+                    fontSize: "1.2rem",
+                    flex: 1,
+                  }}
                 />
               </div>
 
@@ -525,7 +654,13 @@ const ItineraryDetails = () => {
                   placeholder="Location Address"
                   value={locationAddress}
                   onChange={(e) => setLocationAddress(e.target.value)}
-                  style={{ border: "none", outline: "none", background: "transparent", fontSize: "1.2rem", flex: 1 }}
+                  style={{
+                    border: "none",
+                    outline: "none",
+                    background: "transparent",
+                    fontSize: "1.2rem",
+                    flex: 1,
+                  }}
                 />
               </div>
 
@@ -548,7 +683,14 @@ const ItineraryDetails = () => {
                   placeholder="Notes"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  style={{ border: "none", outline: "none", background: "transparent", fontSize: "1.2rem", flex: 1, resize: "none" }}
+                  style={{
+                    border: "none",
+                    outline: "none",
+                    background: "transparent",
+                    fontSize: "1.2rem",
+                    flex: 1,
+                    resize: "none",
+                  }}
                 />
               </div>
             </div>
