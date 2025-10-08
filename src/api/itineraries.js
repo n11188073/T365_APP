@@ -69,7 +69,7 @@ module.exports = (db) => {
         `,
         [req.user.id, safeTitle, safeCollaborative, start, end]
       );
-      const itinerary_id = result?.lastID || null;
+      const itinerary_id = result;
       res.json({ message: "Itinerary created successfully", itinerary_id });
     } catch (err) {
       res.status(500).json({ error: "Database error" });

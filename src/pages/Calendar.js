@@ -54,7 +54,7 @@ const Calendar = () => {
 
   const handleAddItinerary = async () => {
     try {
-      const res = await fetch(`${API_BASE}/./api/itineraries/saveItinerary`, {
+      const res = await fetch(`${API_BASE}/api/itineraries/saveItinerary`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -68,21 +68,25 @@ const Calendar = () => {
 
       const data = await res.json();
 
-      if (res.ok) {
-        setShowModal(false);
-        setItineraries((prev) => [
-          {
-            itinerary_id: data.itinerary_id,
-            title: "New Itinerary",
-            collaborative: mode === "Collaborative" ? 1 : 0,
-            date_start: dateStart,
-            date_end: dateEnd,
-          },
-          ...prev,
-        ]);
-      } else {
-        alert(`Error creating itinerary: ${data.error}`);
-      }
+    if (res.ok && data.itinerary_id) {
+      setShowModal(false);
+
+      // Add new itinerary to state so Calendar shows it immediately
+      setItineraries((prev) => [
+        {
+          itinerary_id: data.itinerary_id,
+          title: "New Itinerary",
+          collaborative: mode === "Collaborative" ? 1 : 0,
+          date_start: dateStart,
+          date_end: dateEnd,
+        },
+        ...prev,
+      ]);
+
+      // Navigate using React Router
+      navigate(`/itinerary/${data.itinerary_id}`);
+    }
+
     } catch (err) {
       console.error("Failed to create itinerary:", err);
       alert("Failed to create itinerary.");
