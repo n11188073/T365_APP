@@ -325,7 +325,7 @@ const ItineraryDetails = () => {
                     width: "50px",
                     height: "50px",
                     lineHeight: "50px",
-                    backgroundColor: isSelected ? "#90cdf4" : "#fff",
+                    backgroundColor: isSelected ? "#cde5f4ff" : "#fff",
                     boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
                     borderRadius: "8px",
                     cursor: "pointer",

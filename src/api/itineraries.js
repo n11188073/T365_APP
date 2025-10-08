@@ -103,7 +103,7 @@ module.exports = (db) => {
           notes || "",
           order_index || 0,
           card_time || "",
-          card_date || null, // <-- pass null if no date provided
+          card_date || null, 
         ]
       );
 
