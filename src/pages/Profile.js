@@ -72,9 +72,9 @@ const Profile = () => {
     setEditData({
       post_name: post.post_name,
       location: post.location || "",
-      tags: post.tags || ""
+      tags: post.tags || "",
     });
-    setExpandedPost(post); // Keep the modal open while editing
+    setExpandedPost(post);
   };
 
   const cancelEdit = () => {
@@ -145,7 +145,7 @@ const Profile = () => {
         </div>
 
         <div className="profile-actions">
-          <button className="edit-btn">Edit profile</button>
+          <button className="edit-btn" onClick={() => setExpandedPost({})}>Edit profile</button>
           <button className="share-btn" aria-label="share">⤴</button>
         </div>
       </div>
@@ -181,25 +181,24 @@ const Profile = () => {
 
       {/* Expanded Post / Edit Modal */}
       {expandedPost && (
-        <div className="modal-overlay" onClick={() => setExpandedPost(null)}>
+        <div className="modal-overlay" onClick={cancelEdit}>
           <div
             className="modal-content"
             onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: "90%", maxHeight: "90%", overflow: "auto" }}
           >
             {/* Edit/Delete Buttons */}
-            {editingPostId !== expandedPost.post_id && (
+            {expandedPost.post_id && editingPostId !== expandedPost.post_id && (
               <div className="modal-menu">
                 <button onClick={() => startEdit(expandedPost)}>Edit</button>
                 <button onClick={() => deletePost(expandedPost.post_id)}>Delete</button>
               </div>
             )}
 
-            <button className="modal-close" onClick={() => setExpandedPost(null)}>×</button>
+            <button className="modal-close" onClick={cancelEdit}>×</button>
 
             {/* Editing Form */}
             {editingPostId === expandedPost.post_id ? (
-              <div className="edit-form" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <div className="edit-form">
                 <input
                   className="edit-input"
                   value={editData.post_name}
@@ -218,35 +217,35 @@ const Profile = () => {
                   onChange={(e) => setEditData({ ...editData, tags: e.target.value })}
                   placeholder="Tags"
                 />
-                <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+                <div className="edit-buttons">
                   <button className="edit-btn" onClick={saveEdit}>Save</button>
                   <button className="edit-btn" onClick={cancelEdit}>Cancel</button>
                 </div>
               </div>
-            ) : (
-              /* Expanded Media Carousel */
+            ) : expandedPost.post_id ? (
+              /* Carousel */
               <div className="carousel" style={{ textAlign: "center" }}>
-                {expandedPost.media.length > 1 && (
+                {expandedPost.media?.length > 1 && (
                   <button className="carousel-btn left" onClick={() => handlePrev(expandedPost.post_id)}>
                     <FontAwesomeIcon icon={faChevronLeft} />
                   </button>
                 )}
 
-                {expandedPost.media[carouselIndex[expandedPost.post_id] || 0].type === "image" ? (
+                {expandedPost.media && expandedPost.media[carouselIndex[expandedPost.post_id] || 0]?.type === "image" ? (
                   <img
                     src={`data:image/*;base64,${expandedPost.media[carouselIndex[expandedPost.post_id] || 0].data}`}
                     alt={expandedPost.post_name}
                     style={{ maxHeight: "80vh", width: "auto", display: "block", margin: "0 auto" }}
                   />
-                ) : (
+                ) : expandedPost.media && expandedPost.media[carouselIndex[expandedPost.post_id] || 0] ? (
                   <video
                     controls
                     src={`data:video/*;base64,${expandedPost.media[carouselIndex[expandedPost.post_id] || 0].data}`}
                     style={{ maxHeight: "80vh", width: "auto", display: "block", margin: "0 auto" }}
                   />
-                )}
+                ) : null}
 
-                {expandedPost.media.length > 1 && (
+                {expandedPost.media?.length > 1 && (
                   <>
                     <button className="carousel-btn right" onClick={() => handleNext(expandedPost.post_id)}>
                       <FontAwesomeIcon icon={faChevronRight} />
@@ -263,10 +262,16 @@ const Profile = () => {
                   </>
                 )}
               </div>
+            ) : (
+              <p>No post selected</p>
             )}
 
-            <p>Location: {expandedPost.location || "N/A"}</p>
-            <p>Tags: {expandedPost.tags || "N/A"}</p>
+            {expandedPost.post_id && (
+              <>
+                <p>Location: {expandedPost.location || "N/A"}</p>
+                <p>Tags: {expandedPost.tags || "N/A"}</p>
+              </>
+            )}
           </div>
         </div>
       )}
