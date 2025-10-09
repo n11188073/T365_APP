@@ -8,44 +8,81 @@ const multer = require('multer');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Enable CORS
+// Enable CORS for frontend
 app.use(cors({
   origin: ["http://localhost:3000", "https://cozy-mousse-7c2a8f.netlify.app"],
   credentials: true,
 }));
 app.use(express.json());
 
-// SQLite DB
+// --- SQLite Database ---
 const dbPath = path.resolve(__dirname, '../t365backend/t65sql.db');
+console.log('Using database at:', dbPath);
+
 const db = new sqlite3.Database(dbPath, (err) => {
-  if (err) console.error('DB error:', err);
+  if (err) console.error('DB connection error:', err);
   else console.log('Connected to SQLite database:', dbPath);
 });
 
-// Helpers
-const dbAll = (sql, params = []) => new Promise((resolve, reject) => {
-  db.all(sql, params, (err, rows) => err ? reject(err) : resolve(rows));
-});
-const dbGet = (sql, params = []) => new Promise((resolve, reject) => {
-  db.get(sql, params, (err, row) => err ? reject(err) : resolve(row));
-});
+// --- Helper Promises ---
+const dbAll = (sql, params = []) =>
+  new Promise((resolve, reject) => {
+    db.all(sql, params, (err, rows) => err ? reject(err) : resolve(rows));
+  });
 
-// Multer for uploads
+const dbGet = (sql, params = []) =>
+  new Promise((resolve, reject) => {
+    db.get(sql, params, (err, row) => err ? reject(err) : resolve(row));
+  });
+
+// --- Multer (memory storage) ---
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-// AEST timestamp
+// --- Utility: AEST timestamp ---
 function getAESTTimestamp() {
   const now = new Date();
-  const aestOffset = 10 * 60; // 10 hours
+  const aestOffset = 10 * 60; // +10 hours
   const localOffset = now.getTimezoneOffset();
   const aestTime = new Date(now.getTime() + (aestOffset + localOffset) * 60 * 1000);
   const pad = n => n.toString().padStart(2, '0');
   return `${aestTime.getFullYear()}-${pad(aestTime.getMonth()+1)}-${pad(aestTime.getDate())} ${pad(aestTime.getHours())}:${pad(aestTime.getMinutes())}:${pad(aestTime.getSeconds())}`;
 }
 
-// Health check
+// --- Health check ---
 app.get('/', (req, res) => res.json({ message: 'API running', dbPath }));
+
+// --- Database Viewer APIs ---
+// Get all table names
+app.get('/api/tables', async (req, res) => {
+  try {
+    const tables = await dbAll(`
+      SELECT name FROM sqlite_master 
+      WHERE type='table' AND name NOT LIKE 'sqlite_%'
+    `);
+    res.json(tables.map(t => t.name));
+  } catch (err) {
+    console.error('Error fetching tables:', err);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
+// Get all rows from a specific table
+app.get('/api/table/:name', async (req, res) => {
+  const { name } = req.params;
+
+  // Sanitize table name
+  if (!/^[a-zA-Z0-9_]+$/.test(name))
+    return res.status(400).json({ error: 'Invalid table name' });
+
+  try {
+    const rows = await dbAll(`SELECT * FROM ${name}`);
+    res.json(rows);
+  } catch (err) {
+    console.error('Error fetching table data:', err);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
 
 // --- Users ---
 app.post('/api/saveUser', async (req, res) => {
@@ -54,7 +91,8 @@ app.post('/api/saveUser', async (req, res) => {
 
   try {
     const existing = await dbAll('SELECT * FROM user_profiles WHERE user_id = ?', [user_id]);
-    if (existing.length > 0) return res.json({ message: 'User already exists', user: existing[0] });
+    if (existing.length > 0)
+      return res.json({ message: 'User already exists', user: existing[0] });
 
     db.run(
       `INSERT INTO user_profiles (user_id, user_name, user_country, user_bio, user_points)
@@ -77,13 +115,13 @@ app.post('/create-post', upload.array('files'), async (req, res) => {
   const { post_name, location, tags, user_id } = req.body;
   const files = req.files || [];
 
-  if (!post_name || !post_name.trim()) return res.status(400).json({ message: 'Post name required' });
-  if (!user_id || !user_id.trim()) return res.status(400).json({ message: 'user_id required' });
+  if (!post_name?.trim()) return res.status(400).json({ message: 'Post name required' });
+  if (!user_id?.trim()) return res.status(400).json({ message: 'user_id required' });
 
   try {
     const user = await dbGet('SELECT user_id FROM user_profiles WHERE user_id = ?', [user_id]);
     if (!user) return res.status(400).json({ message: 'Invalid user_id' });
-  } catch (err) {
+  } catch {
     return res.status(500).json({ message: 'DB error' });
   }
 
@@ -95,7 +133,7 @@ app.post('/create-post', upload.array('files'), async (req, res) => {
         `INSERT INTO posts (post_name, user_id, location, tags, bookmark_itenerary, num_likes, comments)
          VALUES (?, ?, ?, ?, ?, ?, ?)`,
         [post_name, user_id, location || null, tags || null, null, 0, null],
-        function(err) { if(err) reject(err); else resolve(this.lastID); }
+        function (err) { if (err) reject(err); else resolve(this.lastID); }
       );
     });
 
@@ -106,7 +144,7 @@ app.post('/create-post', upload.array('files'), async (req, res) => {
           `INSERT INTO media (post_id, type, filename, data, created_at)
            VALUES (?, ?, ?, ?, ?)`,
           [postId, type, file.originalname, file.buffer, created_at],
-          function(err){ if(err) reject(err); else resolve(); }
+          function (err) { if (err) reject(err); else resolve(); }
         );
       });
     }
@@ -118,7 +156,7 @@ app.post('/create-post', upload.array('files'), async (req, res) => {
   }
 });
 
-// Get all posts with media (ignore user_id)
+// Get all posts with media (always returns media array)
 app.get('/posts', async (req, res) => {
   const query = `
     SELECT p.post_id, p.post_name, p.user_id, p.num_likes, p.comments,
@@ -163,8 +201,7 @@ app.get('/posts', async (req, res) => {
   }
 });
 
-
-// Media list
+// --- Media list ---
 app.get('/media', async (req, res) => {
   try {
     const rows = await dbAll('SELECT id, type, filename, data, created_at FROM media ORDER BY created_at DESC');
@@ -182,4 +219,5 @@ app.get('/media', async (req, res) => {
   }
 });
 
+// --- Start Server ---
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

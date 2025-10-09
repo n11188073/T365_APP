@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import "./Profile.css";
-import { FiVideo, FiTag, FiBookmark } from "react-icons/fi";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronLeft, faChevronRight } from "@fortawesome/free-solid-svg-icons";
 
@@ -26,22 +25,22 @@ function ImageWithFallback({ src, alt, className, style }) {
 const Profile = () => {
   const [userPosts, setUserPosts] = useState([]);
   const [carouselIndex, setCarouselIndex] = useState({});
+  const [expandedPost, setExpandedPost] = useState(null);
+  const [editingPostId, setEditingPostId] = useState(null);
+  const [editData, setEditData] = useState({ post_name: "", location: "", tags: "" });
 
-  // Get logged-in user info
   const storedUser = localStorage.getItem("user");
   const user = storedUser ? JSON.parse(storedUser) : null;
   const userId = user?.id;
 
-  // ✅ Fetch posts of the logged-in user (already grouped in backend)
+  // Fetch user posts
   useEffect(() => {
+    if (!userId) return;
     const fetchUserPosts = async () => {
-      if (!userId) return;
       try {
         const res = await fetch(`http://localhost:5000/posts?user_id=${userId}`);
         const data = await res.json();
-        if (Array.isArray(data.posts)) {
-          setUserPosts(data.posts); // no need to regroup
-        }
+        if (Array.isArray(data.posts)) setUserPosts(data.posts);
       } catch (err) {
         console.error("Failed to fetch user posts", err);
       }
@@ -49,6 +48,7 @@ const Profile = () => {
     fetchUserPosts();
   }, [userId]);
 
+  // Carousel navigation
   const handlePrev = (postId) => {
     setCarouselIndex((prev) => {
       const current = prev[postId] || 0;
@@ -65,6 +65,47 @@ const Profile = () => {
     });
   };
 
+  // Start editing a post
+  const startEdit = (post) => {
+    setEditingPostId(post.post_id);
+    setEditData({
+      post_name: post.post_name,
+      location: post.location || "",
+      tags: post.tags || ""
+    });
+  };
+
+  const cancelEdit = () => setEditingPostId(null);
+
+  const saveEdit = async () => {
+    try {
+      const res = await fetch(`http://localhost:5000/posts/${editingPostId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editData),
+      });
+      if (res.ok) {
+        setUserPosts((prev) =>
+          prev.map((p) => (p.post_id === editingPostId ? { ...p, ...editData } : p))
+        );
+        setEditingPostId(null);
+      }
+    } catch (err) {
+      console.error("Failed to save edit", err);
+    }
+  };
+
+  const deletePost = async (postId) => {
+    if (!window.confirm("Are you sure you want to delete this post?")) return;
+    try {
+      const res = await fetch(`http://localhost:5000/posts/${postId}`, { method: "DELETE" });
+      if (res.ok) setUserPosts((prev) => prev.filter((p) => p.post_id !== postId));
+      if (expandedPost?.post_id === postId) setExpandedPost(null);
+    } catch (err) {
+      console.error("Failed to delete post", err);
+    }
+  };
+
   return (
     <div className="profile-container">
       {/* User Info Card */}
@@ -79,7 +120,7 @@ const Profile = () => {
           </div>
           <div className="profile-info">
             <h2>
-              {user?.name || "Anonymous"} <span className="username">@{user?.username || "user"}</span>
+              {user?.name || "User"} <span className="username">@{user?.username || "user"}</span>
             </h2>
             <div className="badges">
               <span className="badge">{user?.location || "Unknown"}</span>
@@ -89,7 +130,7 @@ const Profile = () => {
           <button className="menu-btn" aria-label="menu">☰</button>
         </div>
 
-        <p className="bio">{user?.bio || "No bio yet."}</p>
+        <p className="bio">{user?.bio || "I love travelling, follow along to see my travel experiences"}</p>
 
         <div className="profile-stats">
           <div><strong>{userPosts.length}</strong><span>posts</span></div>
@@ -114,66 +155,92 @@ const Profile = () => {
         <button className="view-btn">View Points</button>
       </div>
 
-      {/* Icons row */}
-      <div className="points-actions">
-        <button className="icon-btn" aria-label="video">
-          <FiVideo size={22} />
-          <span className="icon-label">Video</span>
-        </button>
-        <button className="icon-btn" aria-label="tagged">
-          <FiTag size={22} />
-          <span className="icon-label">Tagged</span>
-        </button>
-        <button className="icon-btn" aria-label="saved">
-          <FiBookmark size={22} />
-          <span className="icon-label">Saved</span>
-        </button>
-      </div>
-
       {/* User Posts Grid */}
       <div className="posts-grid">
         {userPosts.length === 0 && <p>No posts yet.</p>}
-        {userPosts.map((p) => (
-          <div key={p.post_id} className="post-card">
-            <h3>{p.post_name}</h3>
-            {p.media && p.media.length > 0 && (
+        {userPosts.map((post) => (
+          <div
+            key={post.post_id}
+            className="post-tile"
+            onClick={() => setExpandedPost(post)}
+          >
+            {post.media && post.media[0] && post.media[0].type === "image" ? (
+              <img src={`data:image/*;base64,${post.media[0].data}`} alt={post.post_name} />
+            ) : post.media && post.media[0] ? (
+              <video src={`data:video/*;base64,${post.media[0].data}`} />
+            ) : null}
+          </div>
+        ))}
+      </div>
+
+      {/* Expanded Post Modal */}
+      {expandedPost && (
+        <div className="modal-overlay" onClick={() => setExpandedPost(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-menu">
+              <button onClick={() => startEdit(expandedPost)}>Edit</button>
+              <button onClick={() => deletePost(expandedPost.post_id)}>Delete</button>
+            </div>
+            <button className="modal-close" onClick={() => setExpandedPost(null)}>×</button>
+
+            {editingPostId === expandedPost.post_id ? (
+              <div className="edit-form">
+                <input
+                  className="edit-input"
+                  value={editData.post_name}
+                  onChange={(e) => setEditData({ ...editData, post_name: e.target.value })}
+                  placeholder="Post Name"
+                />
+                <input
+                  className="edit-input"
+                  value={editData.location}
+                  onChange={(e) => setEditData({ ...editData, location: e.target.value })}
+                  placeholder="Location"
+                />
+                <input
+                  className="edit-input"
+                  value={editData.tags}
+                  onChange={(e) => setEditData({ ...editData, tags: e.target.value })}
+                  placeholder="Tags"
+                />
+                <div className="edit-buttons">
+                  <button className="edit-btn" onClick={saveEdit}>Save</button>
+                  <button className="edit-btn" onClick={cancelEdit}>Cancel</button>
+                </div>
+              </div>
+            ) : (
               <div className="carousel">
-                {p.media.length > 1 && (
-                  <button className="carousel-btn left" onClick={() => handlePrev(p.post_id)}>
+                {expandedPost.media.length > 1 && (
+                  <button className="carousel-btn left" onClick={() => handlePrev(expandedPost.post_id)}>
                     <FontAwesomeIcon icon={faChevronLeft} />
                   </button>
                 )}
 
-                {(() => {
-                  const currentIdx = carouselIndex[p.post_id] || 0;
-                  const media = p.media[currentIdx];
-                  if (!media) return null;
-                  return media.type === "image" ? (
-                    <img
-                      src={`data:image/*;base64,${media.data}`}
-                      alt={media.filename || `post-${p.post_id}`}
-                      className="post-media"
-                    />
-                  ) : (
-                    <video
-                      controls
-                      src={`data:video/*;base64,${media.data}`}
-                      className="post-media"
-                    />
-                  );
-                })()}
+                {expandedPost.media[carouselIndex[expandedPost.post_id] || 0].type === "image" ? (
+                  <img
+                    src={`data:image/*;base64,${expandedPost.media[carouselIndex[expandedPost.post_id] || 0].data}`}
+                    alt={expandedPost.post_name}
+                    className="post-media"
+                  />
+                ) : (
+                  <video
+                    controls
+                    src={`data:video/*;base64,${expandedPost.media[carouselIndex[expandedPost.post_id] || 0].data}`}
+                    className="post-media"
+                  />
+                )}
 
-                {p.media.length > 1 && (
+                {expandedPost.media.length > 1 && (
                   <>
-                    <button className="carousel-btn right" onClick={() => handleNext(p.post_id)}>
+                    <button className="carousel-btn right" onClick={() => handleNext(expandedPost.post_id)}>
                       <FontAwesomeIcon icon={faChevronRight} />
                     </button>
                     <div className="carousel-dots">
-                      {p.media.map((_, idx) => (
+                      {expandedPost.media.map((_, idx) => (
                         <span
                           key={idx}
-                          className={`dot ${carouselIndex[p.post_id] === idx ? "active" : ""}`}
-                          onClick={() => setCarouselIndex((prev) => ({ ...prev, [p.post_id]: idx }))}
+                          className={`dot ${carouselIndex[expandedPost.post_id] === idx ? "active" : ""}`}
+                          onClick={() => setCarouselIndex((prev) => ({ ...prev, [expandedPost.post_id]: idx }))}
                         />
                       ))}
                     </div>
@@ -181,11 +248,12 @@ const Profile = () => {
                 )}
               </div>
             )}
-            <p>Location: {p.location || "N/A"}</p>
-            <p>Tags: {p.tags || "N/A"}</p>
+
+            <p>Location: {expandedPost.location || "N/A"}</p>
+            <p>Tags: {expandedPost.tags || "N/A"}</p>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

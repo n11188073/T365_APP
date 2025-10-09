@@ -121,29 +121,54 @@
 /* posts grid */
 .posts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); /* wider images */
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 4px;
   width: 100%;
 }
 
-/* each post image */
-.post-img {
+.post-tile {
+  position: relative;
   width: 100%;
-  aspect-ratio: 1 / 1; 
-  object-fit: cover;  
+  padding-top: 100%;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.post-tile img,
+.post-tile video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   border-radius: 6px;
-  display: block;
+  transition: transform 0.2s ease;
 }
 
-/* small screens */
-@media (max-width: 480px) {
-  .posts-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 4px;
-  }
+.post-tile:hover img,
+.post-tile:hover video {
+  transform: scale(1.05);
 }
 
-/* Icons under "View Points" */
+/* Carousel buttons */
+.carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0,0,0,0.4);
+  border: none;
+  color: white;
+  font-size: 18px;
+  z-index: 10;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+.carousel-btn.left { left: 8px; }
+.carousel-btn.right { right: 8px; }
+
+/* Points icons row */
 .points-actions {
   display: flex;
   justify-content: space-evenly; 
@@ -161,7 +186,7 @@
   align-items: center;
   color: #6b7280;
   transition: transform 0.12s ease, color 0.12s ease;
-  flex: 1; /* equal space */
+  flex: 1;
 }
 
 .icon-btn:hover {
@@ -175,43 +200,86 @@
   color: #6b7280;
 }
 
-/* Instagram-style 3-column grid */
-.insta-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 2px;
-  margin-top: 16px;
+/* Modal overlay for expanded post */
+.modal-overlay {
+  position: fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+  padding: 16px;
+  overflow-y: auto;
 }
 
-.post-tile {
+.modal-content {
+  background: #fff;
+  border-radius: 16px;
+  max-width: 520px;
+  width: 100%;
+  padding: 16px;
   position: relative;
-  width: 100%;
-  padding-top: 100%; /* Square */
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.post-tile img,
-.post-tile video {
+.modal-close {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.carousel-btn {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  background: rgba(0,0,0,0.4);
+  top: 12px;
+  right: 12px;
+  background: none;
   border: none;
-  color: white;
-  font-size: 18px;
-  z-index: 10;
+  font-size: 20px;
   cursor: pointer;
-  padding: 4px 8px;
+  color: #374151;
 }
 
-.carousel-btn.left { left: 4px; }
-.carousel-btn.right { right: 4px; }
+.modal-menu {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  gap: 8px;
+}
+
+.modal-menu button {
+  background: #fff;
+  border: 1px solid #e6e6e6;
+  padding: 4px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+/* Edit form inside modal */
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.edit-input {
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  width: 100%;
+}
+
+.edit-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .posts-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px;
+  }
+}
