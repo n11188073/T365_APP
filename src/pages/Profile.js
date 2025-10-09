@@ -1,3 +1,4 @@
+// src/pages/Profile.js
 import React, { useEffect, useState } from "react";
 import "./Profile.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -73,9 +74,13 @@ const Profile = () => {
       location: post.location || "",
       tags: post.tags || ""
     });
+    setExpandedPost(post); // Keep the modal open while editing
   };
 
-  const cancelEdit = () => setEditingPostId(null);
+  const cancelEdit = () => {
+    setEditingPostId(null);
+    setExpandedPost(null);
+  };
 
   const saveEdit = async () => {
     try {
@@ -89,6 +94,7 @@ const Profile = () => {
           prev.map((p) => (p.post_id === editingPostId ? { ...p, ...editData } : p))
         );
         setEditingPostId(null);
+        setExpandedPost(null);
       }
     } catch (err) {
       console.error("Failed to save edit", err);
@@ -173,18 +179,27 @@ const Profile = () => {
         ))}
       </div>
 
-      {/* Expanded Post Modal */}
+      {/* Expanded Post / Edit Modal */}
       {expandedPost && (
         <div className="modal-overlay" onClick={() => setExpandedPost(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-menu">
-              <button onClick={() => startEdit(expandedPost)}>Edit</button>
-              <button onClick={() => deletePost(expandedPost.post_id)}>Delete</button>
-            </div>
+          <div
+            className="modal-content"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: "90%", maxHeight: "90%", overflow: "auto" }}
+          >
+            {/* Edit/Delete Buttons */}
+            {editingPostId !== expandedPost.post_id && (
+              <div className="modal-menu">
+                <button onClick={() => startEdit(expandedPost)}>Edit</button>
+                <button onClick={() => deletePost(expandedPost.post_id)}>Delete</button>
+              </div>
+            )}
+
             <button className="modal-close" onClick={() => setExpandedPost(null)}>×</button>
 
+            {/* Editing Form */}
             {editingPostId === expandedPost.post_id ? (
-              <div className="edit-form">
+              <div className="edit-form" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                 <input
                   className="edit-input"
                   value={editData.post_name}
@@ -203,13 +218,14 @@ const Profile = () => {
                   onChange={(e) => setEditData({ ...editData, tags: e.target.value })}
                   placeholder="Tags"
                 />
-                <div className="edit-buttons">
+                <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
                   <button className="edit-btn" onClick={saveEdit}>Save</button>
                   <button className="edit-btn" onClick={cancelEdit}>Cancel</button>
                 </div>
               </div>
             ) : (
-              <div className="carousel">
+              /* Expanded Media Carousel */
+              <div className="carousel" style={{ textAlign: "center" }}>
                 {expandedPost.media.length > 1 && (
                   <button className="carousel-btn left" onClick={() => handlePrev(expandedPost.post_id)}>
                     <FontAwesomeIcon icon={faChevronLeft} />
@@ -220,13 +236,13 @@ const Profile = () => {
                   <img
                     src={`data:image/*;base64,${expandedPost.media[carouselIndex[expandedPost.post_id] || 0].data}`}
                     alt={expandedPost.post_name}
-                    className="post-media"
+                    style={{ maxHeight: "80vh", width: "auto", display: "block", margin: "0 auto" }}
                   />
                 ) : (
                   <video
                     controls
                     src={`data:video/*;base64,${expandedPost.media[carouselIndex[expandedPost.post_id] || 0].data}`}
-                    className="post-media"
+                    style={{ maxHeight: "80vh", width: "auto", display: "block", margin: "0 auto" }}
                   />
                 )}
 
