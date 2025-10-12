@@ -160,7 +160,7 @@ app.post('/create-post', upload.array('files'), async (req, res) => {
 app.get('/posts', async (req, res) => {
   const query = `
     SELECT p.post_id, p.post_name, p.user_id, p.num_likes, p.comments,
-           p.location, p.tags,
+           p.location, p.tags, p.bookmark_folder, p.bookmark_itenerary,
            m.id AS media_id, m.type, m.filename, m.data, m.created_at
     FROM posts p
     LEFT JOIN media m ON p.post_id = m.post_id
