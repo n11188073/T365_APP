@@ -6,9 +6,7 @@ html, body, #root {
     margin: 0;
 }
 
-.App {
-  text-align: center;
-}
+.App { text-align: center; }
 
 .App-logo {
   height: 40vmin;
@@ -32,9 +30,7 @@ html, body, #root {
   color: white;
 }
 
-.App-link {
-  color: #61dafb;
-}
+.App-link { color: #61dafb; }
 
 .main-container {
     background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.418));
@@ -122,13 +118,8 @@ html, body, #root {
     z-index: 10;
 }
 
-.carousel-btn.left {
-    left: 10px;
-}
-
-.carousel-btn.right {
-    right: 10px;
-}
+.carousel-btn.left { left: 10px; }
+.carousel-btn.right { right: 10px; }
 
 .post-details {
     padding: 10px;
@@ -159,9 +150,7 @@ html, body, #root {
     transition: transform 0.2s ease;
 }
 
-.nav-icon:hover svg {
-    transform: scale(1.2);
-}
+.nav-icon:hover svg { transform: scale(1.2); }
 
 /* Optional horizontal scroll for multiple images in older posts style */
 .post-media-container {
@@ -179,10 +168,166 @@ html, body, #root {
 }
 
 @keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }
+
+/* added
+
+/* */
+.main-container.with-topbar { padding-top: 88px; }
+
+/* Top bar */
+.tiktok-topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 64px;
+  width: 100%;
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  background: rgba(255,255,255,0.9);
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  z-index: 1001;
+  backdrop-filter: blur(8px);
+}
+
+.tabs { display: flex; gap: 18px; margin-bottom: 10px; }
+
+.tab-btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  font-weight: 600;
+  font-size: 1rem;
+  color: #777;
+  padding: 6px 4px;
+  position: relative;
+  cursor: pointer;
+}
+.tab-btn.active { color: #000; }
+.tab-btn.active::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0;
+  height: 3px; bottom: -6px;
+  border-radius: 3px;
+  background: #000;
+}
+
+/* Search wrapper */
+.search-wrap { width: 100%; display: flex; justify-content: center; }
+
+/* Post */
+.ig-card {
+  background: #fff;
+  border: 1px solid #eaeaea;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+
+.ig-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+}
+
+.ig-user { display: flex; align-items: center; gap: 10px; }
+
+.ig-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #ddd;
+}
+
+.ig-user-meta { display: flex; flex-direction: column; line-height: 1.1; }
+.ig-username { font-weight: 700; font-size: 0.95rem; }
+.ig-location { color: #666; font-size: 0.8rem; }
+.ig-location a { color: #444; text-decoration: none; }
+.ig-location a:hover { text-decoration: underline; }
+
+.icon-btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  padding: 6px;
+  cursor: pointer;
+  color: #111;
+}
+.icon-btn:hover { opacity: 0.85; }
+
+/* Square media */
+.ig-media-wrap { display: block; width: 100%; background: #000; }
+.ig-media {
+  width: 100%;
+  aspect-ratio: 1 / 1;     
+  object-fit: cover;       
+  display: block;
+}
+
+/* Action bar */
+.ig-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+}
+.ig-actions .left, .ig-actions .right {
+  display: flex; align-items: center; gap: 10px;
+}
+.ig-actions .icon-btn svg { font-size: 1.35rem; }
+
+/* Meta */
+.ig-meta {
+  padding: 0 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ig-likes { font-weight: 700; font-size: 0.95rem; }
+.ig-caption { font-size: 0.95rem; line-height: 1.35; }
+.ig-comments {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: #777;
+  font-size: 0.9rem;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+}
+.ig-time {
+  color: #9a9a9a;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+/* Chips & empty states (used by Nearby/Following) */
+.chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  border: 1px solid #ddd; background: #fafafa; border-radius: 999px;
+  padding: 6px 10px; font-size: 12px; cursor: pointer;
+}
+.chip:hover { background: #f0f0f0; }
+.muted { color: #666; }
+.muted.small { font-size: 12px; }
+
+.empty-state {
+  text-align: center;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 16px;
+  width: 90%;
+  max-width: 700px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+/* Misc helper */
+.skeleton { opacity: 0.7; }
