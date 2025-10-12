@@ -283,11 +283,8 @@ html, body, #root {
 }
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
-}
 
-/* added
 
-/* */
 .main-container.with-topbar { padding-top: 88px; }
 
 /* Top bar */
