@@ -145,7 +145,6 @@ const mapHrefFor = (post) => {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(post?.post_name || 'map')}`;
 };
 
-// ---- Instagram-style Home with TikTok tabs ----
 const HomeBasic = ({ posts }) => {
   const navigate = useNavigate();
   const [q, setQ] = useState('');
@@ -186,7 +185,6 @@ const HomeBasic = ({ posts }) => {
 
   return (
     <div className="main-container with-topbar">
-      {/* TikTok-like top tabs */}
       <div className="tiktok-topbar">
         <div className="tabs">
           {['Following', 'Explore', 'Nearby'].map((t) => (
@@ -232,7 +230,6 @@ const HomeBasic = ({ posts }) => {
         </div>
       )}
 
-      {/* Instagram-style feed */}
       <div className="posts-grid">
         {activeFeed.map((p) => (
           <article key={p.post_id} className="ig-card">
