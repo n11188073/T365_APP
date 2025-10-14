@@ -230,6 +230,12 @@ app.get('/media', async (req, res) => {
 });
 
 // -------------------------
+// Itineraries Routes
+// -------------------------
+const itinerariesRoutes = require("../src/api/itineraries");
+app.use("/api/itineraries", itinerariesRoutes(db));
+
+// -------------------------
 // Start Server
 // -------------------------
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
