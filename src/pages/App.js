@@ -1,15 +1,13 @@
 // src/App.js
-import React from "react";
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faHome, faPlus, faUser, faCalendar, faComment, faRightToBracket,
-  faHeart, faBookmark, faPaperPlane, faCommentDots, faEllipsis, faChevronLeft, faChevronRight
+  faHeart, faBookmark, faPaperPlane, faCommentDots, faEllipsis,
+  faChevronLeft, faChevronRight
 } from '@fortawesome/free-solid-svg-icons';
-import {
-  Link, BrowserRouter as Router, Routes, Route, useNavigate
-} from 'react-router-dom';
+import { Link, BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 
 // Pages
 import Upload from './Upload';
@@ -23,14 +21,13 @@ import DatabaseViewer from './DatabaseViewer';
 import SearchPage from './SearchPage';
 import PostPage from './PostPage';
 
-
 const BACKEND_URL =
   process.env.REACT_APP_BACKEND_URL ||
   (window.location.hostname === 'localhost'
     ? 'http://localhost:5000'
     : 'https://t365-app.onrender.com');
 
-// ---- SAMPLE POSTS (rich, with lat/lng and IG fields) ----
+// Sample demo posts
 export const SAMPLE_POSTS = [
   {
     post_id: 'demo-1',
@@ -47,7 +44,7 @@ export const SAMPLE_POSTS = [
   },
   {
     post_id: 'demo-2',
-    post_name: 'Shibuya crossing',
+    post_name: 'Shibuya Crossing',
     location: 'Tokyo',
     lat: 35.6595, lng: 139.7005,
     tags: 'japan city crossing night',
@@ -138,7 +135,7 @@ export const SAMPLE_POSTS = [
   }
 ];
 
-// Helper: build Google Maps link (lat/lng preferred, fallback to location/name)
+// Helper: build Google Maps link
 const mapHrefFor = (post) => {
   const { lat, lng, location } = post || {};
   if (typeof lat === 'number' && typeof lng === 'number') {
@@ -150,10 +147,18 @@ const mapHrefFor = (post) => {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(post?.post_name || 'map')}`;
 };
 
-// Home component
-const HomeBasic = ({ posts, filteredPosts, carouselIndex, setCarouselIndex, handlePrev, handleNext, searchQuery, handleSearch }) => {
+// Home Component
+const Home = ({
+  posts,
+  filteredPosts,
+  carouselIndex,
+  handlePrev,
+  handleNext,
+  setCarouselIndex,
+  handleSearch,
+  searchQuery
+}) => {
   const navigate = useNavigate();
-  const [q, setQ] = useState('');
   const [tab, setTab] = useState('Explore'); // 'Following' | 'Explore' | 'Nearby'
   const [nearbyAllowed, setNearbyAllowed] = useState(false);
   const [coords, setCoords] = useState(null);
@@ -173,18 +178,17 @@ const HomeBasic = ({ posts, filteredPosts, carouselIndex, setCarouselIndex, hand
 
   const onSubmit = (e) => {
     e.preventDefault();
-    navigate(`/search?q=${encodeURIComponent(q)}`);
+    navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
   };
 
-  // Simple mock feeds for tabs
-  const followingFeed = []; // start empty
+  const followingFeed = [];
   const exploreFeed = posts;
   const nearbyFeed = nearbyAllowed && coords ? posts : posts.slice(0, 3);
 
   const activeFeed =
     tab === 'Following' ? followingFeed :
-    tab === 'Nearby'    ? nearbyFeed    :
-                          exploreFeed;
+    tab === 'Nearby' ? nearbyFeed :
+    exploreFeed;
 
   const formatLikes = (n = 0) =>
     n >= 1000 ? `${(n / 1000).toFixed(n % 1000 >= 100 ? 1 : 0)}k` : `${n}`;
@@ -211,8 +215,8 @@ const HomeBasic = ({ posts, filteredPosts, carouselIndex, setCarouselIndex, hand
           type="text"
           className="search"
           placeholder="Search"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
+          value={searchQuery}
+          onChange={handleSearch}
         />
       </form>
 
@@ -228,7 +232,9 @@ const HomeBasic = ({ posts, filteredPosts, carouselIndex, setCarouselIndex, hand
       {tab === 'Nearby' && !nearbyAllowed && (
         <div className="empty-state">
           <h3>See what’s nearby</h3>
-          <p className="muted">Enable location to personalize this tab. We’ll fall back to popular posts if not allowed.</p>
+          <p className="muted">
+            Enable location to personalize this tab. We’ll fall back to popular posts if not allowed.
+          </p>
           <div className="chip-row">
             <button className="chip" onClick={() => setTab('Explore')}>Explore</button>
             <button className="chip" onClick={() => setTab('Following')}>Following</button>
@@ -237,6 +243,7 @@ const HomeBasic = ({ posts, filteredPosts, carouselIndex, setCarouselIndex, hand
       )}
 
       <div className="posts-grid">
+
         {activeFeed.map((p) => (
           <article key={p.post_id} className="ig-card">
             {/* Header */}
@@ -251,12 +258,7 @@ const HomeBasic = ({ posts, filteredPosts, carouselIndex, setCarouselIndex, hand
                   <div className="ig-username">{p.user_name || 'traveler'}</div>
                   <div className="ig-location">
                     {p.location ? (
-                      <a
-                        href={mapHrefFor(p)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title="Open in Google Maps"
-                      >
+                      <a href={mapHrefFor(p)} target="_blank" rel="noopener noreferrer">
                         {p.location}
                       </a>
                     ) : '—'}
@@ -268,17 +270,34 @@ const HomeBasic = ({ posts, filteredPosts, carouselIndex, setCarouselIndex, hand
               </button>
             </header>
 
-            {/* Media (square) */}
+            {/* Media */}
             <Link to={`/post/${p.post_id}`} className="ig-media-wrap">
-              {p.media?.length>0 ? (
-                (() => {
-                  const idx = carouselIndex[p.post_id] || 0;
-                  const media = p.media[idx];
-                  if (!media) return null;
-                  return media.type==='image' ? <img src={`data:image/*;base64,${media.data}`} alt={media.filename} className="post-media"/>
-                                               : <video controls src={`data:video/*;base64,${media.data}`} className="post-media"/>;
-                })()
-              ) : <img src={p.imageUrl} alt={p.post_name} className="post-media"/>}
+              {p.media && p.media.length > 0 ? (
+                <div className="carousel">
+                  {p.media.length > 1 && (
+                    <button className="carousel-btn left" onClick={() => handlePrev(p.post_id)}>
+                      <FontAwesomeIcon icon={faChevronLeft} />
+                    </button>
+                  )}
+                  {(() => {
+                    const idx = carouselIndex[p.post_id] || 0;
+                    const media = p.media[idx];
+                    if (!media) return null;
+                    return media.type === 'image' ? (
+                      <img src={`data:image/*;base64,${media.data}`} alt={media.filename} className="post-media" />
+                    ) : (
+                      <video controls src={`data:video/*;base64,${media.data}`} className="post-media" />
+                    );
+                  })()}
+                  {p.media.length > 1 && (
+                    <button className="carousel-btn right" onClick={() => handleNext(p.post_id)}>
+                      <FontAwesomeIcon icon={faChevronRight} />
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <img className="ig-media" src={p.imageUrl} alt={p.post_name} />
+              )}
             </Link>
 
             {/* Actions */}
@@ -305,27 +324,33 @@ const HomeBasic = ({ posts, filteredPosts, carouselIndex, setCarouselIndex, hand
             <div className="ig-meta">
               <div className="ig-likes">{formatLikes(p.likes || 0)} likes</div>
               <div className="ig-caption">
-                <span className="ig-username">{p.user_name || 'traveler'}</span>{' '}
-                {p.caption || p.post_name}
+                <span className="ig-username">{p.user_name || 'traveler'}</span> {p.caption || p.post_name}
               </div>
               <button className="ig-comments">View all comments</button>
               <div className="ig-time">{p.time_ago || 'now'}</div>
             </div>
           </article>
         ))}
+
+        {/* Sample posts fallback */}
+        {SAMPLE_POSTS.map((p) => (
+          <div key={p.post_id} className="post-card">
+            <h3>{p.post_name}</h3>
+            {p.imageUrl && <img src={p.imageUrl} alt={p.post_name} className="post-media" />}
+          </div>
+        ))}
       </div>
     </div>
   );
 };
 
+// App Component
 const App = () => {
   const [posts, setPosts] = useState([]);
   const [filteredPosts, setFilteredPosts] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [carouselIndex, setCarouselIndex] = useState({});
 
-  // Fetch posts
-  useEffect(() => {
   const fetchPosts = async () => {
     try {
       const res = await fetch(`${BACKEND_URL}/posts`);
@@ -342,36 +367,37 @@ const App = () => {
         setFilteredPosts(postsArray);
       }
     } catch (err) {
-      console.error(err);
+      console.error('Error fetching posts:', err);
     }
   };
-    fetchPosts();
-  }, []);
 
   useEffect(() => { fetchPosts(); }, []);
 
   const handleSearch = (e) => {
     const query = e.target.value.toLowerCase();
     setSearchQuery(query);
-    setFilteredPosts(posts.filter(p =>
-      (p.post_name && p.post_name.toLowerCase().includes(query)) ||
-      (p.tags && p.tags.toLowerCase().includes(query)) ||
-      (p.location && p.location.toLowerCase().includes(query))
-    ));
+    setFilteredPosts(
+      posts.filter(
+        (p) =>
+          (p.post_name && p.post_name.toLowerCase().includes(query)) ||
+          (p.tags && p.tags.toLowerCase().includes(query)) ||
+          (p.location && p.location.toLowerCase().includes(query))
+      )
+    );
   };
 
   const handlePrev = (postId) => {
-    setCarouselIndex(prev => {
+    setCarouselIndex((prev) => {
       const current = prev[postId] || 0;
-      const length = posts.find(p => p.post_id === postId)?.media.length || 1;
+      const length = posts.find((p) => p.post_id === postId)?.media.length || 1;
       return { ...prev, [postId]: (current - 1 + length) % length };
     });
   };
 
   const handleNext = (postId) => {
-    setCarouselIndex(prev => {
+    setCarouselIndex((prev) => {
       const current = prev[postId] || 0;
-      const length = posts.find(p => p.post_id === postId)?.media.length || 1;
+      const length = posts.find((p) => p.post_id === postId)?.media.length || 1;
       return { ...prev, [postId]: (current + 1) % length };
     });
   };
@@ -379,21 +405,24 @@ const App = () => {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={
-          <HomeBasic
-            posts={posts}
-            filteredPosts={filteredPosts}
-            carouselIndex={carouselIndex}
-            setCarouselIndex={setCarouselIndex}
-            handlePrev={handlePrev}
-            handleNext={handleNext}
-            handleSearch={handleSearch}
-            searchQuery={searchQuery}
-          />
-        }/>
-        <Route path="/search" element={<SearchPage posts={posts} />} />
-        <Route path="/post/:id" element={<PostPage posts={posts} />} />
-        <Route path="/upload" element={<Upload />} />
+        <Route
+          path="/"
+          element={
+            <Home
+              posts={posts}
+              filteredPosts={filteredPosts}
+              carouselIndex={carouselIndex}
+              setCarouselIndex={setCarouselIndex}
+              handlePrev={handlePrev}
+              handleNext={handleNext}
+              handleSearch={handleSearch}
+              searchQuery={searchQuery}
+            />
+          }
+        />
+        <Route path="/search" element={<SearchPage posts={SAMPLE_POSTS} />} />
+        <Route path="/post/:id" element={<PostPage posts={SAMPLE_POSTS} />} />
+        <Route path="/upload" element={<Upload onPostCreated={fetchPosts} />} />
         <Route path="/chat" element={<Chat />} />
         <Route path="/calendar" element={<Calendar />} />
         <Route path="/itinerary/:id" element={<ItineraryDetails />} />

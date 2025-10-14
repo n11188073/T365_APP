@@ -170,10 +170,12 @@ const Profile = () => {
             className="post-tile"
             onClick={() => setExpandedPost(post)}
           >
-            {post.media && post.media[0] && post.media[0].type === "image" ? (
-              <img src={`data:image/*;base64,${post.media[0].data}`} alt={post.post_name} />
-            ) : post.media && post.media[0] ? (
-              <video src={`data:video/*;base64,${post.media[0].data}`} />
+            {post.media && post.media[0] ? (
+              post.media[0].type.startsWith("image") ? (
+                <img src={`data:${post.media[0].type};base64,${post.media[0].data}`} alt={post.post_name} />
+              ) : (
+                <video src={`data:${post.media[0].type};base64,${post.media[0].data}`} controls />
+              )
             ) : null}
           </div>
         ))}
@@ -231,18 +233,20 @@ const Profile = () => {
                   </button>
                 )}
 
-                {expandedPost.media && expandedPost.media[carouselIndex[expandedPost.post_id] || 0]?.type === "image" ? (
-                  <img
-                    src={`data:image/*;base64,${expandedPost.media[carouselIndex[expandedPost.post_id] || 0].data}`}
-                    alt={expandedPost.post_name}
-                    style={{ maxHeight: "80vh", width: "auto", display: "block", margin: "0 auto" }}
-                  />
-                ) : expandedPost.media && expandedPost.media[carouselIndex[expandedPost.post_id] || 0] ? (
-                  <video
-                    controls
-                    src={`data:video/*;base64,${expandedPost.media[carouselIndex[expandedPost.post_id] || 0].data}`}
-                    style={{ maxHeight: "80vh", width: "auto", display: "block", margin: "0 auto" }}
-                  />
+                {expandedPost.media && expandedPost.media[carouselIndex[expandedPost.post_id] || 0] ? (
+                  expandedPost.media[carouselIndex[expandedPost.post_id] || 0].type.startsWith("image") ? (
+                    <img
+                      src={`data:${expandedPost.media[carouselIndex[expandedPost.post_id] || 0].type};base64,${expandedPost.media[carouselIndex[expandedPost.post_id] || 0].data}`}
+                      alt={expandedPost.post_name}
+                      style={{ maxHeight: "80vh", width: "auto", display: "block", margin: "0 auto" }}
+                    />
+                  ) : (
+                    <video
+                      controls
+                      src={`data:${expandedPost.media[carouselIndex[expandedPost.post_id] || 0].type};base64,${expandedPost.media[carouselIndex[expandedPost.post_id] || 0].data}`}
+                      style={{ maxHeight: "80vh", width: "auto", display: "block", margin: "0 auto" }}
+                    />
+                  )
                 ) : null}
 
                 {expandedPost.media?.length > 1 && (
