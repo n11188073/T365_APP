@@ -12,7 +12,12 @@ import {
   faChevronLeft,
   faChevronRight,
 } from '@fortawesome/free-solid-svg-icons';
-import { Link, BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import {
+  Link,
+  BrowserRouter as Router,
+  Routes,
+  Route,
+} from 'react-router-dom';
 
 // Pages
 import Upload from './Upload';
@@ -50,7 +55,15 @@ const SAMPLE_POSTS = [
   },
 ];
 
-const Home = ({ filteredPosts, carouselIndex, setCarouselIndex, handlePrev, handleNext, handleSearch, searchQuery }) => (
+const Home = ({
+  filteredPosts,
+  carouselIndex,
+  handlePrev,
+  handleNext,
+  setCarouselIndex,
+  handleSearch,
+  searchQuery,
+}) => (
   <div className="main-container">
     <input
       type="text"
@@ -70,7 +83,10 @@ const Home = ({ filteredPosts, carouselIndex, setCarouselIndex, handlePrev, hand
           {p.media && p.media.length > 0 && (
             <div className="carousel">
               {p.media.length > 1 && (
-                <button className="carousel-btn left" onClick={() => handlePrev(p.post_id)}>
+                <button
+                  className="carousel-btn left"
+                  onClick={() => handlePrev(p.post_id)}
+                >
                   <FontAwesomeIcon icon={faChevronLeft} />
                 </button>
               )}
@@ -80,14 +96,25 @@ const Home = ({ filteredPosts, carouselIndex, setCarouselIndex, handlePrev, hand
                 const media = p.media[idx];
                 if (!media) return null;
                 return media.type === 'image' ? (
-                  <img src={`data:image/*;base64,${media.data}`} alt={media.filename} className="post-media" />
+                  <img
+                    src={`data:image/*;base64,${media.data}`}
+                    alt={media.filename}
+                    className="post-media"
+                  />
                 ) : (
-                  <video controls src={`data:video/*;base64,${media.data}`} className="post-media" />
+                  <video
+                    controls
+                    src={`data:video/*;base64,${media.data}`}
+                    className="post-media"
+                  />
                 );
               })()}
 
               {p.media.length > 1 && (
-                <button className="carousel-btn right" onClick={() => handleNext(p.post_id)}>
+                <button
+                  className="carousel-btn right"
+                  onClick={() => handleNext(p.post_id)}
+                >
                   <FontAwesomeIcon icon={faChevronRight} />
                 </button>
               )}
@@ -97,8 +124,15 @@ const Home = ({ filteredPosts, carouselIndex, setCarouselIndex, handlePrev, hand
                   {p.media.map((_, idx) => (
                     <span
                       key={idx}
-                      className={`dot ${carouselIndex[p.post_id] === idx ? 'active' : ''}`}
-                      onClick={() => setCarouselIndex((prev) => ({ ...prev, [p.post_id]: idx }))}
+                      className={`dot ${
+                        carouselIndex[p.post_id] === idx ? 'active' : ''
+                      }`}
+                      onClick={() =>
+                        setCarouselIndex((prev) => ({
+                          ...prev,
+                          [p.post_id]: idx,
+                        }))
+                      }
                     />
                   ))}
                 </div>
@@ -115,7 +149,9 @@ const Home = ({ filteredPosts, carouselIndex, setCarouselIndex, handlePrev, hand
       {SAMPLE_POSTS.map((p) => (
         <div key={p.post_id} className="post-card">
           <h3>{p.post_name}</h3>
-          {p.imageUrl && <img src={p.imageUrl} alt={p.post_name} className="post-media" />}
+          {p.imageUrl && (
+            <img src={p.imageUrl} alt={p.post_name} className="post-media" />
+          )}
         </div>
       ))}
     </div>
@@ -133,6 +169,15 @@ const App = () => {
       const res = await fetch(`${BACKEND_URL}/posts`);
       const data = await res.json();
       if (Array.isArray(data.posts)) {
+        const groupedPosts = data.posts.reduce((acc, item) => {
+          const postId = item.post_id;
+          if (!acc[postId]) acc[postId] = { ...item, media: [] };
+          if (item.media_id) acc[postId].media.push(item);
+          return acc;
+        }, {});
+        const postsArray = Object.values(groupedPosts);
+        setPosts(postsArray);
+        setFilteredPosts(postsArray);
         // Use backend posts directly
         setPosts(data.posts);
         setFilteredPosts(data.posts);

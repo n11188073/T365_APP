@@ -9,10 +9,16 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Enable CORS for frontend
-app.use(cors({
-  origin: ["http://localhost:3000", "https://cozy-mousse-7c2a8f.netlify.app"],
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: [
+      "http://localhost:3000", 
+      "https://cozy-mousse-7c2a8f.netlify.app"
+    ],
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 
 // --- SQLite Database ---
@@ -144,19 +150,22 @@ app.post('/create-post', upload.array('files'), async (req, res) => {
           `INSERT INTO media (post_id, type, filename, data, created_at)
            VALUES (?, ?, ?, ?, ?)`,
           [postId, type, file.originalname, file.buffer, created_at],
-          function (err) { if (err) reject(err); else resolve(); }
+          function(err) {
+            if (err) reject(err);
+            else resolve();
+          }
         );
       });
     }
 
-    res.json({ message: 'Post and media saved', post_id: postId, post_name });
+    res.json({ message: 'Post and media saved successfully', post_id: postId, post_name });
   } catch (err) {
-    console.error('Create post error:', err);
+    console.error('Error creating post:', err);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
 
-// Get all posts with media (always returns media array)
+// Get all posts with media
 app.get('/posts', async (req, res) => {
   const query = `
     SELECT p.post_id, p.post_name, p.user_id, p.num_likes, p.comments,
