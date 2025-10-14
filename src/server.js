@@ -27,11 +27,11 @@ app.use(cookieParser());
 
 // SQLite DB
 const dbPath = path.resolve(__dirname, '../t365backend/t65sql.db');
-console.log('Using DB at:', dbPath);
+console.log('Using database at:', dbPath);
 
 const db = new sqlite3.Database(dbPath, (err) => {
-  if (err) console.error('Database connection error:', err);
-  else console.log('Connected to SQLite database.');
+  if (err) console.error('DB connection error:', err);
+  else console.log('Connected to SQLite database:', dbPath);
 });
 
 // DB helpers
@@ -125,6 +125,11 @@ app.get('/api/tables', async (req, res) => {
 
 app.get('/api/table/:name', async (req, res) => {
   const { name } = req.params;
+
+  // Sanitize table name
+  if (!/^[a-zA-Z0-9_]+$/.test(name))
+    return res.status(400).json({ error: 'Invalid table name' });
+
   try {
     const rows = await dbAll(`SELECT * FROM ${name}`);
     res.json(rows);
@@ -160,7 +165,7 @@ app.post('/api/saveUser', async (req, res) => {
     res.json({ message: 'User created successfully', user_id });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Database error' });
+    res.status(500).json({ error: 'DB error' });
   }
 });
 
@@ -216,7 +221,7 @@ app.get('/posts', (req, res) => {
            m.id AS media_id, m.type, m.filename, m.data, m.created_at
     FROM posts p
     LEFT JOIN media m ON p.post_id = m.post_id
-    ORDER BY m.created_at DESC
+    ORDER BY p.post_id DESC, m.created_at ASC
   `;
   db.all(query, [], (err, rows) => {
     if (err) return res.status(500).json({ message: 'Error fetching posts' });

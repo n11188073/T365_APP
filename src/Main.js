@@ -17,6 +17,7 @@ import 'leaflet/dist/leaflet.css';
 const Main = () => {
   const [userName, setUserName] = useState('');
   const [mediaList, setMediaList] = useState([]);
+  const [refreshProfile, setRefreshProfile] = useState(0);
 
   // Fetch user info and media
   useEffect(() => {
@@ -26,16 +27,14 @@ const Main = () => {
         const user = JSON.parse(storedUser);
         if (user?.name) setUserName(user.name);
       } catch (e) {
-        console.error("❌ Failed to parse user", e);
+        console.error("Failed to parse user", e);
       }
     }
 
-    // Fetch media from backend
     const fetchMedia = async () => {
       try {
         const res = await fetch('http://localhost:5000/media');
         const data = await res.json();
-        // Convert base64 if needed
         if (data?.media) {
           const formattedMedia = data.media.map(m => ({
             ...m,
@@ -51,6 +50,11 @@ const Main = () => {
     fetchMedia();
   }, []);
 
+  // Callback for when a new post is created
+  const handlePostCreated = () => {
+    setRefreshProfile(prev => prev + 1);
+  };
+
   return (
     <GoogleOAuthProvider clientId="708003752619-2c5sop4u7m30rg6pngpcumjacsfumobh.apps.googleusercontent.com">
       <Router>
@@ -64,14 +68,15 @@ const Main = () => {
           <Routes>
             <Route path="/" element={<App mediaList={mediaList} />} />
             <Route path="/chat" element={<Chat />} />
-            <Route path="/upload" element={<New />} />
+            <Route path="/upload" element={<New onPostCreated={handlePostCreated} />} />
             <Route path="/calendar" element={<Calendar />} />
-            <Route path="/profile" element={<Profile />} />
+            <Route path="/profile" element={<Profile key={refreshProfile} refreshProfile={refreshProfile} />} />
             <Route path="/login" element={<Login />} />
             <Route path="/DatabaseViewer" element={<DatabaseViewer />} />
           </Routes>
         </div>
 
+        {/* Bottom navigation */}
         <div className="bottom-nav">
           <Link to="/" className="nav-icon"><FontAwesomeIcon icon={faHome} /></Link>
           <Link to="/chat" className="nav-icon"><FontAwesomeIcon icon={faComment} /></Link>

@@ -150,7 +150,8 @@ const mapHrefFor = (post) => {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(post?.post_name || 'map')}`;
 };
 
-const HomeBasic = ({ posts }) => {
+// Home component
+const HomeBasic = ({ posts, filteredPosts, carouselIndex, setCarouselIndex, handlePrev, handleNext, searchQuery, handleSearch }) => {
   const navigate = useNavigate();
   const [q, setQ] = useState('');
   const [tab, setTab] = useState('Explore'); // 'Following' | 'Explore' | 'Nearby'
@@ -269,7 +270,15 @@ const HomeBasic = ({ posts }) => {
 
             {/* Media (square) */}
             <Link to={`/post/${p.post_id}`} className="ig-media-wrap">
-              <img className="ig-media" src={p.imageUrl} alt={p.post_name} />
+              {p.media?.length>0 ? (
+                (() => {
+                  const idx = carouselIndex[p.post_id] || 0;
+                  const media = p.media[idx];
+                  if (!media) return null;
+                  return media.type==='image' ? <img src={`data:image/*;base64,${media.data}`} alt={media.filename} className="post-media"/>
+                                               : <video controls src={`data:video/*;base64,${media.data}`} className="post-media"/>;
+                })()
+              ) : <img src={p.imageUrl} alt={p.post_name} className="post-media"/>}
             </Link>
 
             {/* Actions */}
@@ -315,7 +324,8 @@ const App = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [carouselIndex, setCarouselIndex] = useState({});
 
-  // Fetch posts from backend (kept from your original)
+  // Fetch posts
+  useEffect(() => {
   const fetchPosts = async () => {
     try {
       const res = await fetch(`${BACKEND_URL}/posts`);
@@ -335,6 +345,8 @@ const App = () => {
       console.error(err);
     }
   };
+    fetchPosts();
+  }, []);
 
   useEffect(() => { fetchPosts(); }, []);
 
@@ -367,11 +379,21 @@ const App = () => {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<HomeBasic posts={SAMPLE_POSTS} />} />
-        <Route path="/search" element={<SearchPage posts={SAMPLE_POSTS} />} />
-        <Route path="/post/:id" element={<PostPage posts={SAMPLE_POSTS} />} />
-
-        <Route path="/upload" element={<Upload onPostCreated={fetchPosts} />} />
+        <Route path="/" element={
+          <HomeBasic
+            posts={posts}
+            filteredPosts={filteredPosts}
+            carouselIndex={carouselIndex}
+            setCarouselIndex={setCarouselIndex}
+            handlePrev={handlePrev}
+            handleNext={handleNext}
+            handleSearch={handleSearch}
+            searchQuery={searchQuery}
+          />
+        }/>
+        <Route path="/search" element={<SearchPage posts={posts} />} />
+        <Route path="/post/:id" element={<PostPage posts={posts} />} />
+        <Route path="/upload" element={<Upload />} />
         <Route path="/chat" element={<Chat />} />
         <Route path="/calendar" element={<Calendar />} />
         <Route path="/itinerary/:id" element={<ItineraryDetails />} />
