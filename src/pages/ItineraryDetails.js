@@ -9,6 +9,7 @@ import {
   faPenToSquare,
   faCircleDot,
   faCalendarAlt,
+  faImage,
 } from "@fortawesome/free-solid-svg-icons";
 import {
   faClock,
@@ -62,7 +63,6 @@ const ItineraryDetails = () => {
     }
   };
 
-  // Fetch itinerary
   useEffect(() => {
     const fetchItinerary = async () => {
       try {
@@ -79,7 +79,6 @@ const ItineraryDetails = () => {
     fetchItinerary();
   }, [id]);
 
-  // Fetch weather
   useEffect(() => {
     const loadWeather = async () => {
       if (!itinerary || !itinerary.destination) return;
@@ -93,7 +92,6 @@ const ItineraryDetails = () => {
     loadWeather();
   }, [itinerary]);
 
-  // Fetch itinerary cards
   useEffect(() => {
     const fetchCards = async () => {
       try {
@@ -110,13 +108,11 @@ const ItineraryDetails = () => {
     fetchCards();
   }, [id]);
 
-  // Filter activities by selected date
   useEffect(() => {
     if (!selectedDate) return setFilteredActivities(activities);
     setFilteredActivities(activities.filter(a => !a.card_date || a.card_date === selectedDate));
   }, [selectedDate, activities]);
 
-  // Save new card
   const handleSaveCard = async () => {
     try {
       const res = await fetch(`${API_BASE}/saveItineraryCard`, {
@@ -145,7 +141,6 @@ const ItineraryDetails = () => {
     }
   };
 
-  // Update existing card
   const handleUpdateCard = async () => {
     try {
       const res = await fetch(`${API_BASE}/updateItineraryCard`, {
@@ -176,7 +171,6 @@ const ItineraryDetails = () => {
     }
   };
 
-  // Open modal for editing
   const handleEditClick = (card) => {
     setEditingCardId(card.card_id);
     setCardTime(card.card_time || "");
@@ -187,7 +181,6 @@ const ItineraryDetails = () => {
     setShowEventModal(true);
   };
 
-  // Delete card
   const handleDeleteCard = async (card_id) => {
     try {
       const res = await fetch(`${API_BASE}/deleteItineraryCard/${card_id}`, { method: "DELETE", credentials: "include" });
@@ -321,6 +314,24 @@ const ItineraryDetails = () => {
 
             {/* Input Fields */}
             <div style={{ display: "grid", gap: 20 }}>
+              {/* Post from bookmark */}
+              <div style={{ display: "flex", alignItems: "center", backgroundColor: "#f9f9f9", borderRadius: 12, padding: 15, boxShadow: "0px 2px 6px rgba(0,0,0,0.15)" }}>
+                <FontAwesomeIcon icon={faBookmark} style={{ marginRight: 10, fontSize: "150%" }} />
+                <input type="text" placeholder="Add post from bookmark folder" onChange={(e) => setLocationName(e.target.value)} style={{ border: "none", outline: "none", background: "transparent", fontSize: "1.2rem", flex: 1 }} />
+              </div>
+
+              {/* Or */}
+              <div style={{ textAlign: "center", fontWeight: "bold", color: "#555" }}>or</div>
+              
+              {/* Image */}
+              <div style={{ display: "flex", alignItems: "center", backgroundColor: "#f9f9f9", borderRadius: 12, padding: 15, boxShadow: "0px 2px 6px rgba(0,0,0,0.15)" }}>
+                <FontAwesomeIcon icon={faImage} style={{ marginRight: 10, fontSize: "150%" }} />
+                <input type="text" placeholder="Upload image" onChange={(e) => setLocationName(e.target.value)} style={{ border: "none", outline: "none", background: "transparent", fontSize: "1.2rem", flex: 1 }} />
+              </div>
+
+              {/* Line */}
+              <div style={{ display: "flex", alignItems: "center", backgroundColor: "#dededeff", borderRadius: 12, padding: 3 }}></div>
+
               {/* Time */}
               <div style={{ display: "flex", alignItems: "center", backgroundColor: "#f9f9f9", borderRadius: 12, padding: 15, boxShadow: "0px 2px 6px rgba(0,0,0,0.15)" }}>
                 <FontAwesomeIcon icon={faClock} style={{ marginRight: 10, fontSize: "150%" }} />
