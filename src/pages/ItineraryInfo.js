@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -28,6 +28,35 @@ const ItineraryInfo = () => {
   const [title, setTitle] = useState("");
   const [showEditLocation, setShowEditLocation] = useState(false);
   const [location, setLocation] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [collaborative, setCollaborative] = useState(0);
+
+  useEffect(() => {
+    const fetchItinerary = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/itineraries/${id}`, {
+          credentials: "include",
+        });
+        const data = await res.json();
+
+        if (res.ok && data.itinerary) {
+          setTitle(data.itinerary.title || "");
+          setLocation(data.itinerary.destination || "");
+          setCollaborative(data.itinerary.collaborative || 0);
+        } else {
+          console.error("Failed to fetch itinerary:", data.error);
+          alert("Could not load itinerary.");
+        }
+      } catch (err) {
+        console.error("Error fetching itinerary:", err);
+        alert("Error loading itinerary.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchItinerary();
+  }, [id]);
 
   const handleTogglePrivate = () => {
     setIsPrivate((prev) => !prev);
@@ -102,7 +131,6 @@ const ItineraryInfo = () => {
     }
   };
 
-
   const rowStyle = {
     display: "flex",
     alignItems: "center",
@@ -133,6 +161,14 @@ const ItineraryInfo = () => {
     flexDirection: "column",
     gap: "18px",
   };
+
+  if (loading) {
+    return (
+      <div style={{ padding: "20px", textAlign: "center", fontSize: "1.2rem" }}>
+        Loading itinerary...
+      </div>
+    );
+  }
 
   return (
     <div style={{ padding: "20px", height: "100vh", overflowY: "auto" }}>
@@ -169,10 +205,16 @@ const ItineraryInfo = () => {
 
       {/* First Box: Trip Info */}
       <div style={boxStyle}>
-        <div style={rowStyle}
-        onClick={() => setShowEditTitle(true)}
-        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#e5f9ff")}
-        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}>
+        <div
+          style={rowStyle}
+          onClick={() => setShowEditTitle(true)}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.backgroundColor = "#e5f9ff")
+          }
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.backgroundColor = "transparent")
+          }
+        >
           <div style={iconTextStyle}>
             <FontAwesomeIcon
               icon={faPenToSquare}
@@ -181,7 +223,6 @@ const ItineraryInfo = () => {
             <span>Edit Title</span>
           </div>
           <FontAwesomeIcon icon={faChevronRight} style={arrowStyle} />
-
         </div>
 
         <div style={rowStyle}>
@@ -196,39 +237,55 @@ const ItineraryInfo = () => {
         </div>
 
         {/* Edit Location */}
-        <div style={rowStyle} onClick={() => setShowEditLocation(true)} onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#e5f9ff")} onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}>
+        <div
+          style={rowStyle}
+          onClick={() => setShowEditLocation(true)}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.backgroundColor = "#e5f9ff")
+          }
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.backgroundColor = "transparent")
+          }
+        >
           <div style={iconTextStyle}>
-            <FontAwesomeIcon icon={faMapMarkerAlt} style={{ fontSize: "1.5rem", color: "#3e3e3eff" }} />
+            <FontAwesomeIcon
+              icon={faMapMarkerAlt}
+              style={{ fontSize: "1.5rem", color: "#3e3e3eff" }}
+            />
             <span>Location</span>
           </div>
           <FontAwesomeIcon icon={faChevronRight} style={arrowStyle} />
         </div>
-
       </div>
 
       {/* Second Box: Members & Management */}
       <div style={boxStyle}>
-        <div style={rowStyle}>
-          <div style={iconTextStyle}>
-            <FontAwesomeIcon
-              icon={faUsers}
-              style={{ fontSize: "1.5rem", color: "#3e3e3eff" }}
-            />
-            <span>Members</span>
-          </div>
-          <FontAwesomeIcon icon={faChevronRight} style={arrowStyle} />
-        </div>
+        {/* Only show these if collaborative === 1 */}
+        {collaborative === 1 && (
+          <>
+            <div style={rowStyle}>
+              <div style={iconTextStyle}>
+                <FontAwesomeIcon
+                  icon={faUsers}
+                  style={{ fontSize: "1.5rem", color: "#3e3e3eff" }}
+                />
+                <span>Members</span>
+              </div>
+              <FontAwesomeIcon icon={faChevronRight} style={arrowStyle} />
+            </div>
 
-        <div style={rowStyle}>
-          <div style={iconTextStyle}>
-            <FontAwesomeIcon
-              icon={faUserPlus}
-              style={{ fontSize: "1.5rem", color: "#3e3e3eff" }}
-            />
-            <span>Add Members</span>
-          </div>
-          <FontAwesomeIcon icon={faChevronRight} style={arrowStyle} />
-        </div>
+            <div style={rowStyle}>
+              <div style={iconTextStyle}>
+                <FontAwesomeIcon
+                  icon={faUserPlus}
+                  style={{ fontSize: "1.5rem", color: "#3e3e3eff" }}
+                />
+                <span>Add Members</span>
+              </div>
+              <FontAwesomeIcon icon={faChevronRight} style={arrowStyle} />
+            </div>
+          </>
+        )}
 
         <div style={rowStyle}>
           <div style={iconTextStyle}>
@@ -284,8 +341,12 @@ const ItineraryInfo = () => {
             color: "black",
             transition: "background-color 0.2s",
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#ffe5e5")}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.backgroundColor = "#ffe5e5")
+          }
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.backgroundColor = "transparent")
+          }
           onClick={handleDeleteClick}
         >
           <div style={iconTextStyle}>
@@ -296,7 +357,6 @@ const ItineraryInfo = () => {
             <span>Delete Itinerary</span>
           </div>
         </div>
-
       </div>
 
       {/* Edit Title Modal */}
@@ -374,18 +434,76 @@ const ItineraryInfo = () => {
 
       {/* Edit Location Modal */}
       {showEditLocation && (
-        <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", backgroundColor: "rgba(0,0,0,0.5)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000 }}>
-          <div style={{ backgroundColor: "white", borderRadius: "12px", width: "85%", maxWidth: "400px", padding: "25px", textAlign: "center", boxShadow: "0px 4px 10px rgba(0,0,0,0.2)" }}>
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            backgroundColor: "rgba(0,0,0,0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              borderRadius: "12px",
+              width: "85%",
+              maxWidth: "400px",
+              padding: "25px",
+              textAlign: "center",
+              boxShadow: "0px 4px 10px rgba(0,0,0,0.2)",
+            }}
+          >
             <h2 style={{ marginBottom: "20px" }}>Edit Location</h2>
-            <input type="text" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Enter destination" style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #ccc", fontSize: "1rem", marginBottom: "20px" }} />
+            <input
+              type="text"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="Enter destination"
+              style={{
+                width: "100%",
+                padding: "10px",
+                borderRadius: "8px",
+                border: "1px solid #ccc",
+                fontSize: "1rem",
+                marginBottom: "20px",
+              }}
+            />
             <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <button onClick={() => setShowEditLocation(false)} style={{ backgroundColor: "#ccc", padding: "10px 20px", borderRadius: "8px", fontSize: "1rem", cursor: "pointer" }}>Cancel</button>
-              <button onClick={handleSaveLocation} style={{ backgroundColor: "#3182ce", color: "white", padding: "10px 20px", borderRadius: "8px", fontSize: "1rem", cursor: "pointer" }}>Save</button>
+              <button
+                onClick={() => setShowEditLocation(false)}
+                style={{
+                  backgroundColor: "#ccc",
+                  padding: "10px 20px",
+                  borderRadius: "8px",
+                  fontSize: "1rem",
+                  cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveLocation}
+                style={{
+                  backgroundColor: "#3182ce",
+                  color: "white",
+                  padding: "10px 20px",
+                  borderRadius: "8px",
+                  fontSize: "1rem",
+                  cursor: "pointer",
+                }}
+              >
+                Save
+              </button>
             </div>
           </div>
         </div>
       )}
-
     </div>
   );
 };
