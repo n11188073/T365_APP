@@ -222,5 +222,34 @@ module.exports = (db) => {
     }
   });
 
+  router.post('/updateItineraryCard', authenticate, async (req, res) => {
+    const {
+      card_id,
+      location_name,
+      location_address,
+      notes,
+      card_time,
+      card_date
+    } = req.body;
+
+    if (!card_id) {
+      return res.status(400).json({ error: 'card_id is required' });
+    }
+
+    try {
+      await dbRun(
+        `UPDATE itinerary_cards 
+         SET location_name = ?, location_address = ?, notes = ?, card_time = ?, card_date = ?
+         WHERE card_id = ?`,
+        [location_name, location_address, notes, card_time, card_date, card_id]
+      );
+
+      res.json({ success: true, message: 'Card updated successfully' });
+    } catch (err) {
+      console.error("Update card error:", err);
+      res.status(500).json({ error: 'Database error' });
+    }
+  });
+
   return router;
 };
