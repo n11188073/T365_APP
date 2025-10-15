@@ -1,3 +1,4 @@
+// src/pages/Upload.js
 import { useState } from 'react';
 import './Upload.css';
 
@@ -8,6 +9,11 @@ const Upload = ({ onPostCreated }) => {
   const [mode, setMode] = useState('post');
   const [postText, setPostText] = useState('');
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+
+  // Get logged-in user from localStorage
+  const storedUser = localStorage.getItem('user');
+  const user = storedUser ? JSON.parse(storedUser) : null;
+  const userId = user?.id;
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
@@ -47,6 +53,11 @@ const Upload = ({ onPostCreated }) => {
       return;
     }
 
+    if (!userId) {
+      alert("You must be logged in to create a post");
+      return;
+    }
+
     const mediaFiles = selected.map(i => previews[i]);
     if (mediaFiles.length === 0) {
       alert("Please select at least one image or video");
@@ -56,6 +67,7 @@ const Upload = ({ onPostCreated }) => {
     try {
       const formData = new FormData();
       formData.append('post_name', postText);
+      formData.append('user_id', String(userId)); // <--- include logged-in user_id
 
       mediaFiles.forEach(file => formData.append('files', file.file));
 
@@ -68,14 +80,12 @@ const Upload = ({ onPostCreated }) => {
 
       if (response.ok) {
         alert("Post created successfully!");
-        // Reset form
         setStep(1);
         setPreviews([]);
         setSelected([]);
         setPostText('');
 
-        // Refresh home page posts
-        if (onPostCreated) onPostCreated();  // calls fetchPosts in App.js
+        if (onPostCreated) onPostCreated();
       } else {
         alert("Failed to create post: " + (data.message || "Unknown error"));
       }

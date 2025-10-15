@@ -1,63 +1,69 @@
 import React, { useState, useEffect } from "react";
 import { GoogleLogin } from "@react-oauth/google";
-import { jwtDecode } from "jwt-decode";
 
-// Automatically detect API URL
 const API_BASE =
   process.env.NODE_ENV === "production"
-    ? "https://t365-app.onrender.com" // no trailing slash
-    : "http://localhost:5000"; // Express server port
-
+    ? "https://t365-app.onrender.com"
+    : "http://localhost:5000";
 
 const Login = () => {
   const [user, setUser] = useState(null);
 
-  // Load stored user from localStorage when page loads
+  // Check session on page load
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
+    const fetchMe = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/me`, {
+          credentials: "include", // include cookies
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setUser(data.user);
+        }
+      } catch (err) {
+        console.error("Error checking session:", err);
+      }
+    };
+    fetchMe();
   }, []);
 
   const handleSuccess = async (credentialResponse) => {
-  const token = credentialResponse.credential;
-  localStorage.setItem("google_token", token);
+    try {
+      const token = credentialResponse.credential;
+      // Send token to backend to create HttpOnly cookie
+      const res = await fetch(`${API_BASE}/api/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include", // required for cookies
+        body: JSON.stringify({ token }),
+      });
 
-  const decoded = jwtDecode(token);
-  const user_id = decoded.sub; // unique Google ID
-  const user_name = decoded.name || decoded.email;
+      const data = await res.json();
+      if (res.ok) {
+        setUser(data.user);
+        console.log("Logged in successfully:", data.user);
+      } else {
+        console.error("Login failed:", data.error);
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+    }
+  };
 
-  const newUser = { id: user_id, name: user_name };
-  setUser(newUser);
-
-  localStorage.setItem("user", JSON.stringify(newUser));
-
-  // Save to backend
-  try {
-    const res = await fetch(`${API_BASE}/api/saveUser`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ user_id, user_name })
-    });
-    const data = await res.json();
-    console.log("Server response:", data);
-  } catch (err) {
-    console.error("Failed to save user:", err);
-  }
-};
-
-
-  // Handle login error
   const handleError = () => {
     console.error("Google Login Failed");
   };
 
-  // Handle logout
-  const handleLogout = () => {
-    localStorage.removeItem("google_token");
-    localStorage.removeItem("user");
-    setUser(null);
+  const handleLogout = async () => {
+    try {
+      await fetch(`${API_BASE}/api/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+      setUser(null);
+    } catch (err) {
+      console.error("Logout error:", err);
+    }
   };
 
   return (
@@ -76,7 +82,7 @@ const Login = () => {
               border: "none",
               padding: "0.5rem 1rem",
               borderRadius: "5px",
-              cursor: "pointer"
+              cursor: "pointer",
             }}
           >
             Logout
