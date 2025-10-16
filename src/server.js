@@ -160,7 +160,6 @@ app.post('/api/saveUser', async (req, res) => {
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-// Create Post
 app.post('/create-post', upload.array('files'), async (req, res) => {
   const { post_name, location, tags, user_id } = req.body;
   const files = req.files || [];
@@ -176,17 +175,11 @@ app.post('/create-post', upload.array('files'), async (req, res) => {
 
   const created_at = getAESTTimestamp();
   try {
-    const postId = await dbRun(
-      `INSERT INTO posts (post_name, user_id, location, tags, bookmark_itenerary, num_likes, comments) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [post_name, user_id, location || null, tags || null, null, 0, null]
-    );
+    const postId = await dbRun(`INSERT INTO posts (post_name, user_id, location, tags, bookmark_itenerary, num_likes, comments) VALUES (?, ?, ?, ?, ?, ?, ?)`, [post_name, user_id, location || null, tags || null, null, 0, null]);
 
     for (const file of files) {
       const type = file.mimetype.startsWith('image/') ? 'image' : 'video';
-      await dbRun(
-        `INSERT INTO media (post_id, type, filename, data, created_at) VALUES (?, ?, ?, ?, ?)`,
-        [postId, type, file.originalname, file.buffer, created_at]
-      );
+      await dbRun(`INSERT INTO media (post_id, type, filename, data, created_at) VALUES (?, ?, ?, ?, ?)`, [postId, type, file.originalname, file.buffer, created_at]);
     }
 
     res.json({ message: 'Post and media saved', post_id: postId, post_name });
@@ -196,46 +189,25 @@ app.post('/create-post', upload.array('files'), async (req, res) => {
   }
 });
 
-// Get Posts (optionally filter by user_id)
+// Get all posts with media
 app.get('/posts', async (req, res) => {
-  const { user_id } = req.query;
-  let query = `
+  const query = `
     SELECT p.post_id, p.post_name, p.user_id, p.num_likes, p.comments,
            p.location, p.tags,
            m.id AS media_id, m.type, m.filename, m.data, m.created_at
     FROM posts p
     LEFT JOIN media m ON p.post_id = m.post_id
+    ORDER BY p.post_id DESC, m.created_at ASC
   `;
-  const params = [];
-  if (user_id) {
-    query += " WHERE p.user_id = ?";
-    params.push(user_id);
-  }
-  query += " ORDER BY p.post_id DESC, m.created_at ASC";
-
   try {
-    const rows = await dbAll(query, params);
+    const rows = await dbAll(query);
     const postsMap = {};
     rows.forEach(row => {
       if (!postsMap[row.post_id]) {
-        postsMap[row.post_id] = {
-          post_id: row.post_id,
-          post_name: row.post_name,
-          user_id: row.user_id,
-          num_likes: row.num_likes,
-          comments: row.comments,
-          location: row.location,
-          tags: row.tags,
-          media: []
-        };
+        postsMap[row.post_id] = { post_id: row.post_id, post_name: row.post_name, user_id: row.user_id, num_likes: row.num_likes, comments: row.comments, location: row.location, tags: row.tags, media: [] };
       }
       if (row.media_id && row.data) {
-        postsMap[row.post_id].media.push({
-          id: row.media_id,
-          type: row.type,
-          filename: row.filename,
-          data: Buffer.from(row.data).toString('base64')
-        });
+        postsMap[row.post_id].media.push({ id: row.media_id, type: row.type, filename: row.filename, data: Buffer.from(row.data).toString('base64') });
       }
     });
     res.json({ posts: Object.values(postsMap) });
