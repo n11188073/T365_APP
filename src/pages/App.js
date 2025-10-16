@@ -251,8 +251,8 @@ const Home = ({
     tab === 'Nearby' ? nearbyFeed :
     [...exploreFeed, ...SAMPLE_POSTS];
 
-  const formatLikes = (n = 0) =>
-    n >= 1000 ? `${(n / 1000).toFixed(n % 1000 >= 100 ? 1 : 0)}k` : `${n}`;
+  //const formatLikes = (n = 0) =>
+  //  n >= 1000 ? `${(n / 1000).toFixed(n % 1000 >= 100 ? 1 : 0)}k` : `${n}`;
 
   return (
     <div className="main-container with-topbar">
