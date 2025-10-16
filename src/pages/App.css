@@ -262,3 +262,35 @@ html, body, #root {
   .ig-meta { padding: 0 10px 10px; }
   .search { width: 100%; }
 }
+
+/* ==== Search page layout (isolated from Home feed) ==== */
+.search-results {
+  width: 100%;
+  max-width: 1050px;
+  padding: 0 16px;
+  margin: 0 auto;
+}
+
+.search-section { margin: 8px 0 16px; }
+.search-section > h3 { margin: 8px 2px; }
+
+.search-section-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+/* Card styling used by Search */
+.post-card {
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 16px;
+  box-shadow: 0 6px 18px rgba(11,22,39,0.06);
+  overflow: hidden;
+}
+.post-card .post-media {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  display: block;
+}

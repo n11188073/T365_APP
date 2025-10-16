@@ -40,30 +40,168 @@ const BACKEND_URL =
 
 // Sample demo posts
 export const SAMPLE_POSTS = [
-  { post_id: 'demo-1',  post_name: 'London',            imageUrl: 'https://images.unsplash.com/photo-1505761671935-60b3a7427bad?auto=format&fit=crop&w=1200&q=80' },
-  { post_id: 'demo-2',  post_name: 'Shibuya Crossing',  imageUrl: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=1200&q=80' },
-  { post_id: 'demo-3',  post_name: 'Matcha Café',       imageUrl: 'https://images.unsplash.com/photo-1575853121743-60c24f0a7502?auto=format&fit=crop&w=1200&q=80' },
-  { post_id: 'demo-4',  post_name: 'Kyoto Streets',     imageUrl: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=1200&q=80' },
-  { post_id: 'demo-5',  post_name: 'Osaka Dotonbori',   imageUrl: 'https://images.unsplash.com/photo-1545569341-9eb8b30979d0?auto=format&fit=crop&w=1200&q=80' },
-
-  { post_id: 'demo-6',  post_name: 'Great Ocean Road',  imageUrl: 'https://images.unsplash.com/photo-1494475673543-6a6a27143b16?auto=format&fit=crop&w=1200&q=80' },
-  { post_id: 'demo-7',  post_name: 'Seoul Night',       imageUrl: 'https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=1200&q=80' },
-  { post_id: 'demo-8',  post_name: 'Taipei Alley',      imageUrl: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1200&q=80' },
-  { post_id: 'demo-9',  post_name: 'Hanoi Old Quarter', imageUrl: 'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?auto=format&fit=crop&w=1200&q=80' },
-  { post_id: 'demo-10', post_name: 'Bangkok Markets',   imageUrl: 'https://images.unsplash.com/photo-1504270997636-07ddfbd48945?auto=format&fit=crop&w=1200&q=80' },
-
-  { post_id: 'demo-11', post_name: 'Santorini',         imageUrl: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80' },
-  { post_id: 'demo-12', post_name: 'Amalfi Coast',      imageUrl: 'https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=1200&q=80' },
-  { post_id: 'demo-13', post_name: 'Paris Café',        imageUrl: 'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?auto=format&fit=crop&w=1200&q=80' },
-  { post_id: 'demo-14', post_name: 'Lisbon Tram',       imageUrl: 'https://images.unsplash.com/photo-1528909514045-2fa4ac7a08ba?auto=format&fit=crop&w=1200&q=80' },
-  { post_id: 'demo-15', post_name: 'Istanbul Bazaar',   imageUrl: 'https://images.unsplash.com/photo-1508612761958-e931d843bddb?auto=format&fit=crop&w=1200&q=80' },
-
-  { post_id: 'demo-16', post_name: 'Marrakesh Souk',    imageUrl: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=80' },
-  { post_id: 'demo-17', post_name: 'New York Rooftop',  imageUrl: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1200&q=80' },
-  { post_id: 'demo-18', post_name: 'Chef’s Table',      imageUrl: 'https://images.unsplash.com/photo-1526318472351-c75fcf070305?auto=format&fit=crop&w=1200&q=80' },
-  { post_id: 'demo-19', post_name: 'Swiss Alps',        imageUrl: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&q=80' },
-  { post_id: 'demo-20', post_name: 'Lake Como',         imageUrl: 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1200&q=80' },
+  {
+    post_id: 'demo-1',
+    post_name: 'London',
+    location: 'Westminster, London',
+    lat: 51.5007, lng: -0.1246,
+    tags: 'uk big ben river thames landmark',
+    imageUrl: 'https://images.unsplash.com/photo-1505761671935-60b3a7427bad?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    post_id: 'demo-2',
+    post_name: 'Shibuya Crossing',
+    location: 'Shibuya City, Tokyo',
+    lat: 35.6595, lng: 139.7005,
+    tags: 'tokyo nightlife neon streets japan',
+    imageUrl: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    post_id: 'demo-3',
+    post_name: 'Matcha Café',
+    location: 'Nishiki Market, Kyoto',
+    lat: 35.0054, lng: 135.7640,
+    tags: 'cafe dessert matcha kyoto sweets',
+    imageUrl: 'https://images.unsplash.com/photo-1575853121743-60c24f0a7502?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    post_id: 'demo-4',
+    post_name: 'Kyoto Streets',
+    location: 'Gion, Kyoto',
+    lat: 35.0037, lng: 135.7788,
+    tags: 'kyoto gion night street photography',
+    imageUrl: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    post_id: 'demo-5',
+    post_name: 'Osaka Dotonbori',
+    location: 'Dōtonbori, Osaka',
+    lat: 34.6687, lng: 135.5011,
+    tags: 'osaka canal food street nightlife',
+    imageUrl: 'https://images.unsplash.com/photo-1549693578-d683be217e58?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    post_id: 'demo-6',
+    post_name: 'Great Ocean Road',
+    location: 'Victoria, Australia',
+    lat: -38.6650, lng: 143.3920,
+    tags: 'australia coast road trip scenery',
+    imageUrl: 'https://images.unsplash.com/photo-1483683804023-6ccdb62f86ef?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    post_id: 'demo-7',
+    post_name: 'Seoul Night',
+    location: 'Myeongdong, Seoul',
+    lat: 37.5636, lng: 126.9827,
+    tags: 'seoul korea night market street',
+    imageUrl: 'https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    post_id: 'demo-8',
+    post_name: 'Taipei Alley',
+    location: 'Zhongzheng, Taipei',
+    lat: 25.0329, lng: 121.5654,
+    tags: 'taipei taiwan alley urban travel',
+    imageUrl: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    post_id: 'demo-9',
+    post_name: 'Hanoi Old Quarter',
+    location: 'Hoàn Kiếm, Hanoi',
+    lat: 21.0359, lng: 105.8520,
+    tags: 'vietnam street scooter food culture',
+    imageUrl: 'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    post_id: 'demo-10',
+    post_name: 'Bangkok Markets',
+    location: 'Chatuchak, Bangkok',
+    lat: 13.7996, lng: 100.5506,
+    tags: 'thailand market street food shopping',
+    imageUrl: 'https://images.unsplash.com/photo-1504270997636-07ddfbd48945?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    post_id: 'demo-11',
+    post_name: 'Santorini',
+    location: 'Oia, Santorini',
+    lat: 36.4618, lng: 25.3753,
+    tags: 'greece island blue domes sunset',
+    imageUrl: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    post_id: 'demo-12',
+    post_name: 'Amalfi Coast',
+    location: 'Positano, Italy',
+    lat: 40.6280, lng: 14.4849,
+    tags: 'italy coast cliff village beach',
+    imageUrl: 'https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    post_id: 'demo-13',
+    post_name: 'Paris Café',
+    location: 'Le Marais, Paris',
+    lat: 48.8576, lng: 2.3626,
+    tags: 'paris cafe brunch croissant france',
+    imageUrl: 'https://images.unsplash.com/photo-1498654200943-1088dd4438ae?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    post_id: 'demo-14',
+    post_name: 'Lisbon Tram',
+    location: 'Alfama, Lisbon',
+    lat: 38.7139, lng: -9.1306,
+    tags: 'lisbon tram hills pastel houses',
+    imageUrl: 'https://images.unsplash.com/photo-1528909514045-2fa4ac7a08ba?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    post_id: 'demo-15',
+    post_name: 'Istanbul Bazaar',
+    location: 'Grand Bazaar, Istanbul',
+    lat: 41.0106, lng: 28.9684,
+    tags: 'istanbul bazaar spices market turkey',
+    imageUrl: 'https://images.unsplash.com/photo-1519050263182-513a8eacb0ff?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    post_id: 'demo-16',
+    post_name: 'Marrakesh Souk',
+    location: 'Medina, Marrakesh',
+    lat: 31.6295, lng: -7.9811,
+    tags: 'morocco souk lanterns market medina',
+    imageUrl: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    post_id: 'demo-17',
+    post_name: 'New York Rooftop',
+    location: 'Midtown, Manhattan',
+    lat: 40.7580, lng: -73.9855,
+    tags: 'new york skyline rooftop city usa',
+    imageUrl: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    post_id: 'demo-18',
+    post_name: 'Chef’s Table',
+    location: 'Soho, London',
+    lat: 51.5136, lng: -0.1365,
+    tags: 'restaurant fine dining tasting menu',
+    imageUrl: 'https://images.unsplash.com/photo-1526318472351-c75fcf070305?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    post_id: 'demo-19',
+    post_name: 'Swiss Alps',
+    location: 'Lauterbrunnen, Switzerland',
+    lat: 46.5930, lng: 7.9070,
+    tags: 'switzerland alps stars mountains nature',
+    imageUrl: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&q=80'
+  },
+  {
+    post_id: 'demo-20',
+    post_name: 'Lake Como',
+    location: 'Varenna, Lake Como',
+    lat: 46.0101, lng: 9.2833,
+    tags: 'italy lake boating summer mountains',
+    imageUrl: 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1200&q=80'
+  }
 ];
+
 
 // Helper: build Google Maps link
 const mapHrefFor = (post) => {
@@ -320,7 +458,7 @@ const App = () => {
         <Route path="/profile" element={<Profile />} />
         <Route path="/login" element={<Login />} />
         <Route path="/DatabaseViewer" element={<DatabaseViewer />} />
-        <Route path="/search" element={<SearchPage />} />
+        <Route path="/search" element={<SearchPage posts={[...posts, ...SAMPLE_POSTS]} />} />
          <Route path="/post/:id" element={<PostPage posts={posts} />} />
       </Routes>
 
