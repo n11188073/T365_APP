@@ -15,7 +15,7 @@ const Login = () => {
     const fetchMe = async () => {
       try {
         const res = await fetch(`${API_BASE}/api/me`, {
-          credentials: "include",
+          credentials: "include", // include cookies
         });
         if (res.ok) {
           const data = await res.json();
@@ -33,10 +33,11 @@ const Login = () => {
   const handleSuccess = async (credentialResponse) => {
     try {
       const token = credentialResponse.credential;
+      // Send token to backend to create HttpOnly cookie
       const res = await fetch(`${API_BASE}/api/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        credentials: "include", // required for cookies
         body: JSON.stringify({ token }),
       });
 
@@ -82,31 +83,34 @@ const Login = () => {
   }
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        {user ? (
-          <>
-            <h1 style={styles.title}>
-              Welcome,{" "}
-              <span style={{ color: "black", fontWeight: "600" }}>
-                {user.name}
-              </span>
-            </h1>
-            <p style={styles.subtitle}>You are now logged in.</p>
-            <button onClick={handleLogout} style={styles.logoutButton}>
-              Logout
-            </button>
-          </>
-        ) : (
-          <>
-            <h1 style={styles.title}>Login</h1>
-            <p style={styles.subtitle}>Please log in with your Google account:</p>
-            <div style={{ marginTop: "1rem" }}>
-              <GoogleLogin onSuccess={handleSuccess} onError={handleError} />
-            </div>
-          </>
-        )}
-      </div>
+    <div style={{ padding: "2rem" }}>
+      {user ? (
+        <>
+          <h1>
+            Welcome, <span style={{ color: "black" }}>{user.name}</span>
+          </h1>
+          <button
+            onClick={handleLogout}
+            style={{
+              marginTop: "1rem",
+              backgroundColor: "#ff4d4d",
+              color: "white",
+              border: "none",
+              padding: "0.5rem 1rem",
+              borderRadius: "5px",
+              cursor: "pointer",
+            }}
+          >
+            Logout
+          </button>
+        </>
+      ) : (
+        <>
+          <h1>Login</h1>
+          <p>Please log in with your Google account:</p>
+          <GoogleLogin onSuccess={handleSuccess} onError={handleError} />
+        </>
+      )}
     </div>
   );
 };
