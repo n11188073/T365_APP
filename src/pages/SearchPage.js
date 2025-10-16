@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { useLocation, Link } from 'react-router-dom';
+import { useLocation, Link, useNavigate } from 'react-router-dom';
 
 const SUGGESTIONS = [
   'Tokyo', 'Kyoto', 'Osaka', 'Shibuya', 'Matcha', 'Onsen',
@@ -42,7 +42,6 @@ const filterSortPosts = (posts, q) =>
     .filter(p => q ? p._score > 0 : true)
     .sort((a, b) => b._score - a._score);
 
-// Build unique users from posts
 const buildUsers = (posts) => {
   const byUser = new Map();
   posts.forEach(p => {
@@ -67,29 +66,19 @@ const buildUsers = (posts) => {
 
 const filterSortUsers = (users, q) =>
   users
-    .map(u => ({
-      ...u,
-      _score: scoreText(u.user_name, q) + (q ? 0 : 0) + Math.min(u.post_count, 3) // small boost for active users
-    }))
+    .map(u => ({ ...u, _score: scoreText(u.user_name, q) + Math.min(u.post_count, 3) }))
     .filter(u => q ? u._score > 0 : true)
     .sort((a, b) => b._score - a._score);
 
-// Build unique places from posts
 const buildPlaces = (posts) => {
   const byPlace = new Map();
   posts.forEach(p => {
     const key = (p.location || '').trim();
     if (!key) return;
     if (!byPlace.has(key)) {
-      byPlace.set(key, {
-        location: key,
-        lat: p.lat,
-        lng: p.lng,
-        posts: [p],
-      });
+      byPlace.set(key, { location: key, lat: p.lat, lng: p.lng, posts: [p] });
     } else {
       const ref = byPlace.get(key);
-      // prefer first lat/lng seen
       if (ref.lat == null && p.lat != null) ref.lat = p.lat;
       if (ref.lng == null && p.lng != null) ref.lng = p.lng;
       ref.posts.push(p);
@@ -104,16 +93,14 @@ const buildPlaces = (posts) => {
 
 const filterSortPlaces = (places, q) =>
   places
-    .map(pl => ({
-      ...pl,
-      _score: scoreText(pl.location, q) + (q ? 0 : 0) + Math.min(pl.count, 3) // small boost for popular places
-    }))
+    .map(pl => ({ ...pl, _score: scoreText(pl.location, q) + Math.min(pl.count, 3) }))
     .filter(pl => q ? pl._score > 0 : true)
     .sort((a, b) => b._score - a._score);
 
 // ---------- component ----------
 const SearchPage = ({ posts = [] }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const params = new URLSearchParams(location.search);
   const rawQ = (params.get('q') || '').trim();
 
@@ -123,11 +110,19 @@ const SearchPage = ({ posts = [] }) => {
 
   // debounce typing
   useEffect(() => {
-    const id = setTimeout(() => setDebouncedQ(q.trim()), 220);
+    const id = setTimeout(() => {
+      const trimmed = q.trim();
+      setDebouncedQ(trimmed);
+      // keep URL in sync so refresh/share works
+      const urlQ = new URLSearchParams(location.search).get('q') || '';
+      if (trimmed !== urlQ) {
+        navigate(`/search?q=${encodeURIComponent(trimmed)}`, { replace: true });
+      }
+    }, 220);
     return () => clearTimeout(id);
-  }, [q]);
+  }, [q, location.search, navigate]);
 
-  // sync when URL changes
+  // sync when URL changes externally
   useEffect(() => {
     setQ(rawQ);
     setDebouncedQ(rawQ);
@@ -137,20 +132,17 @@ const SearchPage = ({ posts = [] }) => {
   const usersAll = useMemo(() => buildUsers(posts), [posts]);
   const placesAll = useMemo(() => buildPlaces(posts), [posts]);
 
-  const postsFiltered = useMemo(() => filterSortPosts(posts, debouncedQ), [posts, debouncedQ]);
-  const usersFiltered = useMemo(() => filterSortUsers(usersAll, debouncedQ), [usersAll, debouncedQ]);
+  const postsFiltered  = useMemo(() => filterSortPosts(posts,  debouncedQ), [posts,  debouncedQ]);
+  const usersFiltered  = useMemo(() => filterSortUsers(usersAll, debouncedQ), [usersAll, debouncedQ]);
   const placesFiltered = useMemo(() => filterSortPlaces(placesAll, debouncedQ), [placesAll, debouncedQ]);
 
   const hasAny =
-    (activeTab === 'All' && (postsFiltered.length || usersFiltered.length || placesFiltered.length)) ||
-    (activeTab === 'Posts' && postsFiltered.length) ||
-    (activeTab === 'Users' && usersFiltered.length) ||
+    (activeTab === 'All'    && (postsFiltered.length || usersFiltered.length || placesFiltered.length)) ||
+    (activeTab === 'Posts'  && postsFiltered.length) ||
+    (activeTab === 'Users'  && usersFiltered.length) ||
     (activeTab === 'Places' && placesFiltered.length);
 
-  const onSubmit = (e) => {
-    e.preventDefault();
-    setDebouncedQ(q.trim());
-  };
+  const onSubmit = (e) => { e.preventDefault(); setDebouncedQ(q.trim()); };
 
   return (
     <div className="main-container">
@@ -185,11 +177,7 @@ const SearchPage = ({ posts = [] }) => {
         <span className="muted">Suggestions:</span>
         <div className="chip-row">
           {SUGGESTIONS.slice(0, 6).map((s) => (
-            <button
-              key={s}
-              className="chip"
-              onClick={() => { setQ(s); setDebouncedQ(s); }}
-            >
+            <button key={s} className="chip" onClick={() => { setQ(s); setDebouncedQ(s); }}>
               {s}
             </button>
           ))}
@@ -198,183 +186,164 @@ const SearchPage = ({ posts = [] }) => {
 
       {debouncedQ && <p>Query: {debouncedQ || '—'}</p>}
 
-      {/* results */}
-      <div className="posts-grid">
-        {/* ALL tab shows sections if present */}
+      {/* results — use dedicated containers so Home feed CSS doesn't affect layout */}
+      <div className="search-results">
         {activeTab === 'All' && (
           <>
             {postsFiltered.length > 0 && (
-              <>
-                <h3 style={{ margin: '4px 0' }}>Posts</h3>
-                {postsFiltered.slice(0, 5).map(p => (
-                  <div key={p.post_id} className="post-card">
-                    <Link
-                      to={`/post/${p.post_id}`}
-                      style={{ textDecoration: 'none', color: 'inherit' }}
-                    >
-                      {p.imageUrl && (
-                        <img src={p.imageUrl} alt={p.post_name} className="post-media" />
-                      )}
-                      <h3 style={{ paddingTop: 8, margin: 0 }}>{p.post_name}</h3>
-                    </Link>
-                    <p className="muted small">
-                      {p.location ? (
-                        <a
-                          href={mapHrefFor(p)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          title="Open in Google Maps"
-                        >
-                          {p.location}
-                        </a>
-                      ) : '—'}
-                    </p>
-                  </div>
-                ))}
-              </>
+              <section className="search-section">
+                <h3>Posts</h3>
+                <div className="search-section-grid">
+                  {postsFiltered.slice(0, 8).map(p => (
+                    <div key={p.post_id} className="post-card">
+                      <Link to={`/post/${p.post_id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                        {p.imageUrl && <img src={p.imageUrl} alt={p.post_name} className="post-media" />}
+                        <h3 style={{ padding: '8px 10px', margin: 0 }}>{p.post_name}</h3>
+                      </Link>
+                      <p className="muted small" style={{ padding: '0 10px 10px' }}>
+                        {p.location ? (
+                          <a href={mapHrefFor(p)} target="_blank" rel="noopener noreferrer" title="Open in Google Maps">
+                            {p.location}
+                          </a>
+                        ) : '—'}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </section>
             )}
 
             {usersFiltered.length > 0 && (
-              <>
-                <h3 style={{ margin: '8px 0 4px' }}>Users</h3>
-                {usersFiltered.slice(0, 5).map(u => (
-                  <div key={u.user_name} className="post-card" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 10 }}>
-                    <img
-                      src={u.user_avatar || 'https://i.pravatar.cc/80?u=placeholder'}
-                      alt={u.user_name}
-                      style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover' }}
-                    />
-                    <div>
-                      <div style={{ fontWeight: 700 }}>{u.user_name}</div>
-                      <div className="muted small">{u.post_count} posts</div>
+              <section className="search-section">
+                <h3>Users</h3>
+                <div className="search-section-grid">
+                  {usersFiltered.slice(0, 6).map(u => (
+                    <div key={u.user_name} className="post-card" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 10 }}>
+                      <img
+                        src={u.user_avatar || 'https://i.pravatar.cc/80?u=placeholder'}
+                        alt={u.user_name}
+                        style={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover' }}
+                      />
+                      <div>
+                        <div style={{ fontWeight: 700 }}>{u.user_name}</div>
+                        <div className="muted small">{u.post_count} posts</div>
+                        {u.location_sample && <div className="muted small">{u.location_sample}</div>}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </>
+                  ))}
+                </div>
+              </section>
             )}
 
             {placesFiltered.length > 0 && (
-              <>
-                <h3 style={{ margin: '8px 0 4px' }}>Places</h3>
-                {placesFiltered.slice(0, 5).map(pl => (
-                  <a
-                    key={pl.location}
-                    className="post-card"
-                    href={mapHrefFor(pl)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title="Open in Google Maps"
-                    style={{ textDecoration: 'none', color: 'inherit' }}
-                  >
-                    {pl.sample_image && (
-                      <img
-                        src={pl.sample_image}
-                        alt={pl.location}
-                        className="post-media"
-                        style={{ maxHeight: 220, objectFit: 'cover' }}
-                      />
-                    )}
-                    <div style={{ padding: '8px 10px' }}>
-                      <div style={{ fontWeight: 700 }}>{pl.location}</div>
-                      <div className="muted small">{pl.count} related posts</div>
-                    </div>
-                  </a>
-                ))}
-              </>
+              <section className="search-section">
+                <h3>Places</h3>
+                <div className="search-section-grid">
+                  {placesFiltered.slice(0, 6).map(pl => (
+                    <a
+                      key={pl.location}
+                      className="post-card"
+                      href={mapHrefFor(pl)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="Open in Google Maps"
+                      style={{ textDecoration: 'none', color: 'inherit' }}
+                    >
+                      {pl.sample_image && (
+                        <img src={pl.sample_image} alt={pl.location} className="post-media" style={{ maxHeight: 220, objectFit: 'cover' }} />
+                      )}
+                      <div style={{ padding: '8px 10px' }}>
+                        <div style={{ fontWeight: 700 }}>{pl.location}</div>
+                        <div className="muted small">{pl.count} related posts</div>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </section>
             )}
           </>
         )}
 
-        {/* POSTS tab */}
-        {activeTab === 'Posts' && postsFiltered.map(p => (
-          <div key={p.post_id} className="post-card">
-            <Link
-              to={`/post/${p.post_id}`}
-              style={{ textDecoration: 'none', color: 'inherit' }}
-            >
-              {p.imageUrl && (
-                <img src={p.imageUrl} alt={p.post_name} className="post-media" />
-              )}
-              <h3 style={{ paddingTop: 8, margin: 0 }}>{p.post_name}</h3>
-            </Link>
-            <p className="muted small">
-              {p.location ? (
+        {activeTab === 'Posts' && (
+          <section className="search-section">
+            <div className="search-section-grid">
+              {postsFiltered.map(p => (
+                <div key={p.post_id} className="post-card">
+                  <Link to={`/post/${p.post_id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                    {p.imageUrl && <img src={p.imageUrl} alt={p.post_name} className="post-media" />}
+                    <h3 style={{ padding: '8px 10px', margin: 0 }}>{p.post_name}</h3>
+                  </Link>
+                  <p className="muted small" style={{ padding: '0 10px 10px' }}>
+                    {p.location ? (
+                      <a href={mapHrefFor(p)} target="_blank" rel="noopener noreferrer" title="Open in Google Maps">
+                        {p.location}
+                      </a>
+                    ) : '—'}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {activeTab === 'Users' && (
+          <section className="search-section">
+            <div className="search-section-grid">
+              {usersFiltered.map(u => (
+                <div key={u.user_name} className="post-card" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 10 }}>
+                  <img
+                    src={u.user_avatar || 'https://i.pravatar.cc/80?u=placeholder'}
+                    alt={u.user_name}
+                    style={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover' }}
+                  />
+                  <div>
+                    <div style={{ fontWeight: 700 }}>{u.user_name}</div>
+                    <div className="muted small">{u.post_count} posts</div>
+                    {u.location_sample && <div className="muted small">{u.location_sample}</div>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {activeTab === 'Places' && (
+          <section className="search-section">
+            <div className="search-section-grid">
+              {placesFiltered.map(pl => (
                 <a
-                  href={mapHrefFor(p)}
+                  key={pl.location}
+                  className="post-card"
+                  href={mapHrefFor(pl)}
                   target="_blank"
                   rel="noopener noreferrer"
                   title="Open in Google Maps"
+                  style={{ textDecoration: 'none', color: 'inherit' }}
                 >
-                  {p.location}
+                  {pl.sample_image && (
+                    <img src={pl.sample_image} alt={pl.location} className="post-media" style={{ maxHeight: 240, objectFit: 'cover' }} />
+                  )}
+                  <div style={{ padding: '8px 10px' }}>
+                    <div style={{ fontWeight: 700 }}>{pl.location}</div>
+                    <div className="muted small">{pl.count} related posts</div>
+                  </div>
                 </a>
-              ) : '—'}
-            </p>
-            <p className="muted small">{p.tags || ''}</p>
-          </div>
-        ))}
-
-        {/* USERS tab */}
-        {activeTab === 'Users' && usersFiltered.map(u => (
-          <div key={u.user_name} className="post-card" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 10 }}>
-            <img
-              src={u.user_avatar || 'https://i.pravatar.cc/80?u=placeholder'}
-              alt={u.user_name}
-              style={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover' }}
-            />
-            <div>
-              <div style={{ fontWeight: 700 }}>{u.user_name}</div>
-              <div className="muted small">{u.post_count} posts</div>
-              {u.location_sample && <div className="muted small">{u.location_sample}</div>}
+              ))}
             </div>
-          </div>
-        ))}
-
-        {/* PLACES tab */}
-        {activeTab === 'Places' && placesFiltered.map(pl => (
-          <a
-            key={pl.location}
-            className="post-card"
-            href={mapHrefFor(pl)}
-            target="_blank"
-            rel="noopener noreferrer"
-            title="Open in Google Maps"
-            style={{ textDecoration: 'none', color: 'inherit' }}
-          >
-            {pl.sample_image && (
-              <img
-                src={pl.sample_image}
-                alt={pl.location}
-                className="post-media"
-                style={{ maxHeight: 240, objectFit: 'cover' }}
-              />
-            )}
-            <div style={{ padding: '8px 10px' }}>
-              <div style={{ fontWeight: 700 }}>{pl.location}</div>
-              <div className="muted small">{pl.count} related posts</div>
-            </div>
-          </a>
-        ))}
+          </section>
+        )}
       </div>
 
-      {/* empty state */}
       {!hasAny && (
-        <div className="post-card" style={{ marginTop: 8 }}>
+        <div className="post-card" style={{ marginTop: 8, paddingBottom: 8 }}>
           <p><strong>No results{debouncedQ ? ` for “${debouncedQ}”` : ''}.</strong></p>
           <p className="muted">Try a broader term or pick a suggestion below.</p>
           <div className="chip-row" style={{ marginBottom: 10 }}>
             {SUGGESTIONS.slice(0, 6).map((s) => (
-              <button
-                key={s}
-                className="chip"
-                onClick={() => { setQ(s); setDebouncedQ(s); }}
-              >
-                {s}
-              </button>
+              <button key={s} className="chip" onClick={() => { setQ(s); setDebouncedQ(s); }}>{s}</button>
             ))}
           </div>
-          <div>
-            <Link to="/">Back to Home</Link>
-          </div>
+          <div><Link to="/">Back to Home</Link></div>
         </div>
       )}
     </div>
