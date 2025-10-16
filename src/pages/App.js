@@ -14,8 +14,9 @@ import {
   faPaperPlane,
   faCommentDots,
   faEllipsis,
-  faChevronLeft,
-  faChevronRight
+  faChevronLeft, 
+  faChevronRight, 
+  faMagnifyingGlass,
 } from '@fortawesome/free-solid-svg-icons';
 import { Link, BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 
@@ -39,11 +40,29 @@ const BACKEND_URL =
 
 // Sample demo posts
 export const SAMPLE_POSTS = [
-  { post_id: 'demo-1', post_name: 'London', imageUrl: 'https://images.unsplash.com/photo-1505761671935-60b3a7427bad?auto=format&fit=crop&w=1200&q=80' },
-  { post_id: 'demo-2', post_name: 'Shibuya Crossing', imageUrl: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=1200&q=80' },
-  { post_id: 'demo-3', post_name: 'Matcha Café', imageUrl: 'https://images.unsplash.com/photo-1575853121743-60c24f0a7502?auto=format&fit=crop&w=1200&q=80' },
-  { post_id: 'demo-4', post_name: 'Kyoto Streets', imageUrl: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=1200&q=80' },
-  { post_id: 'demo-5', post_name: 'Osaka Dotonbori', imageUrl: 'https://images.unsplash.com/photo-1545569341-9eb8b30979d0?auto=format&fit=crop&w=1200&q=80' },
+  { post_id: 'demo-1',  post_name: 'London',            imageUrl: 'https://images.unsplash.com/photo-1505761671935-60b3a7427bad?auto=format&fit=crop&w=1200&q=80' },
+  { post_id: 'demo-2',  post_name: 'Shibuya Crossing',  imageUrl: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=1200&q=80' },
+  { post_id: 'demo-3',  post_name: 'Matcha Café',       imageUrl: 'https://images.unsplash.com/photo-1575853121743-60c24f0a7502?auto=format&fit=crop&w=1200&q=80' },
+  { post_id: 'demo-4',  post_name: 'Kyoto Streets',     imageUrl: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=1200&q=80' },
+  { post_id: 'demo-5',  post_name: 'Osaka Dotonbori',   imageUrl: 'https://images.unsplash.com/photo-1545569341-9eb8b30979d0?auto=format&fit=crop&w=1200&q=80' },
+
+  { post_id: 'demo-6',  post_name: 'Great Ocean Road',  imageUrl: 'https://images.unsplash.com/photo-1494475673543-6a6a27143b16?auto=format&fit=crop&w=1200&q=80' },
+  { post_id: 'demo-7',  post_name: 'Seoul Night',       imageUrl: 'https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=1200&q=80' },
+  { post_id: 'demo-8',  post_name: 'Taipei Alley',      imageUrl: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1200&q=80' },
+  { post_id: 'demo-9',  post_name: 'Hanoi Old Quarter', imageUrl: 'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?auto=format&fit=crop&w=1200&q=80' },
+  { post_id: 'demo-10', post_name: 'Bangkok Markets',   imageUrl: 'https://images.unsplash.com/photo-1504270997636-07ddfbd48945?auto=format&fit=crop&w=1200&q=80' },
+
+  { post_id: 'demo-11', post_name: 'Santorini',         imageUrl: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80' },
+  { post_id: 'demo-12', post_name: 'Amalfi Coast',      imageUrl: 'https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=1200&q=80' },
+  { post_id: 'demo-13', post_name: 'Paris Café',        imageUrl: 'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?auto=format&fit=crop&w=1200&q=80' },
+  { post_id: 'demo-14', post_name: 'Lisbon Tram',       imageUrl: 'https://images.unsplash.com/photo-1528909514045-2fa4ac7a08ba?auto=format&fit=crop&w=1200&q=80' },
+  { post_id: 'demo-15', post_name: 'Istanbul Bazaar',   imageUrl: 'https://images.unsplash.com/photo-1508612761958-e931d843bddb?auto=format&fit=crop&w=1200&q=80' },
+
+  { post_id: 'demo-16', post_name: 'Marrakesh Souk',    imageUrl: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=80' },
+  { post_id: 'demo-17', post_name: 'New York Rooftop',  imageUrl: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1200&q=80' },
+  { post_id: 'demo-18', post_name: 'Chef’s Table',      imageUrl: 'https://images.unsplash.com/photo-1526318472351-c75fcf070305?auto=format&fit=crop&w=1200&q=80' },
+  { post_id: 'demo-19', post_name: 'Swiss Alps',        imageUrl: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1200&q=80' },
+  { post_id: 'demo-20', post_name: 'Lake Como',         imageUrl: 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1200&q=80' },
 ];
 
 // Helper: build Google Maps link
@@ -109,9 +128,18 @@ const Home = ({
         </div>
       </div>
 
-      <form onSubmit={onSubmit} className="search-wrap">
-        <input type="text" className="search" placeholder="Search" value={searchQuery} onChange={handleSearch} />
-      </form>
+     <form onSubmit={onSubmit} className="search-wrap">
+   <input
+     type="text"
+     className="search"
+     placeholder="Search destinations, cafes, ideas…"
+     value={searchQuery}
+     onChange={handleSearch}
+   />
+    <button type="submit" className="search-icon-btn" aria-label="Search">
+     <FontAwesomeIcon icon={faMagnifyingGlass} />
+   </button>
+  </form>
 
       {tab === 'Following' && mergedFeed.length === 0 && (
         <div className="empty-state">
@@ -134,9 +162,9 @@ const Home = ({
         </div>
       )}
 
-      <div className="posts-grid">
+      <div className="posts-grid home-grid">
         {mergedFeed.map((p) => (
-          <article key={p.post_id} className="ig-card">
+          <article key={p.post_id} className={`ig-card ${Array.isArray(p.media) && p.media.some(m => m.type === 'video') ? 'has-video' : ''}`}>
             <header className="ig-header">
               <div className="ig-user">
                 <img className="ig-avatar" src={p.user_avatar || 'https://i.pravatar.cc/80?u=placeholder'} alt={p.user_name || 'user'} />
