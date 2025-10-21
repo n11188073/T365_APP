@@ -153,14 +153,6 @@ export const SAMPLE_POSTS = [
     imageUrl: 'https://images.unsplash.com/photo-1528909514045-2fa4ac7a08ba?auto=format&fit=crop&w=1200&q=80'
   },
   {
-    post_id: 'demo-15',
-    post_name: 'Istanbul Bazaar',
-    location: 'Grand Bazaar, Istanbul',
-    lat: 41.0106, lng: 28.9684,
-    tags: 'istanbul bazaar spices market turkey',
-    imageUrl: 'https://images.unsplash.com/photo-1519050263182-513a8eacb0ff?auto=format&fit=crop&w=1200&q=80'
-  },
-  {
     post_id: 'demo-16',
     post_name: 'Marrakesh Souk',
     location: 'Medina, Marrakesh',
@@ -220,8 +212,10 @@ const Home = ({
   handleNext,
   setCarouselIndex,
   handleSearch,
-  searchQuery
+  searchQuery,
+  onBookmarkClick
 }) => {
+
   const navigate = useNavigate();
   const [tab, setTab] = useState('Explore'); // 'Following' | 'Explore' | 'Nearby'
   const [nearbyAllowed, setNearbyAllowed] = useState(false);
@@ -358,7 +352,13 @@ const Home = ({
                     <button className="icon-btn" aria-label="Share"><FontAwesomeIcon icon={faPaperPlane} /></button>
                   </div>
                   <div className="right">
-                    <button className="icon-btn" aria-label="Save"><FontAwesomeIcon icon={faBookmark} /></button>
+                    <button
+                      className="icon-btn"
+                      aria-label="Save"
+                      onClick={() => onBookmarkClick(p)}
+                    >
+                      <FontAwesomeIcon icon={faBookmark} />
+                    </button>
                   </div>
                 </div>
               )}
@@ -384,6 +384,10 @@ const App = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [carouselIndex, setCarouselIndex] = useState({});
 
+  const [showBookmarkModal, setShowBookmarkModal] = useState(false);
+  const [selectedPost, setSelectedPost] = useState(null);
+
+
   const fetchPosts = async () => {
   try {
     const res = await fetch(`${BACKEND_URL}/posts`);
@@ -399,6 +403,16 @@ const App = () => {
 };
 
   useEffect(() => { fetchPosts(); }, []);
+
+
+  useEffect(() => {
+  if (showBookmarkModal) {
+    document.body.style.overflow = "hidden"; // Disable scrolling
+  } else {
+    document.body.style.overflow = ""; // Restore when closed
+  }
+}, [showBookmarkModal]);
+
 
   const handleSearch = (e) => {
     const query = e.target.value.toLowerCase();
@@ -439,6 +453,10 @@ const App = () => {
             setCarouselIndex={setCarouselIndex}
             handleSearch={handleSearch}
             searchQuery={searchQuery}
+            onBookmarkClick={(post) => {
+              setSelectedPost(post);
+              setShowBookmarkModal(true);
+            }}
           />
         }/>
         <Route path="/upload" element={<Upload onPostCreated={fetchPosts} />} />
@@ -474,6 +492,115 @@ const App = () => {
         <Link className="nav-icon" to="/calendar"><FontAwesomeIcon icon={faCalendar} /></Link>
         <Link className="nav-icon" to="/profile"><FontAwesomeIcon icon={faUser} /></Link>
       </div>
+
+
+
+
+
+
+
+      {/* Bookmark Modal (reuses Calendar style) */}
+      {showBookmarkModal && (
+        <>
+          {/* Background overlay */}
+          <div
+            onClick={() => setShowBookmarkModal(false)}
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              backgroundColor: "rgba(0, 0, 0, 0.5)",
+              zIndex: 9999,         // middle layer
+              pointerEvents: "auto" // ensures it blocks clicks
+            }}
+          ></div>
+
+
+
+          <div
+            style={{
+              position: "fixed",
+              bottom: 0,
+              left: 0,
+              width: "100%",
+              height: "70%",
+              backgroundColor: "white",
+              borderTopLeftRadius: "16px",
+              borderTopRightRadius: "16px",
+              zIndex: 10000,        // top layer (above overlay)
+              boxShadow: "0 -4px 12px rgba(0,0,0,0.3)",
+              display: "flex",
+              flexDirection: "column",
+              padding: "30px",
+              boxSizing: "border-box"
+            }}
+          >
+
+            {/* Header */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: "20px",
+              }}
+            >
+              <span
+                style={{ color: "gray", cursor: "pointer" }}
+                onClick={() => setShowBookmarkModal(false)}
+              >
+                Cancel
+              </span>
+              <span
+                style={{
+                  color: "dodgerblue",
+                  cursor: "pointer",
+                  fontWeight: "bold",
+                }}
+                onClick={() => {
+                  // future: save to itinerary or backend
+                  alert(`Saved "${selectedPost?.post_name}" to your bookmarks!`);
+                  setShowBookmarkModal(false);
+                }}
+              >
+                Save
+              </span>
+            </div>
+
+            {/* Content */}
+            <h3 style={{ marginBottom: "10px" }}>Save Destination</h3>
+
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                flex: 1,
+                gap: "10px",
+              }}
+            >
+              <img
+                src={selectedPost?.imageUrl}
+                alt={selectedPost?.post_name}
+                style={{
+                  width: "60%",
+                  borderRadius: "12px",
+                  boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
+                }}
+              />
+              <h3>{selectedPost?.post_name}</h3>
+              <p style={{ textAlign: "center", color: "gray" }}>
+                {selectedPost?.location}
+              </p>
+            </div>
+          </div>
+        </>
+      )}
+
+
+
     </Router>
   );
 };
