@@ -60,7 +60,7 @@ const Chat = () => {
     if (input.trim() === "") return;
     setMessages([
       ...messages,
-      { id: Date.now(), text: input, sender: "me", avatar: "https://i.pravatar.cc/80?img=12" }
+      { id: Date.now(), text: input, sender: "me", avatar: "https://cdn-icons-png.flaticon.com/512/847/847969.png" }
     ]);
     setInput("");
   };
