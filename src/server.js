@@ -163,6 +163,7 @@ const upload = multer({ storage });
 app.post('/create-post', upload.array('files'), async (req, res) => {
   const { post_name, location, tags, user_id } = req.body;
   const files = req.files || [];
+
   if (!post_name?.trim()) return res.status(400).json({ message: 'Post name required' });
   if (!user_id?.trim()) return res.status(400).json({ message: 'user_id required' });
 
@@ -174,12 +175,20 @@ app.post('/create-post', upload.array('files'), async (req, res) => {
   }
 
   const created_at = getAESTTimestamp();
+
   try {
-    const postId = await dbRun(`INSERT INTO posts (post_name, user_id, location, tags, bookmark_itenerary, num_likes, comments) VALUES (?, ?, ?, ?, ?, ?, ?)`, [post_name, user_id, location || null, tags || null, null, 0, null]);
+    const postId = await dbRun(
+      `INSERT INTO posts (post_name, user_id, location, tags, bookmark_itenerary, num_likes, comments) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [post_name, user_id, location || null, tags || null, null, 0, null]
+    );
 
     for (const file of files) {
-      const type = file.mimetype.startsWith('image/') ? 'image' : 'video';
-      await dbRun(`INSERT INTO media (post_id, type, filename, data, created_at) VALUES (?, ?, ?, ?, ?)`, [postId, type, file.originalname, file.buffer, created_at]);
+      // Store real MIME type
+      const mimeType = file.mimetype; // e.g., 'image/jpeg' or 'video/mp4'
+      await dbRun(
+        `INSERT INTO media (post_id, type, filename, data, created_at) VALUES (?, ?, ?, ?, ?)`,
+        [postId, mimeType, file.originalname, file.buffer, created_at]
+      );
     }
 
     res.json({ message: 'Post and media saved', post_id: postId, post_name });
@@ -189,27 +198,49 @@ app.post('/create-post', upload.array('files'), async (req, res) => {
   }
 });
 
+
 // Get all posts with media
 app.get('/posts', async (req, res) => {
   const query = `
-    SELECT p.post_id, p.post_name, p.user_id, p.num_likes, p.comments,
-           p.location, p.tags,
-           m.id AS media_id, m.type, m.filename, m.data, m.created_at
-    FROM posts p
-    LEFT JOIN media m ON p.post_id = m.post_id
-    ORDER BY p.post_id DESC, m.created_at ASC
+  SELECT p.post_id, p.post_name, p.user_id, p.num_likes, p.comments,
+         p.location, p.tags,
+         u.user_name,
+         m.id AS media_id, m.type, m.filename, m.data, m.created_at
+  FROM posts p
+  LEFT JOIN media m ON p.post_id = m.post_id
+  LEFT JOIN user_profiles u ON p.user_id = u.user_id
+  ORDER BY p.post_id DESC, m.created_at ASC
   `;
+
   try {
     const rows = await dbAll(query);
+
     const postsMap = {};
     rows.forEach(row => {
       if (!postsMap[row.post_id]) {
-        postsMap[row.post_id] = { post_id: row.post_id, post_name: row.post_name, user_id: row.user_id, num_likes: row.num_likes, comments: row.comments, location: row.location, tags: row.tags, media: [] };
+        postsMap[row.post_id] = { 
+          post_id: row.post_id,
+          post_name: row.post_name,
+          user_id: row.user_id,
+          user_name: row.user_name,
+          num_likes: row.num_likes,
+          comments: row.comments,
+          location: row.location,
+          tags: row.tags,
+          media: []
+        };
       }
+
       if (row.media_id && row.data) {
-        postsMap[row.post_id].media.push({ id: row.media_id, type: row.type, filename: row.filename, data: Buffer.from(row.data).toString('base64') });
+        postsMap[row.post_id].media.push({
+          id: row.media_id,
+          type: row.type, // already full MIME type
+          filename: row.filename,
+          data: Buffer.from(row.data).toString('base64') // base64
+        });
       }
     });
+
     res.json({ posts: Object.values(postsMap) });
   } catch (err) {
     console.error(err);
@@ -217,16 +248,6 @@ app.get('/posts', async (req, res) => {
   }
 });
 
-// Media list
-app.get('/media', async (req, res) => {
-  try {
-    const rows = await dbAll('SELECT id, type, filename, data, created_at FROM media ORDER BY created_at DESC');
-    res.json({ media: rows.map(r => ({ ...r, data: r.data ? Buffer.from(r.data).toString('base64') : null })) });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Error querying media' });
-  }
-});
 
 // -------------------------
 // Edit Post
