@@ -452,6 +452,19 @@ const App = () => {
         <Route path="/search" element={<SearchPage posts={[...posts, ...SAMPLE_POSTS]} />} />
         <Route path="/post/:id" element={<PostPage posts={posts} />} />
       </Routes>
+      
+      {/* Hidden Top Corner */}
+      <div style={{
+        position: "fixed",
+        top: "20px",
+        right: "20px",
+        display: "flex",
+        gap: "15px",
+        zIndex: 1000,
+      }}>
+        <Link className="nav-icon" to="/login"><FontAwesomeIcon icon={faRightToBracket} style={{ color: "white" }}/></Link>
+        <Link className="nav-icon" to="/DatabaseViewer"><FontAwesomeIcon icon={faBookmark} style={{ color: "white" }}/></Link>
+      </div>
 
       {/* Bottom Nav */}
       <div className="bottom-nav">
@@ -460,8 +473,6 @@ const App = () => {
         <Link className="nav-icon" to="/upload"><FontAwesomeIcon icon={faPlus} /></Link>
         <Link className="nav-icon" to="/calendar"><FontAwesomeIcon icon={faCalendar} /></Link>
         <Link className="nav-icon" to="/profile"><FontAwesomeIcon icon={faUser} /></Link>
-        <Link className="nav-icon" to="/login"><FontAwesomeIcon icon={faRightToBracket} /></Link>
-        <Link className="nav-icon" to="/DatabaseViewer"><FontAwesomeIcon icon={faBookmark} /></Link>
       </div>
     </Router>
   );
