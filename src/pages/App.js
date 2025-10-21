@@ -468,8 +468,6 @@ const App = () => {
         <Link className="nav-icon" to="/upload"><FontAwesomeIcon icon={faPlus} /></Link>
         <Link className="nav-icon" to="/calendar"><FontAwesomeIcon icon={faCalendar} /></Link>
         <Link className="nav-icon" to="/profile"><FontAwesomeIcon icon={faUser} /></Link>
-        <Link to="/login" className="nav-icon"><FontAwesomeIcon icon={faRightToBracket} /></Link>
-        <Link to="/DatabaseViewer" className="nav-icon"><FontAwesomeIcon icon={faRightToBracket} /></Link>
       </div>
     </Router>
   );
