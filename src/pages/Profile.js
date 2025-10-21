@@ -119,8 +119,8 @@ const Profile = () => {
         <div className="profile-header">
           <div className="avatar">
             <ImageWithFallback
-              src={user?.avatar || "https://cdn-icons-png.flaticon.com/512/847/847969.png"}
-              alt="Generic Avatar"
+              src={user?.avatar || "https://i.pravatar.cc/80?img=32"}
+              alt="avatar"
               style={{ width: 80, height: 80, borderRadius: "50%" }}
             />
           </div>

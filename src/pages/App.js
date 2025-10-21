@@ -251,8 +251,8 @@ const Home = ({
     tab === 'Nearby' ? nearbyFeed :
     [...exploreFeed, ...SAMPLE_POSTS];
 
-  //const formatLikes = (n = 0) =>
-    //n >= 1000 ? `${(n / 1000).toFixed(n % 1000 >= 100 ? 1 : 0)}k` : `${n}`;
+  const formatLikes = (n = 0) =>
+    n >= 1000 ? `${(n / 1000).toFixed(n % 1000 >= 100 ? 1 : 0)}k` : `${n}`;
 
   return (
     <div className="main-container with-topbar">
@@ -301,83 +301,76 @@ const Home = ({
       )}
 
       <div className="posts-grid home-grid">
-        {mergedFeed.map((p) => {
-          const isDemoPost = String(p.post_id || '').startsWith('demo-');
-          const displayName = isDemoPost ? 'traveler' : (p.user_name || 'user');
-          const avatarUrl = p.user_avatar || (isDemoPost ? 'https://i.pravatar.cc/80?u=placeholder' : '');
-          const mediaLength = p.media?.length || (p.imageUrl ? 1 : 0);
-
-          return (
-            <article key={p.post_id} className={`ig-card ${Array.isArray(p.media) && p.media.some(m => m.type === 'video') ? 'has-video' : ''}`}>
-              <header className="ig-header">
-                <div className="ig-user">
-                  <img
-                    className="ig-avatar"
-                    src={avatarUrl || "https://cdn-icons-png.flaticon.com/512/847/847969.png"}
-                    alt={p.user_name || 'user'}
-                  />
-                  <div className="ig-user-meta">
-                    <div className="ig-username">{displayName}</div>
-                    <div className="ig-location">{p.location ? <a href={mapHrefFor(p)} target="_blank" rel="noopener noreferrer">{p.location}</a> : '—'}</div>
+        {mergedFeed.map((p) => (
+          <article key={p.post_id} className={`ig-card ${Array.isArray(p.media) && p.media.some(m => m.type === 'video') ? 'has-video' : ''}`}>
+            <header className="ig-header">
+              <div className="ig-user">
+                <img className="ig-avatar" src={p.user_avatar || 'https://i.pravatar.cc/80?u=placeholder'} alt={p.user_name || 'user'} />
+                <div className="ig-user-meta">
+                  <div className="ig-username">{p.user_name || 'traveler'}</div>
+                  <div className="ig-location">
+                    {p.location ? (
+                      <a href={mapHrefFor(p)} target="_blank" rel="noopener noreferrer">{p.location}</a>
+                    ) : '—'}
                   </div>
                 </div>
-                <button className="icon-btn" aria-label="More"><FontAwesomeIcon icon={faEllipsis} /></button>
-              </header>
+              </div>
+              <button className="icon-btn" aria-label="More"><FontAwesomeIcon icon={faEllipsis} /></button>
+            </header>
 
               <Link to={`/post/${p.post_id}`} state={{ post: p }} className="ig-media-wrap">
-                {p.media && p.media.length > 0 ? (
-                  <div className="carousel">
-                    {mediaLength > 1 && <button className="carousel-btn left" onClick={() => handlePrev(p.post_id)}><FontAwesomeIcon icon={faChevronLeft} /></button>}
-                    {(() => {
-                      const idx = carouselIndex[p.post_id] || 0;
-                      const media = p.media[idx];
-                      if (!media) return null;
-                      if (media.type?.startsWith('image')) return <img src={`data:${media.type};base64,${media.data}`} alt={media.filename || p.post_name} className="post-media" />;
-                      if (media.type?.startsWith('video')) return <video controls src={`data:${media.type};base64,${media.data}`} className="post-media" />;
-                      return null;
-                    })()}
-                    {mediaLength > 1 && <button className="carousel-btn right" onClick={() => handleNext(p.post_id)}><FontAwesomeIcon icon={faChevronRight} /></button>}
-                    {mediaLength > 1 && (
-                      <div className="carousel-dots">
-                        {Array.from({ length: mediaLength }).map((_, idx) => (
-                          <span key={idx} className={`dot ${carouselIndex[p.post_id] === idx ? 'active' : ''}`} onClick={() => setCarouselIndex(prev => ({ ...prev, [p.post_id]: idx }))} />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ) : p.imageUrl ? (
-                  <img className="ig-media" src={p.imageUrl} alt={p.post_name} />
-                ) : null}
-              </Link>
-
-              {(p.media || p.imageUrl) && (
-                <div className="ig-actions">
-                  <div className="left">
-                    <button className="icon-btn" aria-label="Like"><FontAwesomeIcon icon={faHeart} /></button>
-                    <button className="icon-btn" aria-label="Comment"><FontAwesomeIcon icon={faCommentDots} /></button>
-                    <button className="icon-btn" aria-label="Share"><FontAwesomeIcon icon={faPaperPlane} /></button>
-                  </div>
-                  <div className="right">
-                    <button className="icon-btn" aria-label="Save"><FontAwesomeIcon icon={faBookmark} /></button>
-                  </div>
+              {p.media && p.media.length > 0 ? (
+                <div className="carousel">
+                  {p.media.length > 1 && <button className="carousel-btn left" onClick={() => handlePrev(p.post_id)}><FontAwesomeIcon icon={faChevronLeft} /></button>}
+                  {(() => {
+                    const idx = carouselIndex[p.post_id] || 0;
+                    const media = p.media[idx];
+                    if (!media) return null;
+                    return media.type === 'image' ? (
+                      <img src={`data:image/*;base64,${media.data}`} alt={media.filename} className="post-media" />
+                    ) : (
+                      <video controls src={`data:video/*;base64,${media.data}`} className="post-media" />
+                    );
+                  })()}
+                  {p.media.length > 1 && <button className="carousel-btn right" onClick={() => handleNext(p.post_id)}><FontAwesomeIcon icon={faChevronRight} /></button>}
+                  {p.media.length > 1 && (
+                    <div className="carousel-dots">
+                      {p.media.map((_, idx) => (
+                        <span key={idx} className={`dot ${carouselIndex[p.post_id] === idx ? 'active' : ''}`} onClick={() => setCarouselIndex((prev) => ({ ...prev, [p.post_id]: idx }))} />
+                      ))}
+                    </div>
+                  )}
                 </div>
-              )}
+              ) : p.imageUrl ? <img className="ig-media" src={p.imageUrl} alt={p.post_name} /> : null}
+            </Link>
 
-              <div className="ig-meta">
-                <div className="ig-likes">{(p.likes || p.num_likes || 0).toLocaleString()} likes</div>
-                <div className="ig-caption"><span className="ig-username">{displayName}</span> {p.caption || p.post_name}</div>
-                <button className="ig-comments">View all comments</button>
-                <div className="ig-time">{p.time_ago || 'now'}</div>
+            {p.media && p.media.length > 0 && (
+              <div className="ig-actions">
+                <div className="left">
+                  <button className="icon-btn" aria-label="Like"><FontAwesomeIcon icon={faHeart} /></button>
+                  <button className="icon-btn" aria-label="Comment"><FontAwesomeIcon icon={faCommentDots} /></button>
+                  <button className="icon-btn" aria-label="Share"><FontAwesomeIcon icon={faPaperPlane} /></button>
+                </div>
+                <div className="right">
+                  <button className="icon-btn" aria-label="Save"><FontAwesomeIcon icon={faBookmark} /></button>
+                </div>
               </div>
-            </article>
-          );
-        })}
+            )}
+
+            <div className="ig-meta">
+              <div className="ig-likes">{(p.likes || p.num_likes || 0).toLocaleString()} likes</div>
+              <div className="ig-caption"><span className="ig-username">{p.user_name || 'traveler'}</span> {p.caption || p.post_name}</div>
+              <button className="ig-comments">View all comments</button>
+              <div className="ig-time">{p.time_ago || 'now'}</div>
+            </div>
+          </article>
+        ))}
       </div>
     </div>
   );
 };
 
-// App component
+// App Component
 const App = () => {
   const [posts, setPosts] = useState([]);
   const [filteredPosts, setFilteredPosts] = useState([]);
@@ -385,43 +378,59 @@ const App = () => {
   const [carouselIndex, setCarouselIndex] = useState({});
 
   const fetchPosts = async () => {
-  try {
-    const res = await fetch(`${BACKEND_URL}/posts`);
-    const data = await res.json();
-    if (!Array.isArray(data.posts)) return;
+    try {
+      const res = await fetch(`${BACKEND_URL}/posts`);
+      const data = await res.json();
+      if (Array.isArray(data.posts)) {
+        const groupedPosts = data.posts.reduce((acc, item) => {
+          const postId = item.post_id;
+          if (!acc[postId]) acc[postId] = { ...item, media: [] };
 
-    // No extra base64 conversion needed
-    setPosts(data.posts);
-    setFilteredPosts(data.posts);
-  } catch (err) {
-    console.error('Error fetching posts:', err);
-  }
-};
+          // Only add media if media_id exists
+          if (item.media_id) {
+            const base64Data = item.data ? (typeof item.data === 'string' ? item.data : Buffer.from(item.data).toString('base64')) : null;
+            acc[postId].media.push({ ...item, data: base64Data });
+          }
+
+          return acc;
+        }, {});
+        const postsArray = Object.values(groupedPosts);
+        setPosts(postsArray);
+        setFilteredPosts(postsArray);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
 
   useEffect(() => { fetchPosts(); }, []);
 
   const handleSearch = (e) => {
     const query = e.target.value.toLowerCase();
     setSearchQuery(query);
-    setFilteredPosts(posts.filter(p =>
-      (p.post_name && p.post_name.toLowerCase().includes(query)) ||
-      (p.tags && p.tags.toLowerCase().includes(query)) ||
-      (p.location && p.location.toLowerCase().includes(query))
-    ));
+    setFilteredPosts(
+      posts.filter(
+        (p) =>
+          (p.post_name && p.post_name.toLowerCase().includes(query)) ||
+          (p.tags && p.tags.toLowerCase().includes(query)) ||
+          (p.location && p.location.toLowerCase().includes(query))
+      )
+    );
   };
 
   const handlePrev = (postId) => {
-    setCarouselIndex(prev => {
+    setCarouselIndex((prev) => {
       const current = prev[postId] || 0;
-      const length = posts.find(p => p.post_id === postId)?.media?.length || 1;
+      const length = posts.find((p) => p.post_id === postId)?.media.length || 1;
       return { ...prev, [postId]: (current - 1 + length) % length };
     });
   };
 
   const handleNext = (postId) => {
-    setCarouselIndex(prev => {
+    setCarouselIndex((prev) => {
       const current = prev[postId] || 0;
-      const length = posts.find(p => p.post_id === postId)?.media?.length || 1;
+      const length = posts.find((p) => p.post_id === postId)?.media.length || 1;
       return { ...prev, [postId]: (current + 1) % length };
     });
   };
@@ -440,7 +449,7 @@ const App = () => {
             handleSearch={handleSearch}
             searchQuery={searchQuery}
           />
-        }/>
+        } />
         <Route path="/upload" element={<Upload onPostCreated={fetchPosts} />} />
         <Route path="/chat" element={<Chat />} />
         <Route path="/calendar" element={<Calendar />} />
@@ -450,18 +459,15 @@ const App = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/DatabaseViewer" element={<DatabaseViewer />} />
         <Route path="/search" element={<SearchPage posts={[...posts, ...SAMPLE_POSTS]} />} />
-        <Route path="/post/:id" element={<PostPage posts={posts} />} />
+         <Route path="/post/:id" element={<PostPage posts={posts} />} />
       </Routes>
 
-      {/* Bottom Nav */}
       <div className="bottom-nav">
         <Link className="nav-icon" to="/"><FontAwesomeIcon icon={faHome} /></Link>
         <Link className="nav-icon" to="/chat"><FontAwesomeIcon icon={faComment} /></Link>
         <Link className="nav-icon" to="/upload"><FontAwesomeIcon icon={faPlus} /></Link>
         <Link className="nav-icon" to="/calendar"><FontAwesomeIcon icon={faCalendar} /></Link>
         <Link className="nav-icon" to="/profile"><FontAwesomeIcon icon={faUser} /></Link>
-        <Link className="nav-icon" to="/login"><FontAwesomeIcon icon={faRightToBracket} /></Link>
-        <Link className="nav-icon" to="/DatabaseViewer"><FontAwesomeIcon icon={faBookmark} /></Link>
       </div>
     </Router>
   );

@@ -17,7 +17,6 @@ const Calendar = () => {
   const [mode, setMode] = useState("Individual");
   const [dateStart, setDateStart] = useState("");
   const [dateEnd, setDateEnd] = useState("");
-
   const navigate = useNavigate();
 
   const fetchItineraries = async () => {
@@ -31,7 +30,7 @@ const Calendar = () => {
       if (res.status === 401) {
         setError("You must be logged in to see your itineraries.");
         setItineraries([]);
-        return;
+        return; // ✅ Stop — don’t redirect
       }
 
       const data = await res.json();
@@ -70,7 +69,6 @@ const Calendar = () => {
 
       if (res.ok && data.itinerary_id) {
         setShowModal(false);
-
         setItineraries((prev) => [
           {
             itinerary_id: data.itinerary_id,
@@ -99,7 +97,7 @@ const Calendar = () => {
         overflowY: "auto",
         display: "flex",
         flexDirection: "column",
-        alignItems: "center", // ✅ ensures everything inside is centered
+        alignItems: "center",
       }}
     >
       {/* Header */}
@@ -111,6 +109,7 @@ const Calendar = () => {
           marginBottom: "3%",
           display: "flex",
           justifyContent: "center",
+          alignItems: "center",
           padding: "10px",
         }}
       >
@@ -130,13 +129,14 @@ const Calendar = () => {
         />
       </div>
 
-      {/* ✅ Wrapping content in a centered container */}
+      {/* ✅ Main Centered Container */}
       <div
         style={{
           width: "85vw",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
+          justifyContent: "flex-start",
         }}
       >
         {/* Toggle Boxes */}
@@ -146,6 +146,7 @@ const Calendar = () => {
             width: "100%",
             gap: "10px",
             justifyContent: "center",
+            alignItems: "center",
           }}
         >
           <div
@@ -202,58 +203,92 @@ const Calendar = () => {
         </div>
 
         {loading && <p>Loading itineraries...</p>}
-        {error && <p style={{ color: "red" }}>{error}</p>}
 
-        {/* Itinerary Cards */}
-        {itineraries.length === 0 ? (
-          <p>No itineraries yet.</p>
-        ) : (
-          itineraries.map((it) => (
-            <div
-              key={it.itinerary_id}
-              onClick={() => navigate(`/itinerary/${it.itinerary_id}`)}
+        {/* Error / Not logged in */}
+        {error && (
+          <div
+            style={{
+              marginTop: "20px",
+              textAlign: "center",
+              color: "red",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "10px",
+            }}
+          >
+            <p>{error}</p>
+            <button
+              onClick={() => navigate("/login")}
               style={{
-                width: "100%",
-                height: "10vh",
-                backgroundColor: "white",
-                borderRadius: "12px",
-                boxShadow: "0px 4px 8px rgba(0,0,0,0.2)",
-                display: "flex",
-                padding: "10px",
-                gap: "10px",
+                backgroundColor: "dodgerblue",
+                color: "white",
+                border: "none",
+                padding: "10px 20px",
+                borderRadius: "8px",
                 cursor: "pointer",
-                marginTop: "10px",
-                justifyContent: "center",
+                fontWeight: "bold",
               }}
             >
-              <div
-                style={{
-                  width: "20%",
-                  height: "90%",
-                  backgroundColor: "lightblue",
-                  borderRadius: "8px",
-                  alignSelf: "center",
-                }}
-              ></div>
-              <div
-                style={{
-                  flex: 1,
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-              >
-                <h3 style={{ margin: 0, fontSize: "1rem" }}>{it.title}</h3>
-              </div>
-            </div>
-          ))
+              Go to Login
+            </button>
+          </div>
+        )}
+
+        {/* Itinerary Cards */}
+        {!error && !loading && (
+          <>
+            {itineraries.length === 0 ? (
+              <p>No itineraries yet.</p>
+            ) : (
+              itineraries.map((it) => (
+                <div
+                  key={it.itinerary_id}
+                  onClick={() => navigate(`/itinerary/${it.itinerary_id}`)}
+                  style={{
+                    width: "100%",
+                    height: "10vh",
+                    backgroundColor: "white",
+                    borderRadius: "12px",
+                    boxShadow: "0px 4px 8px rgba(0,0,0,0.2)",
+                    display: "flex",
+                    padding: "10px",
+                    gap: "10px",
+                    cursor: "pointer",
+                    marginTop: "10px",
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "20%",
+                      height: "90%",
+                      backgroundColor: "lightblue",
+                      borderRadius: "8px",
+                    }}
+                  ></div>
+                  <div
+                    style={{
+                      flex: 1,
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                    }}
+                  >
+                    <h3 style={{ margin: 0, fontSize: "1rem" }}>{it.title}</h3>
+                  </div>
+                </div>
+              ))
+            )}
+          </>
         )}
       </div>
 
-      {/* Add Itinerary Modal */}
+      {/* Modal */}
       {showModal && (
         <>
-          {/* Dimmed Background */}
+          {/* Background */}
           <div
             onClick={() => setShowModal(false)}
             style={{
@@ -267,7 +302,7 @@ const Calendar = () => {
             }}
           ></div>
 
-          {/* Bottom Slide-up Window */}
+          {/* Bottom Sheet */}
           <div
             style={{
               position: "fixed",
@@ -286,7 +321,7 @@ const Calendar = () => {
               boxSizing: "border-box",
             }}
           >
-            {/* Row 1: Cancel / Add */}
+            {/* Cancel / Add */}
             <div
               style={{
                 display: "flex",
@@ -312,10 +347,8 @@ const Calendar = () => {
               </span>
             </div>
 
-            {/* Row 2: Itinerary Mode */}
             <h3 style={{ marginBottom: "10px" }}>Itinerary Mode</h3>
 
-            {/* Row 3: Mode Buttons */}
             <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
               {["Individual", "Collaborative"].map((option) => (
                 <div
@@ -337,10 +370,8 @@ const Calendar = () => {
               ))}
             </div>
 
-            {/* Row 4: Date */}
             <h3 style={{ marginBottom: "10px" }}>Date</h3>
 
-            {/* Row 5: Date Pickers */}
             <div style={{ display: "flex", gap: "10px" }}>
               <input
                 type="date"
