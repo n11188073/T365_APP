@@ -387,55 +387,79 @@ const App = () => {
   const [showBookmarkModal, setShowBookmarkModal] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
 
+  const [itineraries, setItineraries] = useState([]);
+  const [selectedItinerary, setSelectedItinerary] = useState(null);
 
   const fetchPosts = async () => {
-  try {
-    const res = await fetch(`${BACKEND_URL}/posts`);
-    const data = await res.json();
-    if (!Array.isArray(data.posts)) return;
+    try {
+      const res = await fetch(`${BACKEND_URL}/posts`);
+      const data = await res.json();
+      if (!Array.isArray(data.posts)) return;
 
-    // No extra base64 conversion needed
-    setPosts(data.posts);
-    setFilteredPosts(data.posts);
+      setPosts(data.posts);
+      setFilteredPosts(data.posts);
+    } catch (err) {
+      console.error('Error fetching posts:', err);
+    }
+  };
+
+const fetchItineraries = async () => {
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/table/myItineraries`, {
+      method: "GET",
+      credentials: "include", // 🔑 important! sends auth_token cookie
+    });
+
+    const data = await res.json();
+
+    if (Array.isArray(data.itineraries)) {
+      setItineraries(data.itineraries);
+    } else {
+      console.error("Unexpected itineraries response:", data);
+    }
   } catch (err) {
-    console.error('Error fetching posts:', err);
+    console.error("Error fetching itineraries:", err);
   }
 };
 
-  useEffect(() => { fetchPosts(); }, []);
-
 
   useEffect(() => {
-  if (showBookmarkModal) {
-    document.body.style.overflow = "hidden"; // Disable scrolling
-  } else {
-    document.body.style.overflow = ""; // Restore when closed
-  }
-}, [showBookmarkModal]);
+    fetchPosts();
+  }, []);
 
+  useEffect(() => {
+    if (showBookmarkModal) {
+      document.body.style.overflow = "hidden";
+      fetchItineraries(); // Fetch when modal opens
+    } else {
+      document.body.style.overflow = "";
+    }
+  }, [showBookmarkModal]);
 
   const handleSearch = (e) => {
     const query = e.target.value.toLowerCase();
     setSearchQuery(query);
-    setFilteredPosts(posts.filter(p =>
-      (p.post_name && p.post_name.toLowerCase().includes(query)) ||
-      (p.tags && p.tags.toLowerCase().includes(query)) ||
-      (p.location && p.location.toLowerCase().includes(query))
-    ));
+    setFilteredPosts(
+      posts.filter((p) =>
+        (p.post_name && p.post_name.toLowerCase().includes(query)) ||
+        (p.tags && p.tags.toLowerCase().includes(query)) ||
+        (p.location && p.location.toLowerCase().includes(query))
+      )
+    );
   };
 
   const handlePrev = (postId) => {
-    setCarouselIndex(prev => {
+    setCarouselIndex((prev) => {
       const current = prev[postId] || 0;
-      const length = posts.find(p => p.post_id === postId)?.media?.length || 1;
+      const length = posts.find((p) => p.post_id === postId)?.media?.length || 1;
       return { ...prev, [postId]: (current - 1 + length) % length };
     });
   };
 
   const handleNext = (postId) => {
-    setCarouselIndex(prev => {
+    setCarouselIndex((prev) => {
       const current = prev[postId] || 0;
-      const length = posts.find(p => p.post_id === postId)?.media?.length || 1;
+      const length = posts.find((p) => p.post_id === postId)?.media?.length || 1;
       return { ...prev, [postId]: (current + 1) % length };
     });
   };
@@ -443,22 +467,25 @@ const App = () => {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={
-          <Home
-            posts={posts}
-            filteredPosts={filteredPosts}
-            carouselIndex={carouselIndex}
-            handlePrev={handlePrev}
-            handleNext={handleNext}
-            setCarouselIndex={setCarouselIndex}
-            handleSearch={handleSearch}
-            searchQuery={searchQuery}
-            onBookmarkClick={(post) => {
-              setSelectedPost(post);
-              setShowBookmarkModal(true);
-            }}
-          />
-        }/>
+        <Route
+          path="/"
+          element={
+            <Home
+              posts={posts}
+              filteredPosts={filteredPosts}
+              carouselIndex={carouselIndex}
+              handlePrev={handlePrev}
+              handleNext={handleNext}
+              setCarouselIndex={setCarouselIndex}
+              handleSearch={handleSearch}
+              searchQuery={searchQuery}
+              onBookmarkClick={(post) => {
+                setSelectedPost(post);
+                setShowBookmarkModal(true);
+              }}
+            />
+          }
+        />
         <Route path="/upload" element={<Upload onPostCreated={fetchPosts} />} />
         <Route path="/chat" element={<Chat />} />
         <Route path="/calendar" element={<Calendar />} />
@@ -470,39 +497,48 @@ const App = () => {
         <Route path="/search" element={<SearchPage posts={[...posts, ...SAMPLE_POSTS]} />} />
         <Route path="/post/:id" element={<PostPage posts={posts} />} />
       </Routes>
-      
-      {/* Hidden Top Corner */}
-      <div style={{
-        position: "fixed",
-        top: "20px",
-        right: "20px",
-        display: "flex",
-        gap: "15px",
-        zIndex: 1000,
-      }}>
-        <Link className="nav-icon" to="/login"><FontAwesomeIcon icon={faRightToBracket} style={{ color: "white" }}/></Link>
-        <Link className="nav-icon" to="/DatabaseViewer"><FontAwesomeIcon icon={faBookmark} style={{ color: "white" }}/></Link>
+
+      {/* Top-right icons */}
+      <div
+        style={{
+          position: "fixed",
+          top: "20px",
+          right: "20px",
+          display: "flex",
+          gap: "15px",
+          zIndex: 1000,
+        }}
+      >
+        <Link className="nav-icon" to="/login">
+          <FontAwesomeIcon icon={faRightToBracket} style={{ color: "white" }} />
+        </Link>
+        <Link className="nav-icon" to="/DatabaseViewer">
+          <FontAwesomeIcon icon={faBookmark} style={{ color: "white" }} />
+        </Link>
       </div>
 
       {/* Bottom Nav */}
       <div className="bottom-nav">
-        <Link className="nav-icon" to="/"><FontAwesomeIcon icon={faHome} /></Link>
-        <Link className="nav-icon" to="/chat"><FontAwesomeIcon icon={faComment} /></Link>
-        <Link className="nav-icon" to="/upload"><FontAwesomeIcon icon={faPlus} /></Link>
-        <Link className="nav-icon" to="/calendar"><FontAwesomeIcon icon={faCalendar} /></Link>
-        <Link className="nav-icon" to="/profile"><FontAwesomeIcon icon={faUser} /></Link>
+        <Link className="nav-icon" to="/">
+          <FontAwesomeIcon icon={faHome} />
+        </Link>
+        <Link className="nav-icon" to="/chat">
+          <FontAwesomeIcon icon={faComment} />
+        </Link>
+        <Link className="nav-icon" to="/upload">
+          <FontAwesomeIcon icon={faPlus} />
+        </Link>
+        <Link className="nav-icon" to="/calendar">
+          <FontAwesomeIcon icon={faCalendar} />
+        </Link>
+        <Link className="nav-icon" to="/profile">
+          <FontAwesomeIcon icon={faUser} />
+        </Link>
       </div>
 
-
-
-
-
-
-
-      {/* Bookmark Modal (reuses Calendar style) */}
+      {/* Bookmark Modal */}
       {showBookmarkModal && (
         <>
-          {/* Background overlay */}
           <div
             onClick={() => setShowBookmarkModal(false)}
             style={{
@@ -512,13 +548,9 @@ const App = () => {
               width: "100%",
               height: "100%",
               backgroundColor: "rgba(0, 0, 0, 0.5)",
-              zIndex: 9999,         // middle layer
-              pointerEvents: "auto" // ensures it blocks clicks
+              zIndex: 9999,
             }}
-          ></div>
-
-
-
+          />
           <div
             style={{
               position: "fixed",
@@ -529,16 +561,14 @@ const App = () => {
               backgroundColor: "white",
               borderTopLeftRadius: "16px",
               borderTopRightRadius: "16px",
-              zIndex: 10000,        // top layer (above overlay)
+              zIndex: 10000,
               boxShadow: "0 -4px 12px rgba(0,0,0,0.3)",
               display: "flex",
               flexDirection: "column",
               padding: "30px",
-              boxSizing: "border-box"
+              boxSizing: "border-box",
             }}
           >
-
-            {/* Header */}
             <div
               style={{
                 display: "flex",
@@ -559,8 +589,10 @@ const App = () => {
                   fontWeight: "bold",
                 }}
                 onClick={() => {
-                  // future: save to itinerary or backend
-                  alert(`Saved "${selectedPost?.post_name}" to your bookmarks!`);
+                  if (!selectedItinerary) {
+                    return;
+                  }
+                  alert(`Saved "${selectedPost?.post_name}" to itinerary "${selectedItinerary.title}"`);
                   setShowBookmarkModal(false);
                 }}
               >
@@ -568,39 +600,53 @@ const App = () => {
               </span>
             </div>
 
-            {/* Content */}
-            <h3 style={{ marginBottom: "10px" }}>Save Destination</h3>
+            <h3 style={{ marginBottom: "10px" }}>Select an Itinerary</h3>
 
             <div
               style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
                 flex: 1,
-                gap: "10px",
+                overflowY: "auto",
+                border: "1px solid #ddd",
+                borderRadius: "8px",
+                padding: "10px",
               }}
             >
-              <img
-                src={selectedPost?.imageUrl}
-                alt={selectedPost?.post_name}
-                style={{
-                  width: "60%",
-                  borderRadius: "12px",
-                  boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
-                }}
-              />
-              <h3>{selectedPost?.post_name}</h3>
-              <p style={{ textAlign: "center", color: "gray" }}>
-                {selectedPost?.location}
-              </p>
+              {itineraries.length === 0 ? (
+                <p style={{ color: "gray", textAlign: "center" }}>
+                  No itineraries found.
+                </p>
+              ) : (
+                itineraries.map((it) => (
+                  <div
+                    key={it.itinerary_id}
+                    onClick={() => setSelectedItinerary(it)}
+                    style={{
+                      padding: "10px",
+                      borderBottom: "1px solid #eee",
+                      borderRadius: "6px",
+                      backgroundColor:
+                        selectedItinerary?.itinerary_id === it.itinerary_id
+                          ? "#e6f0ff"
+                          : "white",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <strong>{it.title}</strong>
+                    <div style={{ fontSize: "0.9em", color: "gray" }}>
+                      {it.destination || "Unknown destination"}
+                    </div>
+                    <div style={{ fontSize: "0.8em", color: "gray" }}>
+                      {it.date_start
+                        ? `${it.date_start} → ${it.date_end || "?"}`
+                        : "No date set"}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </>
       )}
-
-
-
     </Router>
   );
 };
