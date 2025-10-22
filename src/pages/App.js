@@ -405,9 +405,9 @@ const App = () => {
 
 const fetchItineraries = async () => {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/table/myItineraries`, {
+    const res = await fetch(`${BACKEND_URL}/api/itineraries/myItineraries`, {
       method: "GET",
-      credentials: "include", // 🔑 important! sends auth_token cookie
+      credentials: "include",
     });
 
     const data = await res.json();
@@ -600,49 +600,96 @@ const fetchItineraries = async () => {
               </span>
             </div>
 
-            <h3 style={{ marginBottom: "10px" }}>Select an Itinerary</h3>
+            <h3 style={{ marginBottom: "10px", textAlign: "center" }}>
+              Select an Itinerary to save post to
+            </h3>
 
             <div
               style={{
                 flex: 1,
                 overflowY: "auto",
-                border: "1px solid #ddd",
                 borderRadius: "8px",
                 padding: "10px",
               }}
             >
-              {itineraries.length === 0 ? (
-                <p style={{ color: "gray", textAlign: "center" }}>
-                  No itineraries found.
-                </p>
-              ) : (
-                itineraries.map((it) => (
-                  <div
-                    key={it.itinerary_id}
-                    onClick={() => setSelectedItinerary(it)}
-                    style={{
-                      padding: "10px",
-                      borderBottom: "1px solid #eee",
-                      borderRadius: "6px",
-                      backgroundColor:
-                        selectedItinerary?.itinerary_id === it.itinerary_id
-                          ? "#e6f0ff"
-                          : "white",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <strong>{it.title}</strong>
-                    <div style={{ fontSize: "0.9em", color: "gray" }}>
-                      {it.destination || "Unknown destination"}
+            {itineraries.length === 0 ? (
+              <p style={{ color: "gray", textAlign: "center" }}>No itineraries found.</p>
+            ) : (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: "15px",
+                }}
+              >
+                {itineraries.map((it) => {
+                  const isSelected = Array.isArray(selectedItinerary)
+                    ? selectedItinerary.some((sel) => sel.itinerary_id === it.itinerary_id)
+                    : false;
+
+                  return (
+                    <div
+                      key={it.itinerary_id}
+                      onClick={() => {
+                        setSelectedItinerary((prev) => {
+                          if (!Array.isArray(prev)) return [it];
+                          const alreadySelected = prev.some(
+                            (sel) => sel.itinerary_id === it.itinerary_id
+                          );
+                          if (alreadySelected) {
+                            return prev.filter(
+                              (sel) => sel.itinerary_id !== it.itinerary_id
+                            );
+                          } else {
+                            return [...prev, it];
+                          }
+                        });
+                      }}
+                      style={{
+                        width: "80%",
+                        backgroundColor: isSelected ? "#e6f0ff" : "white",
+                        borderRadius: "16px",
+                        boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+                        padding: "16px 20px",
+                        cursor: "pointer",
+                        transition: "all 0.2s ease",
+                        border: "none",
+                      }}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.boxShadow = "0 6px 14px rgba(0,0,0,0.15)")
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.boxShadow = "0 4px 10px rgba(0,0,0,0.1)")
+                      }
+                    >
+                      <strong
+                        style={{
+                          display: "block",
+                          fontSize: "1.1em",
+                          marginBottom: "4px",
+                          color: "#333",
+                        }}
+                      >
+                        {it.title}
+                      </strong>
+
+                      <div style={{ fontSize: "0.9em", color: "#555" }}>
+                        {it.destination || "Unknown destination"}
+                      </div>
+
+                      <div style={{ fontSize: "0.8em", color: "gray", marginTop: "2px" }}>
+                        {it.date_start
+                          ? `${it.date_start} → ${it.date_end || "?"}`
+                          : "No date set"}
+                      </div>
                     </div>
-                    <div style={{ fontSize: "0.8em", color: "gray" }}>
-                      {it.date_start
-                        ? `${it.date_start} → ${it.date_end || "?"}`
-                        : "No date set"}
-                    </div>
-                  </div>
-                ))
-              )}
+                  );
+                })}
+              </div>
+            )}
+
+
             </div>
           </div>
         </>
