@@ -80,26 +80,37 @@ const PostPage = ({ posts = [] }) => {
           {/* Header */}
           <header className="post-header">
             <div className="ig-user">
-              <img
-                className="ig-avatar"
-                src={post.user_avatar || 'https://i.pravatar.cc/80?u=placeholder'}
-                alt={post.user_name || 'user'}
-              />
-              <div className="ig-user-meta">
-                <div className="ig-username">{post.user_name || 'traveler'}</div>
-                <div className="ig-location">
-                  {post.location ? (
-                    <a href={mapHrefFor(post)} target="_blank" rel="noopener noreferrer">
-                      {post.location}
-                    </a>
-                  ) : '—'}
-                </div>
-              </div>
+              {/** Determine avatar URL the same way as App.js */}
+              {(() => {
+                const isDemoPost = String(post.post_id || '').startsWith('demo-');
+                const avatarUrl = post.user_avatar || (isDemoPost ? 'https://i.pravatar.cc/80?u=placeholder' : '');
+                const displayName = isDemoPost ? 'traveler' : (post.user_name || 'user');
+                return (
+                  <>
+                    <img
+                      className="ig-avatar"
+                      src={avatarUrl || "https://cdn-icons-png.flaticon.com/512/847/847969.png"}
+                      alt={displayName}
+                    />
+                    <div className="ig-user-meta">
+                      <div className="ig-username">{displayName}</div>
+                      <div className="ig-location">
+                        {post.location ? (
+                          <a href={mapHrefFor(post)} target="_blank" rel="noopener noreferrer">
+                            {post.location}
+                          </a>
+                        ) : '—'}
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
             <button className="icon-btn" aria-label="More">
               <FontAwesomeIcon icon={faEllipsis} />
             </button>
           </header>
+
 
           {/* Media */}
           <div className="post-media-frame">
