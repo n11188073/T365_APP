@@ -599,11 +599,9 @@ const fetchItineraries = async () => {
                 Save
               </span>
             </div>
-
             <h3 style={{ marginBottom: "10px", textAlign: "center" }}>
               Select an Itinerary to save post to
             </h3>
-
             <div
               style={{
                 flex: 1,
@@ -673,11 +671,9 @@ const fetchItineraries = async () => {
                       >
                         {it.title}
                       </strong>
-
                       <div style={{ fontSize: "0.9em", color: "#555" }}>
                         {it.destination || "Unknown destination"}
                       </div>
-
                       <div style={{ fontSize: "0.8em", color: "gray", marginTop: "2px" }}>
                         {it.date_start
                           ? `${it.date_start} → ${it.date_end || "?"}`
@@ -688,8 +684,6 @@ const fetchItineraries = async () => {
                 })}
               </div>
             )}
-
-
             </div>
           </div>
         </>
@@ -697,5 +691,4 @@ const fetchItineraries = async () => {
     </Router>
   );
 };
-
 export default App;
