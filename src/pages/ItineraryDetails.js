@@ -278,29 +278,108 @@ const ItineraryDetails = () => {
 
       {/* Timeline */}
       <div style={{ width: "85vw", margin: "0 auto", position: "relative" }}>
-        {filteredActivities.length > 0 && <div style={{ position: "absolute", top: 0, left: "-20px", width: 2, height: "100%", backgroundColor: "#ccc" }} />}
-        {filteredActivities.map(activity => (
+        {filteredActivities.length > 0 && (
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: "-20px",
+              width: 2,
+              height: "100%",
+              backgroundColor: "#ccc",
+            }}
+          />
+        )}
+
+        {filteredActivities.map((activity) => (
           <div key={activity.card_id} style={{ marginBottom: 30, position: "relative" }}>
+            {/* Time dot + time */}
             <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
-              <div style={{ width: 16, height: 16, borderRadius: "50%", backgroundColor: "#90cdf4", border: "2px solid white", boxShadow: "0 0 3px rgba(0,0,0,0.2)", marginRight: 8, marginLeft: -28, flexShrink: 0 }} />
+              <div
+                style={{
+                  width: 16,
+                  height: 16,
+                  borderRadius: "50%",
+                  backgroundColor: "#90cdf4",
+                  border: "2px solid white",
+                  boxShadow: "0 0 3px rgba(0,0,0,0.2)",
+                  marginRight: 8,
+                  marginLeft: -28,
+                  flexShrink: 0,
+                }}
+              />
               <span style={{ fontSize: "1.2rem", color: "#555" }}>{activity.card_time}</span>
             </div>
-            <div style={{ padding: 20, backgroundColor: "white", borderRadius: 12, boxShadow: "0px 4px 8px rgba(0,0,0,0.2)", position: "relative" }}>
-              <h2 style={{ marginTop: 0, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span>{activity.location_name}</span>
-                {isEditing && (
-                  <div style={{ display: "flex", gap: 10 }}>
-                    <FontAwesomeIcon icon={faPenToSquare} style={{ cursor: "pointer", color: "blue" }} title="Edit card" onClick={() => handleEditClick(activity)} />
-                    <FontAwesomeIcon icon={faCircleXmark} style={{ cursor: "pointer", color: "red" }} title="Delete card" onClick={() => handleDeleteCard(activity.card_id)} />
-                  </div>
-                )}
-              </h2>
-              <p>{activity.location_address}</p>
-              <p>{activity.notes}</p>
+
+            {/* Card */}
+            <div
+              style={{
+                display: "flex",
+                gap: 15,
+                padding: 20,
+                backgroundColor: "white",
+                borderRadius: 12,
+                boxShadow: "0px 4px 8px rgba(0,0,0,0.2)",
+                position: "relative",
+              }}
+            >
+              {/* Grey image placeholder square */}
+              <div
+                style={{
+                  width: 120,
+                  height: 120,
+                  backgroundColor: "#e0e0e0",
+                  borderRadius: 8,
+                  flexShrink: 0,
+                }}
+              />
+
+              {/* Text content */}
+              <div style={{ flex: 1 }}>
+                <h2
+                  style={{
+                    marginTop: 0,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <span>{activity.location_name}</span>
+                  {isEditing && (
+                    <div style={{ display: "flex", gap: 10 }}>
+                      <FontAwesomeIcon
+                        icon={faPenToSquare}
+                        style={{ cursor: "pointer", color: "blue" }}
+                        title="Edit card"
+                        onClick={() => handleEditClick(activity)}
+                      />
+                      <FontAwesomeIcon
+                        icon={faCircleXmark}
+                        style={{ cursor: "pointer", color: "red" }}
+                        title="Delete card"
+                        onClick={() => handleDeleteCard(activity.card_id)}
+                      />
+                    </div>
+                  )}
+                </h2>
+                <p>{activity.location_address}</p>
+                <p>{activity.notes}</p>
+              </div>
             </div>
           </div>
         ))}
       </div>
+
+      <div
+        style={{
+          display: "flex",
+          gap: 15,
+          padding: 60,
+          backgroundColor: "transparent",
+          borderRadius: 12,
+          position: "relative",
+        }}
+        ></div>
 
       {/* Add/Edit Event Modal */}
       {showEventModal && (
@@ -366,6 +445,8 @@ const ItineraryDetails = () => {
         </div>
       )}
     </div>
+    
+    
   );
 };
 
