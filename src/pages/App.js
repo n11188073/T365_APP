@@ -396,7 +396,10 @@ const fetchItineraries = async () => {
       {showBookmarkModal && (
         <>
           <div
-            onClick={() => setShowBookmarkModal(false)}
+            onClick={() => {
+              console.log("🟣 Overlay clicked — closing modal");
+              setShowBookmarkModal(false);
+            }}
             style={{
               position: "fixed",
               top: 0,
@@ -434,30 +437,19 @@ const fetchItineraries = async () => {
             >
               <span
                 style={{ color: "gray", cursor: "pointer" }}
-                onClick={() => setShowBookmarkModal(false)}
-              >
-                Cancel
-              </span>
-              <span
-                style={{
-                  color: "dodgerblue",
-                  cursor: "pointer",
-                  fontWeight: "bold",
-                }}
                 onClick={() => {
-                  if (!selectedItinerary) {
-                    return;
-                  }
-                  alert(`Saved "${selectedPost?.post_name}" to itinerary "${selectedItinerary.title}"`);
+                  console.log("🟢 Close button clicked");
                   setShowBookmarkModal(false);
                 }}
               >
-                Save
+                Close
               </span>
             </div>
+
             <h3 style={{ marginBottom: "10px", textAlign: "center" }}>
               Select an Itinerary to save post to
             </h3>
+
             <div
               style={{
                 flex: 1,
@@ -466,116 +458,152 @@ const fetchItineraries = async () => {
                 padding: "10px",
               }}
             >
-            {itineraries.length === 0 ? (
-              <p style={{ color: "gray", textAlign: "center" }}>No itineraries found.</p>
-            ) : (
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: "15px",
-                }}
-              >
-                {itineraries.map((it) => {
-                  const isSelected = Array.isArray(selectedItinerary)
-                    ? selectedItinerary.some((sel) => sel.itinerary_id === it.itinerary_id)
-                    : false;
+              {itineraries.length === 0 ? (
+                <p style={{ color: "gray", textAlign: "center" }}>
+                  No itineraries found.
+                </p>
+              ) : (
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: "15px",
+                  }}
+                >
+                  {itineraries.map((it) => {
+                    const isSelected = Array.isArray(selectedItinerary)
+                      ? selectedItinerary.some(
+                          (sel) => sel.itinerary_id === it.itinerary_id
+                        )
+                      : false;
 
-                  return (
-                    <div
-                      key={it.itinerary_id}
-                      
-                      onClick={async () => {
-                      if (!selectedPost) return;
+                    return (
+                      <div
+                        key={it.itinerary_id}
+                        onClick={async () => {
+                          console.log(
+                            `🟡 Clicked itinerary card: ${it.itinerary_id}`
+                          );
 
-                      const alreadySelected = Array.isArray(selectedItinerary)
-                        ? selectedItinerary.some(sel => sel.itinerary_id === it.itinerary_id)
-                        : false;
-
-                      try {
-                        if (alreadySelected) {
-                          // 🔹 Remove bookmark
-                          const res = await fetch(`${BACKEND_URL}/api/bookmarks/remove`, {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            credentials: "include",
-                            body: JSON.stringify({
-                              post_id: selectedPost.post_id,
-                              itinerary_id: it.itinerary_id,
-                            }),
-                          });
-                          if (res.ok) {
-                            setSelectedItinerary(prev =>
-                              prev.filter(sel => sel.itinerary_id !== it.itinerary_id)
-                            );
+                          if (!selectedPost) {
+                            console.log("⚠️ No selected post found — skipping");
+                            return;
                           }
-                        } else {
-                          // 🔹 Add bookmark
-                          const res = await fetch(`${BACKEND_URL}/api/bookmarks/add`, {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            credentials: "include",
-                            body: JSON.stringify({
-                              post_id: selectedPost.post_id,
-                              itinerary_id: it.itinerary_id,
-                            }),
-                          });
-                          if (res.ok) {
-                            setSelectedItinerary(prev =>
-                              Array.isArray(prev) ? [...prev, it] : [it]
-                            );
-                          }
-                        }
-                      } catch (err) {
-                        console.error("Error updating bookmark:", err);
-                      }
-                    }}
 
-                      style={{
-                        width: "80%",
-                        backgroundColor: isSelected ? "#e6f0ff" : "white",
-                        borderRadius: "16px",
-                        boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
-                        padding: "16px 20px",
-                        cursor: "pointer",
-                        transition: "all 0.2s ease",
-                        border: "none",
-                      }}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.boxShadow = "0 6px 14px rgba(0,0,0,0.15)")
-                      }
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.boxShadow = "0 4px 10px rgba(0,0,0,0.1)")
-                      }
-                    >
-                      <strong
+                          const alreadySelected = Array.isArray(selectedItinerary)
+                            ? selectedItinerary.some(
+                                (sel) => sel.itinerary_id === it.itinerary_id
+                              )
+                            : false;
+
+                          console.log(
+                            `🟣 alreadySelected = ${alreadySelected}, post_id = ${selectedPost.post_id}`
+                          );
+
+                          try {
+                            if (alreadySelected) {
+                              console.log("🧹 Removing bookmark...");
+                              const res = await fetch(
+                                `${BACKEND_URL}/api/bookmarks/remove`,
+                                {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  credentials: "include",
+                                  body: JSON.stringify({
+                                    post_id: selectedPost.post_id,
+                                    itinerary_id: it.itinerary_id,
+                                  }),
+                                }
+                              );
+
+                              console.log("Remove response:", res.status);
+                              if (res.ok) {
+                                setSelectedItinerary((prev) =>
+                                  prev.filter(
+                                    (sel) => sel.itinerary_id !== it.itinerary_id
+                                  )
+                                );
+                              }
+                            } else {
+                              console.log("💾 Adding bookmark...");
+                              const res = await fetch(
+                                `${BACKEND_URL}/api/bookmarks/add`,
+                                {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  credentials: "include",
+                                  body: JSON.stringify({
+                                    post_id: selectedPost.post_id,
+                                    itinerary_id: it.itinerary_id,
+                                  }),
+                                }
+                              );
+
+                              console.log("Add response:", res.status);
+                              if (res.ok) {
+                                setSelectedItinerary((prev) =>
+                                  Array.isArray(prev) ? [...prev, it] : [it]
+                                );
+                              }
+                            }
+                          } catch (err) {
+                            console.error("🔥 Error updating bookmark:", err);
+                          }
+                        }}
                         style={{
-                          display: "block",
-                          fontSize: "1.1em",
-                          marginBottom: "4px",
-                          color: "#333",
+                          width: "80%",
+                          backgroundColor: isSelected ? "#e6f0ff" : "white",
+                          borderRadius: "16px",
+                          boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+                          padding: "16px 20px",
+                          cursor: "pointer",
+                          transition: "all 0.2s ease",
+                          border: "none",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.boxShadow =
+                            "0 6px 14px rgba(0,0,0,0.15)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.boxShadow =
+                            "0 4px 10px rgba(0,0,0,0.1)";
                         }}
                       >
-                        {it.title}
-                      </strong>
-                      <div style={{ fontSize: "0.9em", color: "#555" }}>
-                        {it.destination || "Unknown destination"}
+                        <strong
+                          style={{
+                            display: "block",
+                            fontSize: "1.1em",
+                            marginBottom: "4px",
+                            color: "#333",
+                          }}
+                        >
+                          {it.title}
+                        </strong>
+                        <div style={{ fontSize: "0.9em", color: "#555" }}>
+                          {it.destination || "Unknown destination"}
+                        </div>
+                        <div
+                          style={{
+                            fontSize: "0.8em",
+                            color: "gray",
+                            marginTop: "2px",
+                          }}
+                        >
+                          {it.date_start
+                            ? `${it.date_start} → ${it.date_end || "?"}`
+                            : "No date set"}
+                        </div>
                       </div>
-                      <div style={{ fontSize: "0.8em", color: "gray", marginTop: "2px" }}>
-                        {it.date_start
-                          ? `${it.date_start} → ${it.date_end || "?"}`
-                          : "No date set"}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         </>
       )}
+
     </Router>
   );
 };
