@@ -394,19 +394,23 @@ const ItineraryDetails = () => {
             {/* Input Fields */}
             <div style={{ display: "grid", gap: 20 }}>
               {/* Post from bookmark */}
-              <div style={{ display: "flex", alignItems: "center", backgroundColor: "#f9f9f9", borderRadius: 12, padding: 15, boxShadow: "0px 2px 6px rgba(0,0,0,0.15)" }}>
+              <button
+                onClick={() => console.log("Add post from bookmark clicked")}
+                style={{display: "flex", alignItems: "center", backgroundColor: "#f9f9f9", borderRadius: 12, padding: 15, boxShadow: "0px 2px 6px rgba(0,0,0,0.15)", border: "none", cursor: "pointer", fontSize: "1.2rem", textAlign: "left",}}>
                 <FontAwesomeIcon icon={faBookmark} style={{ marginRight: 10, fontSize: "150%" }} />
-                <input type="text" placeholder="Add post from bookmark folder" onChange={(e) => setLocationName(e.target.value)} style={{ border: "none", outline: "none", background: "transparent", fontSize: "1.2rem", flex: 1 }} />
-              </div>
+                Add post from bookmark folder
+              </button>
 
               {/* Or */}
               <div style={{ textAlign: "center", fontWeight: "bold", color: "#555" }}>or</div>
-              
-              {/* Image */}
-              <div style={{ display: "flex", alignItems: "center", backgroundColor: "#f9f9f9", borderRadius: 12, padding: 15, boxShadow: "0px 2px 6px rgba(0,0,0,0.15)" }}>
+
+              {/* Upload Image */}
+              <button
+                onClick={() => console.log("Upload image clicked")}
+                style={{display: "flex", alignItems: "center", backgroundColor: "#f9f9f9", borderRadius: 12, padding: 15, boxShadow: "0px 2px 6px rgba(0,0,0,0.15)", border: "none", cursor: "pointer", fontSize: "1.2rem", textAlign: "left",}}>
                 <FontAwesomeIcon icon={faImage} style={{ marginRight: 10, fontSize: "150%" }} />
-                <input type="text" placeholder="Upload image" onChange={(e) => setLocationName(e.target.value)} style={{ border: "none", outline: "none", background: "transparent", fontSize: "1.2rem", flex: 1 }} />
-              </div>
+                Upload image
+              </button>
 
               {/* Line */}
               <div style={{ display: "flex", alignItems: "center", backgroundColor: "#dededeff", borderRadius: 12, padding: 3 }}></div>
