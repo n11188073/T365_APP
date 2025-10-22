@@ -27,35 +27,33 @@ const PostPage = ({ posts = [] }) => {
   const location = useLocation();
   const statePost = location?.state?.post;
 
-  // Resolve the post (prefer router state for demo/sample posts)
+  // Resolve the post (prefer router state for demo or sample posts)
   const post = useMemo(() => {
     if (statePost) return statePost;
     return posts.find((p) => p.post_id === id);
   }, [statePost, posts, id]);
 
-  // Hooks must always run (no early returns)
-  const [liked, setLiked] = useState(false);
+  // Hooks must always run
+  // Base likes taken from the post only once, then we derive UI count from base + liked
+  const baseLikes = useMemo(() => {
+    const n = Number(post?.likes ?? post?.num_likes ?? 0);
+    return Number.isFinite(n) ? n : 0;
+  }, [post]);
+
+  // If your API supplies whether this user liked it, seed from that
+  const [liked, setLiked] = useState(Boolean(post?.currentUserLiked));
   const [saved, setSaved] = useState(false);
   const [showComments, setShowComments] = useState(false);
-
-  const [likeCount, setLikeCount] = useState(() => {
-    const base = Number(post?.likes ?? post?.num_likes ?? 0);
-    return Number.isNaN(base) ? 0 : base;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  });
 
   // Media carousel support
   const hasMedia = Array.isArray(post?.media) && post.media.length > 0;
   const [idx, setIdx] = useState(0);
   const media = hasMedia ? post.media[idx] : null;
 
-  const onLike = () => {
-    setLiked((prev) => {
-      const next = !prev;
-      setLikeCount((c) => c + (next ? 1 : -1));
-      return next;
-    });
-  };
+  // Derived like count for display
+  const displayLikes = baseLikes + (liked ? 1 : 0);
+
+  const onLike = () => setLiked((v) => !v);
   const onSave = () => setSaved((s) => !s);
   const onToggleComments = () => setShowComments((s) => !s);
 
@@ -140,9 +138,10 @@ const PostPage = ({ posts = [] }) => {
             ) : null}
           </div>
 
-          {/* Actions (row across) */}
+          {/* Actions */}
           <div className="post-actions">
             <button
+              type="button"
               className={`icon-btn like ${liked ? 'active' : ''}`}
               aria-label="Like"
               onClick={onLike}
@@ -152,6 +151,7 @@ const PostPage = ({ posts = [] }) => {
             </button>
 
             <button
+              type="button"
               className="icon-btn comment"
               aria-label="Comments"
               onClick={onToggleComments}
@@ -160,11 +160,12 @@ const PostPage = ({ posts = [] }) => {
               <FontAwesomeIcon icon={faCommentDots} />
             </button>
 
-            <button className="icon-btn share" aria-label="Share" title="Share">
+            <button type="button" className="icon-btn share" aria-label="Share" title="Share">
               <FontAwesomeIcon icon={faPaperPlane} />
             </button>
 
             <button
+              type="button"
               className={`icon-btn save ${saved ? 'active' : ''}`}
               aria-label="Save"
               onClick={onSave}
@@ -176,7 +177,7 @@ const PostPage = ({ posts = [] }) => {
 
           {/* Meta */}
           <div className="post-meta">
-            <div className="ig-likes">{likeCount.toLocaleString()} likes</div>
+            <div className="ig-likes">{displayLikes.toLocaleString()} likes</div>
             <div className="ig-caption">
               <span className="ig-username">{post.user_name || 'traveler'}</span>{' '}
               {post.caption || post.post_name}
@@ -187,7 +188,7 @@ const PostPage = ({ posts = [] }) => {
             <div className="ig-time">{post.time_ago || 'now'}</div>
           </div>
 
-          {/* Comments panel (simple demo) */}
+          {/* Comments panel */}
           {showComments && (
             <div className="comments-panel">
               {(post.comments?.length ? post.comments : [

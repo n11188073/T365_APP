@@ -196,7 +196,11 @@ const SearchPage = ({ posts = [] }) => {
                 <div className="search-section-grid">
                   {postsFiltered.slice(0, 8).map(p => (
                     <div key={p.post_id} className="post-card">
-                      <Link to={`/post/${p.post_id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                      <Link
+                        to={`/post/${p.post_id}`}
+                        state={{ post: p }}
+                        style={{ textDecoration: 'none', color: 'inherit' }}
+                      >
                         {p.imageUrl && <img src={p.imageUrl} alt={p.post_name} className="post-media" />}
                         <h3 style={{ padding: '8px 10px', margin: 0 }}>{p.post_name}</h3>
                       </Link>
@@ -269,7 +273,11 @@ const SearchPage = ({ posts = [] }) => {
             <div className="search-section-grid">
               {postsFiltered.map(p => (
                 <div key={p.post_id} className="post-card">
-                  <Link to={`/post/${p.post_id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                  <Link
+                    to={`/post/${p.post_id}`}
+                    state={{ post: p }}
+                    style={{ textDecoration: 'none', color: 'inherit' }}
+                  >
                     {p.imageUrl && <img src={p.imageUrl} alt={p.post_name} className="post-media" />}
                     <h3 style={{ padding: '8px 10px', margin: 0 }}>{p.post_name}</h3>
                   </Link>

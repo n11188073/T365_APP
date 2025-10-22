@@ -153,14 +153,6 @@ export const SAMPLE_POSTS = [
     imageUrl: 'https://images.unsplash.com/photo-1528909514045-2fa4ac7a08ba?auto=format&fit=crop&w=1200&q=80'
   },
   {
-    post_id: 'demo-15',
-    post_name: 'Istanbul Bazaar',
-    location: 'Grand Bazaar, Istanbul',
-    lat: 41.0106, lng: 28.9684,
-    tags: 'istanbul bazaar spices market turkey',
-    imageUrl: 'https://images.unsplash.com/photo-1519050263182-513a8eacb0ff?auto=format&fit=crop&w=1200&q=80'
-  },
-  {
     post_id: 'demo-16',
     post_name: 'Marrakesh Souk',
     location: 'Medina, Marrakesh',
@@ -220,8 +212,10 @@ const Home = ({
   handleNext,
   setCarouselIndex,
   handleSearch,
-  searchQuery
+  searchQuery,
+  onBookmarkClick
 }) => {
+
   const navigate = useNavigate();
   const [tab, setTab] = useState('Explore'); // 'Following' | 'Explore' | 'Nearby'
   const [nearbyAllowed, setNearbyAllowed] = useState(false);
@@ -301,120 +295,155 @@ const Home = ({
       )}
 
       <div className="posts-grid home-grid">
-        {mergedFeed.map((p) => (
-          <article key={p.post_id} className={`ig-card ${Array.isArray(p.media) && p.media.some(m => m.type === 'video') ? 'has-video' : ''}`}>
-            <header className="ig-header">
-              <div className="ig-user">
-                <img className="ig-avatar" src={p.user_avatar || 'https://i.pravatar.cc/80?u=placeholder'} alt={p.user_name || 'user'} />
-                <div className="ig-user-meta">
-                  <div className="ig-username">{p.user_name || 'traveler'}</div>
-                  <div className="ig-location">
-                    {p.location ? (
-                      <a href={mapHrefFor(p)} target="_blank" rel="noopener noreferrer">{p.location}</a>
-                    ) : '—'}
+        {mergedFeed.map((p) => {
+          const isDemoPost = String(p.post_id || '').startsWith('demo-');
+          const displayName = isDemoPost ? 'traveler' : (p.user_name || 'user');
+          const avatarUrl = p.user_avatar || (isDemoPost ? 'https://i.pravatar.cc/80?u=placeholder' : '');
+          const mediaLength = p.media?.length || (p.imageUrl ? 1 : 0);
+
+          return (
+            <article key={p.post_id} className={`ig-card ${Array.isArray(p.media) && p.media.some(m => m.type === 'video') ? 'has-video' : ''}`}>
+              <header className="ig-header">
+                <div className="ig-user">
+                  <img
+                    className="ig-avatar"
+                    src={avatarUrl || "https://cdn-icons-png.flaticon.com/512/847/847969.png"}
+                    alt={p.user_name || 'user'}
+                  />
+                  <div className="ig-user-meta">
+                    <div className="ig-username">{displayName}</div>
+                    <div className="ig-location">{p.location ? <a href={mapHrefFor(p)} target="_blank" rel="noopener noreferrer">{p.location}</a> : '—'}</div>
                   </div>
                 </div>
-              </div>
-              <button className="icon-btn" aria-label="More"><FontAwesomeIcon icon={faEllipsis} /></button>
-            </header>
+                <button className="icon-btn" aria-label="More"><FontAwesomeIcon icon={faEllipsis} /></button>
+              </header>
 
               <Link to={`/post/${p.post_id}`} state={{ post: p }} className="ig-media-wrap">
-              {p.media && p.media.length > 0 ? (
-                <div className="carousel">
-                  {p.media.length > 1 && <button className="carousel-btn left" onClick={() => handlePrev(p.post_id)}><FontAwesomeIcon icon={faChevronLeft} /></button>}
-                  {(() => {
-                    const idx = carouselIndex[p.post_id] || 0;
-                    const media = p.media[idx];
-                    if (!media) return null;
-                    return media.type === 'image' ? (
-                      <img src={`data:image/*;base64,${media.data}`} alt={media.filename} className="post-media" />
-                    ) : (
-                      <video controls src={`data:video/*;base64,${media.data}`} className="post-media" />
-                    );
-                  })()}
-                  {p.media.length > 1 && <button className="carousel-btn right" onClick={() => handleNext(p.post_id)}><FontAwesomeIcon icon={faChevronRight} /></button>}
-                  {p.media.length > 1 && (
-                    <div className="carousel-dots">
-                      {p.media.map((_, idx) => (
-                        <span key={idx} className={`dot ${carouselIndex[p.post_id] === idx ? 'active' : ''}`} onClick={() => setCarouselIndex((prev) => ({ ...prev, [p.post_id]: idx }))} />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ) : p.imageUrl ? <img className="ig-media" src={p.imageUrl} alt={p.post_name} /> : null}
-            </Link>
+                {p.media && p.media.length > 0 ? (
+                  <div className="carousel">
+                    {mediaLength > 1 && <button className="carousel-btn left" onClick={() => handlePrev(p.post_id)}><FontAwesomeIcon icon={faChevronLeft} /></button>}
+                    {(() => {
+                      const idx = carouselIndex[p.post_id] || 0;
+                      const media = p.media[idx];
+                      if (!media) return null;
+                      if (media.type?.startsWith('image')) return <img src={`data:${media.type};base64,${media.data}`} alt={media.filename || p.post_name} className="post-media" />;
+                      if (media.type?.startsWith('video')) return <video controls src={`data:${media.type};base64,${media.data}`} className="post-media" />;
+                      return null;
+                    })()}
+                    {mediaLength > 1 && <button className="carousel-btn right" onClick={() => handleNext(p.post_id)}><FontAwesomeIcon icon={faChevronRight} /></button>}
+                    {mediaLength > 1 && (
+                      <div className="carousel-dots">
+                        {Array.from({ length: mediaLength }).map((_, idx) => (
+                          <span key={idx} className={`dot ${carouselIndex[p.post_id] === idx ? 'active' : ''}`} onClick={() => setCarouselIndex(prev => ({ ...prev, [p.post_id]: idx }))} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : p.imageUrl ? (
+                  <img className="ig-media" src={p.imageUrl} alt={p.post_name} />
+                ) : null}
+              </Link>
 
-            {p.media && p.media.length > 0 && (
-              <div className="ig-actions">
-                <div className="left">
-                  <button className="icon-btn" aria-label="Like"><FontAwesomeIcon icon={faHeart} /></button>
-                  <button className="icon-btn" aria-label="Comment"><FontAwesomeIcon icon={faCommentDots} /></button>
-                  <button className="icon-btn" aria-label="Share"><FontAwesomeIcon icon={faPaperPlane} /></button>
+              {(p.media || p.imageUrl) && (
+                <div className="ig-actions">
+                  <div className="left">
+                    <button className="icon-btn" aria-label="Like"><FontAwesomeIcon icon={faHeart} /></button>
+                    <button className="icon-btn" aria-label="Comment"><FontAwesomeIcon icon={faCommentDots} /></button>
+                    <button className="icon-btn" aria-label="Share"><FontAwesomeIcon icon={faPaperPlane} /></button>
+                  </div>
+                  <div className="right">
+                    <button
+                      className="icon-btn"
+                      aria-label="Save"
+                      onClick={() => onBookmarkClick(p)}
+                    >
+                      <FontAwesomeIcon icon={faBookmark} />
+                    </button>
+                  </div>
                 </div>
-                <div className="right">
-                  <button className="icon-btn" aria-label="Save"><FontAwesomeIcon icon={faBookmark} /></button>
-                </div>
+              )}
+
+              <div className="ig-meta">
+                <div className="ig-likes">{(p.likes || p.num_likes || 0).toLocaleString()} likes</div>
+                <div className="ig-caption"><span className="ig-username">{displayName}</span> {p.caption || p.post_name}</div>
+                <button className="ig-comments">View all comments</button>
+                <div className="ig-time">{p.time_ago || 'now'}</div>
               </div>
-            )}
-
-            <div className="ig-meta">
-              <div className="ig-likes">{(p.likes || p.num_likes || 0).toLocaleString()} likes</div>
-              <div className="ig-caption"><span className="ig-username">{p.user_name || 'traveler'}</span> {p.caption || p.post_name}</div>
-              <button className="ig-comments">View all comments</button>
-              <div className="ig-time">{p.time_ago || 'now'}</div>
-            </div>
-          </article>
-        ))}
+            </article>
+          );
+        })}
       </div>
     </div>
   );
 };
 
-// App Component
+// App component
 const App = () => {
   const [posts, setPosts] = useState([]);
   const [filteredPosts, setFilteredPosts] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [carouselIndex, setCarouselIndex] = useState({});
 
+  const [showBookmarkModal, setShowBookmarkModal] = useState(false);
+  const [selectedPost, setSelectedPost] = useState(null);
+
+  const [itineraries, setItineraries] = useState([]);
+  const [selectedItinerary, setSelectedItinerary] = useState(null);
+
   const fetchPosts = async () => {
     try {
       const res = await fetch(`${BACKEND_URL}/posts`);
       const data = await res.json();
-      if (Array.isArray(data.posts)) {
-        const groupedPosts = data.posts.reduce((acc, item) => {
-          const postId = item.post_id;
-          if (!acc[postId]) acc[postId] = { ...item, media: [] };
+      if (!Array.isArray(data.posts)) return;
 
-          // Only add media if media_id exists
-          if (item.media_id) {
-            const base64Data = item.data ? (typeof item.data === 'string' ? item.data : Buffer.from(item.data).toString('base64')) : null;
-            acc[postId].media.push({ ...item, data: base64Data });
-          }
-
-          return acc;
-        }, {});
-        const postsArray = Object.values(groupedPosts);
-        setPosts(postsArray);
-        setFilteredPosts(postsArray);
-      }
+      setPosts(data.posts);
+      setFilteredPosts(data.posts);
     } catch (err) {
-      console.error(err);
+      console.error('Error fetching posts:', err);
     }
   };
 
+const fetchItineraries = async () => {
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/itineraries/myItineraries`, {
+      method: "GET",
+      credentials: "include",
+    });
 
-  useEffect(() => { fetchPosts(); }, []);
+    const data = await res.json();
+
+    if (Array.isArray(data.itineraries)) {
+      setItineraries(data.itineraries);
+    } else {
+      console.error("Unexpected itineraries response:", data);
+    }
+  } catch (err) {
+    console.error("Error fetching itineraries:", err);
+  }
+};
+
+
+  useEffect(() => {
+    fetchPosts();
+  }, []);
+
+  useEffect(() => {
+    if (showBookmarkModal) {
+      document.body.style.overflow = "hidden";
+      fetchItineraries(); // Fetch when modal opens
+    } else {
+      document.body.style.overflow = "";
+    }
+  }, [showBookmarkModal]);
 
   const handleSearch = (e) => {
     const query = e.target.value.toLowerCase();
     setSearchQuery(query);
     setFilteredPosts(
-      posts.filter(
-        (p) =>
-          (p.post_name && p.post_name.toLowerCase().includes(query)) ||
-          (p.tags && p.tags.toLowerCase().includes(query)) ||
-          (p.location && p.location.toLowerCase().includes(query))
+      posts.filter((p) =>
+        (p.post_name && p.post_name.toLowerCase().includes(query)) ||
+        (p.tags && p.tags.toLowerCase().includes(query)) ||
+        (p.location && p.location.toLowerCase().includes(query))
       )
     );
   };
@@ -422,7 +451,7 @@ const App = () => {
   const handlePrev = (postId) => {
     setCarouselIndex((prev) => {
       const current = prev[postId] || 0;
-      const length = posts.find((p) => p.post_id === postId)?.media.length || 1;
+      const length = posts.find((p) => p.post_id === postId)?.media?.length || 1;
       return { ...prev, [postId]: (current - 1 + length) % length };
     });
   };
@@ -430,7 +459,7 @@ const App = () => {
   const handleNext = (postId) => {
     setCarouselIndex((prev) => {
       const current = prev[postId] || 0;
-      const length = posts.find((p) => p.post_id === postId)?.media.length || 1;
+      const length = posts.find((p) => p.post_id === postId)?.media?.length || 1;
       return { ...prev, [postId]: (current + 1) % length };
     });
   };
@@ -438,18 +467,25 @@ const App = () => {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={
-          <Home
-            posts={posts}
-            filteredPosts={filteredPosts}
-            carouselIndex={carouselIndex}
-            handlePrev={handlePrev}
-            handleNext={handleNext}
-            setCarouselIndex={setCarouselIndex}
-            handleSearch={handleSearch}
-            searchQuery={searchQuery}
-          />
-        } />
+        <Route
+          path="/"
+          element={
+            <Home
+              posts={posts}
+              filteredPosts={filteredPosts}
+              carouselIndex={carouselIndex}
+              handlePrev={handlePrev}
+              handleNext={handleNext}
+              setCarouselIndex={setCarouselIndex}
+              handleSearch={handleSearch}
+              searchQuery={searchQuery}
+              onBookmarkClick={(post) => {
+                setSelectedPost(post);
+                setShowBookmarkModal(true);
+              }}
+            />
+          }
+        />
         <Route path="/upload" element={<Upload onPostCreated={fetchPosts} />} />
         <Route path="/chat" element={<Chat />} />
         <Route path="/calendar" element={<Calendar />} />
@@ -459,20 +495,200 @@ const App = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/DatabaseViewer" element={<DatabaseViewer />} />
         <Route path="/search" element={<SearchPage posts={[...posts, ...SAMPLE_POSTS]} />} />
-         <Route path="/post/:id" element={<PostPage posts={posts} />} />
+        <Route path="/post/:id" element={<PostPage posts={posts} />} />
       </Routes>
 
-      <div className="bottom-nav">
-        <Link className="nav-icon" to="/"><FontAwesomeIcon icon={faHome} /></Link>
-        <Link className="nav-icon" to="/chat"><FontAwesomeIcon icon={faComment} /></Link>
-        <Link className="nav-icon" to="/upload"><FontAwesomeIcon icon={faPlus} /></Link>
-        <Link className="nav-icon" to="/calendar"><FontAwesomeIcon icon={faCalendar} /></Link>
-        <Link className="nav-icon" to="/profile"><FontAwesomeIcon icon={faUser} /></Link>
-        <Link to="/login" className="nav-icon"><FontAwesomeIcon icon={faRightToBracket} /></Link>
-        <Link to="/DatabaseViewer" className="nav-icon"><FontAwesomeIcon icon={faRightToBracket} /></Link>
+      {/* Top-right icons */}
+      <div
+        style={{
+          position: "fixed",
+          top: "20px",
+          right: "20px",
+          display: "flex",
+          gap: "15px",
+          zIndex: 1000,
+        }}
+      >
+        <Link className="nav-icon" to="/login">
+          <FontAwesomeIcon icon={faRightToBracket} style={{ color: "white" }} />
+        </Link>
+        <Link className="nav-icon" to="/DatabaseViewer">
+          <FontAwesomeIcon icon={faBookmark} style={{ color: "white" }} />
+        </Link>
       </div>
+
+      {/* Bottom Nav */}
+      <div className="bottom-nav">
+        <Link className="nav-icon" to="/">
+          <FontAwesomeIcon icon={faHome} />
+        </Link>
+        <Link className="nav-icon" to="/chat">
+          <FontAwesomeIcon icon={faComment} />
+        </Link>
+        <Link className="nav-icon" to="/upload">
+          <FontAwesomeIcon icon={faPlus} />
+        </Link>
+        <Link className="nav-icon" to="/calendar">
+          <FontAwesomeIcon icon={faCalendar} />
+        </Link>
+        <Link className="nav-icon" to="/profile">
+          <FontAwesomeIcon icon={faUser} />
+        </Link>
+      </div>
+
+      {/* Bookmark Modal */}
+      {showBookmarkModal && (
+        <>
+          <div
+            onClick={() => setShowBookmarkModal(false)}
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              backgroundColor: "rgba(0, 0, 0, 0.5)",
+              zIndex: 9999,
+            }}
+          />
+          <div
+            style={{
+              position: "fixed",
+              bottom: 0,
+              left: 0,
+              width: "100%",
+              height: "70%",
+              backgroundColor: "white",
+              borderTopLeftRadius: "16px",
+              borderTopRightRadius: "16px",
+              zIndex: 10000,
+              boxShadow: "0 -4px 12px rgba(0,0,0,0.3)",
+              display: "flex",
+              flexDirection: "column",
+              padding: "30px",
+              boxSizing: "border-box",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                marginBottom: "20px",
+              }}
+            >
+              <span
+                style={{ color: "gray", cursor: "pointer" }}
+                onClick={() => setShowBookmarkModal(false)}
+              >
+                Cancel
+              </span>
+              <span
+                style={{
+                  color: "dodgerblue",
+                  cursor: "pointer",
+                  fontWeight: "bold",
+                }}
+                onClick={() => {
+                  if (!selectedItinerary) {
+                    return;
+                  }
+                  alert(`Saved "${selectedPost?.post_name}" to itinerary "${selectedItinerary.title}"`);
+                  setShowBookmarkModal(false);
+                }}
+              >
+                Save
+              </span>
+            </div>
+            <h3 style={{ marginBottom: "10px", textAlign: "center" }}>
+              Select an Itinerary to save post to
+            </h3>
+            <div
+              style={{
+                flex: 1,
+                overflowY: "auto",
+                borderRadius: "8px",
+                padding: "10px",
+              }}
+            >
+            {itineraries.length === 0 ? (
+              <p style={{ color: "gray", textAlign: "center" }}>No itineraries found.</p>
+            ) : (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: "15px",
+                }}
+              >
+                {itineraries.map((it) => {
+                  const isSelected = Array.isArray(selectedItinerary)
+                    ? selectedItinerary.some((sel) => sel.itinerary_id === it.itinerary_id)
+                    : false;
+
+                  return (
+                    <div
+                      key={it.itinerary_id}
+                      onClick={() => {
+                        setSelectedItinerary((prev) => {
+                          if (!Array.isArray(prev)) return [it];
+                          const alreadySelected = prev.some(
+                            (sel) => sel.itinerary_id === it.itinerary_id
+                          );
+                          if (alreadySelected) {
+                            return prev.filter(
+                              (sel) => sel.itinerary_id !== it.itinerary_id
+                            );
+                          } else {
+                            return [...prev, it];
+                          }
+                        });
+                      }}
+                      style={{
+                        width: "80%",
+                        backgroundColor: isSelected ? "#e6f0ff" : "white",
+                        borderRadius: "16px",
+                        boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+                        padding: "16px 20px",
+                        cursor: "pointer",
+                        transition: "all 0.2s ease",
+                        border: "none",
+                      }}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.boxShadow = "0 6px 14px rgba(0,0,0,0.15)")
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.boxShadow = "0 4px 10px rgba(0,0,0,0.1)")
+                      }
+                    >
+                      <strong
+                        style={{
+                          display: "block",
+                          fontSize: "1.1em",
+                          marginBottom: "4px",
+                          color: "#333",
+                        }}
+                      >
+                        {it.title}
+                      </strong>
+                      <div style={{ fontSize: "0.9em", color: "#555" }}>
+                        {it.destination || "Unknown destination"}
+                      </div>
+                      <div style={{ fontSize: "0.8em", color: "gray", marginTop: "2px" }}>
+                        {it.date_start
+                          ? `${it.date_start} → ${it.date_end || "?"}`
+                          : "No date set"}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            </div>
+          </div>
+        </>
+      )}
     </Router>
   );
 };
-
 export default App;
