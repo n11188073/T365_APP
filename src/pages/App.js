@@ -283,7 +283,6 @@ const openBookmarkModal = async (post) => {
   setSelectedPost(post);
   setShowBookmarkModal(true);
 
-  // ✅ Reset bookmarks before fetching (change 1)
   setPostBookmarks(null);
 
   try {
@@ -303,7 +302,7 @@ const openBookmarkModal = async (post) => {
 
   } catch (err) {
     console.error("Error fetching post bookmarks:", err);
-    setPostBookmarks([]); // fail-safe
+    setPostBookmarks([]);
   }
 };
 
@@ -314,7 +313,7 @@ const openBookmarkModal = async (post) => {
   useEffect(() => {
     if (showBookmarkModal) {
       document.body.style.overflow = "hidden";
-      fetchItineraries(); // Fetch when modal opens
+      fetchItineraries(); 
     } else {
       document.body.style.overflow = "";
     }

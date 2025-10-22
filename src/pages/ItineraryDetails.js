@@ -48,6 +48,8 @@ const ItineraryDetails = () => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [weather, setWeather] = useState(null);
 
+  const [showSquares, setShowSquares] = useState(false); // Bookmark squares toggle
+
   const getWeatherColor = (main) => {
     switch (main) {
       case "Clear": return "#87CEEB";
@@ -198,6 +200,7 @@ const ItineraryDetails = () => {
     setLocationName("");
     setLocationAddress("");
     setNotes("");
+    setShowSquares(false);
   };
 
   const generateDates = () => {
@@ -212,6 +215,24 @@ const ItineraryDetails = () => {
   };
 
   const dates = generateDates();
+
+  const handleAddFromPost = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/bookmarkPosts?itinerary_id=${id}`, {
+        method: "GET",
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (data.success) {
+        console.log("Bookmarks:", data.bookmarks);
+        setShowSquares(prev => !prev);
+      } else {
+        console.error("Error:", data.error);
+      }
+    } catch (err) {
+      console.error("Fetch error:", err);
+    }
+  };
 
   return (
     <div style={{ padding: 20, height: "100vh", overflowY: "auto" }}>
@@ -279,16 +300,7 @@ const ItineraryDetails = () => {
       {/* Timeline */}
       <div style={{ width: "85vw", margin: "0 auto", position: "relative" }}>
         {filteredActivities.length > 0 && (
-          <div
-            style={{
-              position: "absolute",
-              top: 0,
-              left: "-20px",
-              width: 2,
-              height: "100%",
-              backgroundColor: "#ccc",
-            }}
-          />
+          <div style={{ position: "absolute", top: 0, left: "-20px", width: 2, height: "100%", backgroundColor: "#ccc" }} />
         )}
 
         {filteredActivities.map((activity) => (
@@ -312,53 +324,18 @@ const ItineraryDetails = () => {
             </div>
 
             {/* Card */}
-            <div
-              style={{
-                display: "flex",
-                gap: 15,
-                padding: 20,
-                backgroundColor: "white",
-                borderRadius: 12,
-                boxShadow: "0px 4px 8px rgba(0,0,0,0.2)",
-                position: "relative",
-              }}
-            >
+            <div style={{ display: "flex", gap: 15, padding: 20, backgroundColor: "white", borderRadius: 12, boxShadow: "0px 4px 8px rgba(0,0,0,0.2)", position: "relative" }}>
               {/* Grey image placeholder square */}
-              <div
-                style={{
-                  width: 120,
-                  height: 120,
-                  backgroundColor: "#e0e0e0",
-                  borderRadius: 8,
-                  flexShrink: 0,
-                }}
-              />
+              <div style={{ width: 120, height: 120, backgroundColor: "#e0e0e0", borderRadius: 8, flexShrink: 0 }} />
 
               {/* Text content */}
               <div style={{ flex: 1 }}>
-                <h2
-                  style={{
-                    marginTop: 0,
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
+                <h2 style={{ marginTop: 0, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span>{activity.location_name}</span>
                   {isEditing && (
                     <div style={{ display: "flex", gap: 10 }}>
-                      <FontAwesomeIcon
-                        icon={faPenToSquare}
-                        style={{ cursor: "pointer", color: "blue" }}
-                        title="Edit card"
-                        onClick={() => handleEditClick(activity)}
-                      />
-                      <FontAwesomeIcon
-                        icon={faCircleXmark}
-                        style={{ cursor: "pointer", color: "red" }}
-                        title="Delete card"
-                        onClick={() => handleDeleteCard(activity.card_id)}
-                      />
+                      <FontAwesomeIcon icon={faPenToSquare} style={{ cursor: "pointer", color: "blue" }} title="Edit card" onClick={() => handleEditClick(activity)} />
+                      <FontAwesomeIcon icon={faCircleXmark} style={{ cursor: "pointer", color: "red" }} title="Delete card" onClick={() => handleDeleteCard(activity.card_id)} />
                     </div>
                   )}
                 </h2>
@@ -370,16 +347,7 @@ const ItineraryDetails = () => {
         ))}
       </div>
 
-      <div
-        style={{
-          display: "flex",
-          gap: 15,
-          padding: 60,
-          backgroundColor: "transparent",
-          borderRadius: 12,
-          position: "relative",
-        }}
-        ></div>
+      <div style={{ display: "flex", gap: 15, padding: 60, backgroundColor: "transparent", borderRadius: 12, position: "relative" }}></div>
 
       {/* Add/Edit Event Modal */}
       {showEventModal && (
@@ -395,25 +363,33 @@ const ItineraryDetails = () => {
             <div style={{ display: "grid", gap: 20 }}>
               {/* Post from bookmark */}
               <button
-                onClick={() => console.log("Add post from bookmark clicked")}
-                style={{display: "flex", alignItems: "center", backgroundColor: "#f9f9f9", borderRadius: 12, padding: 15, boxShadow: "0px 2px 6px rgba(0,0,0,0.15)", border: "none", cursor: "pointer", fontSize: "1.2rem", textAlign: "left",}}>
+                onClick={handleAddFromPost}
+                style={{ display: "flex", alignItems: "center", backgroundColor: "#f9f9f9", borderRadius: 12, padding: 15, boxShadow: "0px 2px 6px rgba(0,0,0,0.15)", border: "none", cursor: "pointer", fontSize: "1.2rem", textAlign: "left" }}
+              >
                 <FontAwesomeIcon icon={faBookmark} style={{ marginRight: 10, fontSize: "150%" }} />
                 Add post from bookmark folder
               </button>
 
+              {/* Bookmark Squares */}
+              {showSquares && (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 120px)", gridGap: 20, justifyContent: "center", marginTop: 20 }}>
+                  {Array.from({ length: 9 }).map((_, index) => (
+                    <div key={index} style={{ width: 120, height: 120, backgroundColor: "grey", borderRadius: 12, boxShadow: "0 2px 6px rgba(0,0,0,0.2)" }} />
+                  ))}
+                </div>
+              )}
+              
               {/* Or */}
               <div style={{ textAlign: "center", fontWeight: "bold", color: "#555" }}>or</div>
 
               {/* Upload Image */}
               <button
                 onClick={() => console.log("Upload image clicked")}
-                style={{display: "flex", alignItems: "center", backgroundColor: "#f9f9f9", borderRadius: 12, padding: 15, boxShadow: "0px 2px 6px rgba(0,0,0,0.15)", border: "none", cursor: "pointer", fontSize: "1.2rem", textAlign: "left",}}>
+                style={{ display: "flex", alignItems: "center", backgroundColor: "#f9f9f9", borderRadius: 12, padding: 15, boxShadow: "0px 2px 6px rgba(0,0,0,0.15)", border: "none", cursor: "pointer", fontSize: "1.2rem", textAlign: "left" }}
+              >
                 <FontAwesomeIcon icon={faImage} style={{ marginRight: 10, fontSize: "150%" }} />
                 Upload image
               </button>
-
-              {/* Line */}
-              <div style={{ display: "flex", alignItems: "center", backgroundColor: "#dededeff", borderRadius: 12, padding: 3 }}></div>
 
               {/* Time */}
               <div style={{ display: "flex", alignItems: "center", backgroundColor: "#f9f9f9", borderRadius: 12, padding: 15, boxShadow: "0px 2px 6px rgba(0,0,0,0.15)" }}>
@@ -449,8 +425,6 @@ const ItineraryDetails = () => {
         </div>
       )}
     </div>
-    
-    
   );
 };
 

@@ -84,7 +84,7 @@ module.exports = (db) => {
       notes,
       order_index,
       card_time,
-      card_date, // <-- added
+      card_date, 
     } = req.body;
 
     if (!itinerary_id) {
@@ -200,6 +200,28 @@ module.exports = (db) => {
     } catch (err) {
       console.error("Update destination error:", err);
       res.status(500).json({ success: false, error: 'Database error' });
+    }
+  });
+
+  // bookmarkPosts must be above '/:id'
+  router.get("/bookmarkPosts", authenticate, async (req, res) => {
+    try {
+      const itineraryId = req.query.itinerary_id; // ?itinerary_id=6
+
+      if (!itineraryId) {
+        return res.status(400).json({ success: false, error: "Missing itinerary ID" });
+      }
+
+      // Fetch all bookmarks for this itinerary
+      const rows = await dbAll(
+        `SELECT * FROM bookmark_posts_itineraries WHERE itinerary_id = ? ORDER BY saved_at DESC`,
+        [itineraryId]
+      );
+
+      res.json({ success: true, bookmarks: rows });
+    } catch (err) {
+      console.error("Error fetching bookmark posts:", err);
+      res.status(500).json({ success: false, error: "Database error" });
     }
   });
 
