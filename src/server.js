@@ -302,6 +302,12 @@ const itinerariesRoutes = require("../src/api/itineraries");
 app.use("/api/itineraries", itinerariesRoutes(db));
 
 // -------------------------
+// Bookmarks Routes
+// -------------------------
+const bookmarksRoutes = require("../src/api/bookmarks");
+app.use("/api/bookmarks", bookmarksRoutes(db));
+
+// -------------------------
 // Start Server
 // -------------------------
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
