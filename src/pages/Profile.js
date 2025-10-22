@@ -42,6 +42,7 @@ const Profile = () => {
         const res = await fetch(`http://localhost:5000/posts?user_id=${userId}`);
         const data = await res.json();
         if (Array.isArray(data.posts)) setUserPosts(data.posts);
+        else setUserPosts([]);
       } catch (err) {
         console.error("Failed to fetch user posts", err);
       }
