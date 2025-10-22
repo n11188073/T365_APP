@@ -1,4 +1,3 @@
-// src/pages/Upload.js
 import { useState } from 'react';
 import './Upload.css';
 
@@ -8,9 +7,13 @@ const Upload = ({ onPostCreated }) => {
   const [step, setStep] = useState(1);
   const [mode, setMode] = useState('post');
   const [postText, setPostText] = useState('');
-  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+  const [location, setLocation] = useState('');
+  const [tags, setTags] = useState('');
+  const [taggedUsers, setTaggedUsers] = useState([]); // 👤 for UI display only
+  const [showTagModal, setShowTagModal] = useState(false);
+  const [tempTag, setTempTag] = useState('');
 
-  // Get logged-in user from localStorage
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
   const storedUser = localStorage.getItem('user');
   const user = storedUser ? JSON.parse(storedUser) : null;
   const userId = user?.id;
@@ -20,7 +23,6 @@ const Upload = ({ onPostCreated }) => {
     const mediaFiles = files.filter(file =>
       mode === 'post' ? file.type.startsWith('image/') : file.type.startsWith('video/')
     );
-
     mediaFiles.forEach(file => {
       const reader = new FileReader();
       reader.onload = () => {
@@ -47,44 +49,49 @@ const Upload = ({ onPostCreated }) => {
     setStep(2);
   };
 
-  const handleCreatePost = async () => {
-    if (!postText.trim()) {
-      alert("Post text is required");
-      return;
+  const handleAddTag = () => {
+    if (tempTag.trim() && !taggedUsers.includes(tempTag.trim())) {
+      setTaggedUsers(prev => [...prev, tempTag.trim()]);
+      setTempTag('');
     }
+  };
 
-    if (!userId) {
-      alert("You must be logged in to create a post");
-      return;
-    }
+  const handleRemoveTag = (username) => {
+    setTaggedUsers(prev => prev.filter(u => u !== username));
+  };
+
+  const handleCreatePost = async () => {
+    if (!postText.trim()) return alert("Post text is required");
+    if (!userId) return alert("You must be logged in to create a post");
 
     const mediaFiles = selected.map(i => previews[i]);
-    if (mediaFiles.length === 0) {
-      alert("Please select at least one image or video");
-      return;
-    }
+    if (mediaFiles.length === 0) return alert("Please select at least one image or video");
 
     try {
       const formData = new FormData();
       formData.append('post_name', postText);
-      formData.append('user_id', String(userId)); // <--- include logged-in user_id
+      formData.append('location', location);
+      formData.append('tags', tags);
+      formData.append('user_id', String(userId));
+      formData.append('tagged_users', JSON.stringify(taggedUsers)); // UI only for now
 
       mediaFiles.forEach(file => formData.append('files', file.file));
 
       const response = await fetch(`${BACKEND_URL}/create-post`, {
         method: 'POST',
-        body: formData
+        body: formData,
       });
 
       const data = await response.json();
-
       if (response.ok) {
         alert("Post created successfully!");
         setStep(1);
         setPreviews([]);
         setSelected([]);
         setPostText('');
-
+        setLocation('');
+        setTags('');
+        setTaggedUsers([]);
         if (onPostCreated) onPostCreated();
       } else {
         alert("Failed to create post: " + (data.message || "Unknown error"));
@@ -108,10 +115,16 @@ const Upload = ({ onPostCreated }) => {
 
       {step === 1 && (
         <div className="toggle-buttons">
-          <button className={`toggle ${mode === 'post' ? 'active' : ''}`} onClick={() => { setMode('post'); setPreviews([]); setSelected([]); }}>
+          <button
+            className={`toggle ${mode === 'post' ? 'active' : ''}`}
+            onClick={() => { setMode('post'); setPreviews([]); setSelected([]); }}
+          >
             Post
           </button>
-          <button className={`toggle ${mode === 'video' ? 'active' : ''}`} onClick={() => { setMode('video'); setPreviews([]); setSelected([]); }}>
+          <button
+            className={`toggle ${mode === 'video' ? 'active' : ''}`}
+            onClick={() => { setMode('video'); setPreviews([]); setSelected([]); }}
+          >
             Video
           </button>
         </div>
@@ -130,13 +143,12 @@ const Upload = ({ onPostCreated }) => {
             <span className="icon">{mode === 'video' ? '🎥' : '📷'}</span>
           </label>
         )}
-
         {previews.map((media, idx) => (
           <div key={idx} className={`tile preview ${selected.includes(idx) ? 'selected' : ''}`}>
             {media.type.startsWith('image/') ? (
               <img src={media.src} alt={`media-${idx}`} />
             ) : (
-              <video src={media.src} controls muted style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <video src={media.src} controls muted />
             )}
             {step === 1 && (
               <input
@@ -158,9 +170,36 @@ const Upload = ({ onPostCreated }) => {
             value={postText}
             onChange={e => setPostText(e.target.value)}
           />
-          <button className="arrow-btn">📍 Add location</button>
-          <button className="arrow-btn">#️⃣ Hashtags</button>
-          <button className="arrow-btn">👤 Tag people</button>
+          <input
+            type="text"
+            className="input-text"
+            placeholder="📍 Add location"
+            value={location}
+            onChange={e => setLocation(e.target.value)}
+          />
+          <input
+            type="text"
+            className="input-text"
+            placeholder="#️⃣ Add tags (comma separated)"
+            value={tags}
+            onChange={e => setTags(e.target.value)}
+          />
+
+          <button className="tag-btn" onClick={() => setShowTagModal(true)}>
+            <span className="tag-icon">👥</span>
+            <span>Tag People</span>
+          </button>
+
+          {taggedUsers.length > 0 && (
+            <div className="tagged-list">
+              {taggedUsers.map((user, idx) => (
+                <span key={idx} className="tag-chip">
+                  @{user}
+                  <button className="remove-tag" onClick={() => handleRemoveTag(user)}>×</button>
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -168,6 +207,27 @@ const Upload = ({ onPostCreated }) => {
         <button className="btn primary bottom-btn" onClick={handleCreatePost}>
           Upload
         </button>
+      )}
+
+      {showTagModal && (
+        <div className="tag-modal">
+          <div className="tag-modal-content">
+            <h3>Tag People</h3>
+            <input
+              type="text"
+              className="input-text"
+              placeholder="Enter username..."
+              value={tempTag}
+              onChange={e => setTempTag(e.target.value)}
+            />
+            <div className="tag-modal-actions">
+              <button className="btn" onClick={() => setShowTagModal(false)}>Cancel</button>
+              <button className="btn primary" onClick={() => { handleAddTag(); setShowTagModal(false); }}>
+                Add
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
