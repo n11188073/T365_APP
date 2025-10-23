@@ -51,6 +51,8 @@ const ItineraryDetails = () => {
 
   const [showSquares, setShowSquares] = useState(false);
   const [images, setImages] = useState({});
+  const [editingPostId, setEditingPostId] = useState(null);
+
 
 
   const getWeatherColor = (main) => {
@@ -162,63 +164,88 @@ useEffect(() => {
     setFilteredActivities(activities.filter(a => !a.card_date || a.card_date === selectedDate));
   }, [selectedDate, activities]);
 
-  const handleSaveCard = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/saveItineraryCard`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
+const handleSaveCard = async () => {
+  console.log("Saving card...");
+  console.log("Selected post_id:", editingPostId);  // <-- log here
+  console.log("Other card info:", { locationName, locationAddress, notes, cardTime, cardDate });
+
+  try {
+    const res = await fetch(`${API_BASE}/saveItineraryCard`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        itinerary_id: id,
+        location_name: locationName,
+        location_address: locationAddress,
+        notes,
+        order_index: activities.length,
+        card_time: cardTime,
+        card_date: cardDate || null,
+        post_id: editingPostId ? parseInt(editingPostId) : null, // <-- make sure this is included
+      }),
+    });
+
+    const data = await res.json();
+    console.log("Backend response:", data);
+
+    if (data.card_id) {
+      setActivities(prev => [
+        ...prev,
+        {
+          card_id: data.card_id,
           itinerary_id: id,
           location_name: locationName,
           location_address: locationAddress,
           notes,
-          order_index: activities.length,
+          order_index: prev.length,
           card_time: cardTime,
           card_date: cardDate || null,
-        }),
-      });
-      const data = await res.json();
-      if (data.card_id) {
-        setActivities(prev => [...prev, { card_id: data.card_id, itinerary_id: id, location_name: locationName, location_address: locationAddress, notes, order_index: prev.length, card_time: cardTime, card_date: cardDate || null }].sort((a, b) => a.card_time.localeCompare(b.card_time)));
-        closeModal();
-      } else {
-        console.error("Error saving card:", data);
-      }
-    } catch (err) {
-      console.error(err);
+          post_id: editingPostId ? parseInt(editingPostId) : null,
+        }
+      ]);
+      closeModal();
+    } else {
+      console.error("Error saving card:", data);
     }
-  };
+  } catch (err) {
+    console.error(err);
+  }
+};
 
-  const handleUpdateCard = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/updateItineraryCard`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          card_id: editingCardId,
-          location_name: locationName,
-          location_address: locationAddress,
-          notes,
-          card_time: cardTime,
-          card_date: cardDate,
-        }),
-      });
-      if (res.ok) {
-        setActivities(prev =>
-          prev.map(a =>
-            a.card_id === editingCardId
-              ? { ...a, location_name: locationName, location_address: locationAddress, notes, card_time: cardTime, card_date: cardDate }
-              : a
-          )
-        );
-        closeModal();
-      }
-    } catch (err) {
-      console.error(err);
+
+
+const handleUpdateCard = async () => {
+  try {
+    const res = await fetch(`${API_BASE}/updateItineraryCard`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        card_id: editingCardId,
+        location_name: locationName,
+        location_address: locationAddress,
+        notes,
+        card_time: cardTime,
+        card_date: cardDate,
+        post_id: editingPostId ? parseInt(editingPostId) : null,
+      }),
+    });
+    if (res.ok) {
+      setActivities(prev =>
+        prev.map(a =>
+          a.card_id === editingCardId
+            ? { ...a, location_name: locationName, location_address: locationAddress, notes, card_time: cardTime, card_date: cardDate, post_id: editingPostId ? parseInt(editingPostId) : null }
+            : a
+        )
+      );
+      closeModal();
     }
-  };
+  } catch (err) {
+    console.error(err);
+  }
+};
+
 
   const handleEditClick = (card) => {
     setEditingCardId(card.card_id);
@@ -281,7 +308,7 @@ const handleAddFromPost = async () => {
       // Map post_id -> image from your `images` object
       const filteredImages = filteredPosts.map(
         (b) => images[b.post_id]
-      ).filter(Boolean); // remove null/undefined
+      ).filter(Boolean);
 
       setBookmarkImages(filteredImages);
       setShowSquares(true);
@@ -382,96 +409,30 @@ const handleAddFromPost = async () => {
               <span style={{ fontSize: "1.2rem", color: "#555" }}>{activity.card_time}</span>
             </div>
 
-
-
-
-
-
-
-
-
-
-
             {/* Card */}
             <div style={{ display: "flex", gap: 15, padding: 20, backgroundColor: "white", borderRadius: 12, boxShadow: "0px 4px 8px rgba(0,0,0,0.2)", position: "relative" }}>
-            
-            
-            
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+      
             {/* Card image */}
             <div
               style={{
                 width: 120,
                 height: 120,
-                backgroundColor: "#e0e0e0",
                 borderRadius: 8,
                 flexShrink: 0,
                 overflow: "hidden",
+                backgroundColor: "#e0e0e0", 
               }}
             >
-              {image ? (
-                <div
-                  style={{
-                    width: 120,
-                    height: 120,
-                    backgroundColor: "#e0e0e0",
-                    borderRadius: 8,
-                    flexShrink: 0,
-                    overflow: "hidden",
-                  }}
-                >
-                  {images[activity.post_id || 8] ? (
-                    <img
-                      src={`data:${images[activity.post_id || 8].type};base64,${images[activity.post_id || 8].data}`}
-                      alt={images[activity.post_id || 8].filename || "Post image"}
-                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                    />
-                  ) : (
-                    <div style={{ width: "100%", height: "100%", backgroundColor: "#e0e0e0" }} />
-                  )}
-                </div>
-
+              {activity.post_id && images[activity.post_id] ? (
+                <img
+                  src={`data:${images[activity.post_id].type};base64,${images[activity.post_id].data}`}
+                  alt={images[activity.post_id].filename || "Post image"}
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                />
               ) : (
-                // fallback grey box if image not yet loaded
-                <div style={{ width: "100%", height: "100%", backgroundColor: "#grey" }} />
+                <div style={{ width: "100%", height: "100%", backgroundColor: "#e0e0e0" }} />
               )}
             </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
               {/* Text content */}
               <div style={{ flex: 1 }}>
@@ -515,89 +476,53 @@ const handleAddFromPost = async () => {
                 Add post from bookmark folder
               </button>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
               {/* Bookmark Squares */}
-{/* Bookmark Squares */}
-{showSquares && (
-  <div
-  style={{
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, 120px)", // fill as many 120px squares per row as possible
-    gridGap: 20,                                      // gap between squares
-    justifyContent: "start",                          // align items to left
-    marginTop: 20,
-  }}
->
-  {bookmarkImages.slice(0, 9).map((img, index) => (
-    <div
-      key={index}
-      style={{
-        width: 120,
-        height: 120,
-        borderRadius: 12,
-        boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
-        overflow: "hidden",
-        backgroundColor: "#e0e0e0",
-      }}
-    >
-      {img ? (
-        <img
-          src={`data:${img.type};base64,${img.data}`}
-          alt={img.filename || "Bookmark image"}
-          style={{ width: "100%", height: "100%", objectFit: "cover" }}
-        />
-      ) : (
-        <div style={{ width: "100%", height: "100%", backgroundColor: "#e0e0e0" }} />
-      )}
-    </div>
-  ))}
-</div>
-
-)}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-              
+              {showSquares && (
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 12,
+                    justifyContent: "flex-start",
+                    marginTop: 20,
+                  }}
+                >
+                  {Object.entries(images).map(([postId, img]) => {
+                    const isSelected = postId === (editingPostId?.toString() || "");
+                    return (
+                      <div
+                key={postId}
+                onClick={(e) => {
+                  e.preventDefault();
+                  console.log("Selected post clicked:", postId);
+                  setEditingPostId(postId); // just highlight selected
+                }}
+                style={{
+                  width: 120,
+                  height: 120,
+                  borderRadius: 12,
+                  boxShadow: postId === (editingPostId?.toString() || "") ? "0 0 0 3px #90cdf4 inset" : "0 2px 6px rgba(0,0,0,0.2)",
+                  overflow: "hidden",
+                  backgroundColor: "#e0e0e0",
+                  cursor: "pointer",
+                  position: "relative",
+                }}
+              >
+                {img ? (
+                  <img
+                    src={`data:${img.type};base64,${img.data}`}
+                    alt={img.filename || "Bookmark image"}
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  />
+                ) : (
+                  <div style={{ width: "100%", height: "100%", backgroundColor: "#e0e0e0" }} />
+                )}
+              </div>
+                    );
+                  })}
+                </div>
+              )}
+            
               {/* Or */}
               <div style={{ textAlign: "center", fontWeight: "bold", color: "#555" }}>or</div>
 

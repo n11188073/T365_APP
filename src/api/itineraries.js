@@ -84,7 +84,8 @@ module.exports = (db) => {
       notes,
       order_index,
       card_time,
-      card_date, 
+      card_date,
+      post_id 
     } = req.body;
 
     if (!itinerary_id) {
@@ -94,8 +95,8 @@ module.exports = (db) => {
     try {
       const card_id = await dbRun(
         `INSERT INTO itinerary_cards 
-          (itinerary_id, location_name, location_address, notes, order_index, created_at, card_time, card_date) 
-        VALUES (?, ?, ?, ?, ?, datetime('now'), ?, ?)`,
+          (itinerary_id, location_name, location_address, notes, order_index, created_at, card_time, card_date, post_id) 
+        VALUES (?, ?, ?, ?, ?, datetime('now'), ?, ?, ?)`,
         [
           itinerary_id,
           location_name || "",
@@ -103,7 +104,8 @@ module.exports = (db) => {
           notes || "",
           order_index || 0,
           card_time || "",
-          card_date || null, 
+          card_date || null,
+          post_id || null
         ]
       );
 
@@ -113,6 +115,7 @@ module.exports = (db) => {
       res.status(500).json({ error: 'Database error' });
     }
   });
+
 
   router.get('/myItineraries', authenticate, async (req, res) => {
     try {
@@ -153,22 +156,34 @@ module.exports = (db) => {
     }
   });
 
-  router.post('/updateItineraryTitle', authenticate, async (req, res) => {
-    const { itinerary_id, title } = req.body;
-    if (!itinerary_id || !title) {
-      return res.status(400).json({ error: 'Missing itinerary_id or title' });
-    }
+  router.post('/updateItineraryCard', authenticate, async (req, res) => {
+    const {
+      card_id,
+      location_name,
+      location_address,
+      notes,
+      card_time,
+      card_date,
+      post_id
+    } = req.body;
+
+    if (!card_id) return res.status(400).json({ error: 'card_id is required' });
+
     try {
       await dbRun(
-        `UPDATE itineraries SET title = ? WHERE itinerary_id = ? AND owner_id = ?`,
-        [title, itinerary_id, req.user.id]
+        `UPDATE itinerary_cards 
+        SET location_name = ?, location_address = ?, notes = ?, card_time = ?, card_date = ?, post_id = ?
+        WHERE card_id = ?`,
+        [location_name, location_address, notes, card_time, card_date, post_id || null, card_id]
       );
-      res.json({ success: true, message: 'Title updated successfully' });
+
+      res.json({ success: true, message: 'Card updated successfully' });
     } catch (err) {
-      console.error("Update title error:", err);
-      res.status(500).json({ success: false, error: 'Database error' });
+      console.error("Update card error:", err);
+      res.status(500).json({ error: 'Database error' });
     }
   });
+
 
   router.delete('/deleteItinerary/:itinerary_id', authenticate, async (req, res) => {
     const { itinerary_id } = req.params;
