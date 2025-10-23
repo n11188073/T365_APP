@@ -32,24 +32,27 @@ const ItineraryDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
+  // State
   const [isEditing, setIsEditing] = useState(false);
   const [showEventModal, setShowEventModal] = useState(false);
   const [editingCardId, setEditingCardId] = useState(null);
   const [activities, setActivities] = useState([]);
   const [filteredActivities, setFilteredActivities] = useState([]);
   const [itinerary, setItinerary] = useState(null);
+  const [posts, setPosts] = useState([]);
 
   const [cardTime, setCardTime] = useState("");
   const [cardDate, setCardDate] = useState("");
   const [locationName, setLocationName] = useState("");
   const [locationAddress, setLocationAddress] = useState("");
   const [notes, setNotes] = useState("");
+  const [uploadedImage, setUploadedImage] = useState(null);
 
   const [selectedDate, setSelectedDate] = useState(null);
   const [weather, setWeather] = useState(null);
+  const [showSquares, setShowSquares] = useState(false);
 
-  const [showSquares, setShowSquares] = useState(false); // Bookmark squares toggle
-
+  // Weather colors
   const getWeatherColor = (main) => {
     switch (main) {
       case "Clear": return "#87CEEB";
@@ -65,6 +68,7 @@ const ItineraryDetails = () => {
     }
   };
 
+  // Fetch itinerary
   useEffect(() => {
     const fetchItinerary = async () => {
       try {
@@ -81,9 +85,10 @@ const ItineraryDetails = () => {
     fetchItinerary();
   }, [id]);
 
+  // Fetch weather
   useEffect(() => {
     const loadWeather = async () => {
-      if (!itinerary || !itinerary.destination) return;
+      if (!itinerary?.destination) return;
       try {
         const data = await fetchWeather(itinerary.destination);
         setWeather(data);
@@ -94,6 +99,7 @@ const ItineraryDetails = () => {
     loadWeather();
   }, [itinerary]);
 
+  // Fetch itinerary cards
   useEffect(() => {
     const fetchCards = async () => {
       try {
@@ -110,11 +116,37 @@ const ItineraryDetails = () => {
     fetchCards();
   }, [id]);
 
+  // Filter activities by selected date
   useEffect(() => {
     if (!selectedDate) return setFilteredActivities(activities);
     setFilteredActivities(activities.filter(a => !a.card_date || a.card_date === selectedDate));
   }, [selectedDate, activities]);
 
+  // Fetch bookmarked posts
+  const fetchBookmarkPosts = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/bookmarkPosts?itinerary_id=${id}`, {
+        method: "GET",
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (data.success && Array.isArray(data.bookmarks)) {
+        setPosts(data.bookmarks);
+      } else {
+        console.error("Error fetching bookmarks:", data.error);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Handle modal open
+  const handleAddFromPost = () => {
+    fetchBookmarkPosts();
+    setShowSquares(prev => !prev);
+  };
+
+  // Save card
   const handleSaveCard = async () => {
     try {
       const res = await fetch(`${API_BASE}/saveItineraryCard`, {
@@ -129,11 +161,12 @@ const ItineraryDetails = () => {
           order_index: activities.length,
           card_time: cardTime,
           card_date: cardDate || null,
+          image: uploadedImage || null,
         }),
       });
       const data = await res.json();
       if (data.card_id) {
-        setActivities(prev => [...prev, { card_id: data.card_id, itinerary_id: id, location_name: locationName, location_address: locationAddress, notes, order_index: prev.length, card_time: cardTime, card_date: cardDate || null }].sort((a, b) => a.card_time.localeCompare(b.card_time)));
+        setActivities(prev => [...prev, { card_id: data.card_id, itinerary_id: id, location_name: locationName, location_address: locationAddress, notes, order_index: prev.length, card_time: cardTime, card_date: cardDate || null, image: uploadedImage || null }].sort((a, b) => a.card_time.localeCompare(b.card_time)));
         closeModal();
       } else {
         console.error("Error saving card:", data);
@@ -143,6 +176,7 @@ const ItineraryDetails = () => {
     }
   };
 
+  // Update card
   const handleUpdateCard = async () => {
     try {
       const res = await fetch(`${API_BASE}/updateItineraryCard`, {
@@ -156,13 +190,14 @@ const ItineraryDetails = () => {
           notes,
           card_time: cardTime,
           card_date: cardDate,
+          image: uploadedImage || null,
         }),
       });
       if (res.ok) {
         setActivities(prev =>
           prev.map(a =>
             a.card_id === editingCardId
-              ? { ...a, location_name: locationName, location_address: locationAddress, notes, card_time: cardTime, card_date: cardDate }
+              ? { ...a, location_name: locationName, location_address: locationAddress, notes, card_time: cardTime, card_date: cardDate, image: uploadedImage || a.image }
               : a
           )
         );
@@ -180,6 +215,7 @@ const ItineraryDetails = () => {
     setLocationName(card.location_name || "");
     setLocationAddress(card.location_address || "");
     setNotes(card.notes || "");
+    setUploadedImage(card.image || null);
     setShowEventModal(true);
   };
 
@@ -200,9 +236,11 @@ const ItineraryDetails = () => {
     setLocationName("");
     setLocationAddress("");
     setNotes("");
+    setUploadedImage(null);
     setShowSquares(false);
   };
 
+  // Generate dates
   const generateDates = () => {
     if (!itinerary?.date_start || !itinerary?.date_end) return [];
     const start = new Date(itinerary.date_start);
@@ -216,21 +254,12 @@ const ItineraryDetails = () => {
 
   const dates = generateDates();
 
-  const handleAddFromPost = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/bookmarkPosts?itinerary_id=${id}`, {
-        method: "GET",
-        credentials: "include",
-      });
-      const data = await res.json();
-      if (data.success) {
-        console.log("Bookmarks:", data.bookmarks);
-        setShowSquares(prev => !prev);
-      } else {
-        console.error("Error:", data.error);
-      }
-    } catch (err) {
-      console.error("Fetch error:", err);
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => setUploadedImage(reader.result);
+      reader.readAsDataURL(file);
     }
   };
 
@@ -299,36 +328,20 @@ const ItineraryDetails = () => {
 
       {/* Timeline */}
       <div style={{ width: "85vw", margin: "0 auto", position: "relative" }}>
-        {filteredActivities.length > 0 && (
-          <div style={{ position: "absolute", top: 0, left: "-20px", width: 2, height: "100%", backgroundColor: "#ccc" }} />
-        )}
-
+        {filteredActivities.length > 0 && <div style={{ position: "absolute", top: 0, left: "-20px", width: 2, height: "100%", backgroundColor: "#ccc" }} />}
         {filteredActivities.map((activity) => (
           <div key={activity.card_id} style={{ marginBottom: 30, position: "relative" }}>
-            {/* Time dot + time */}
             <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
-              <div
-                style={{
-                  width: 16,
-                  height: 16,
-                  borderRadius: "50%",
-                  backgroundColor: "#90cdf4",
-                  border: "2px solid white",
-                  boxShadow: "0 0 3px rgba(0,0,0,0.2)",
-                  marginRight: 8,
-                  marginLeft: -28,
-                  flexShrink: 0,
-                }}
-              />
+              <div style={{ width: 16, height: 16, borderRadius: "50%", backgroundColor: "#90cdf4", border: "2px solid white", boxShadow: "0 0 3px rgba(0,0,0,0.2)", marginRight: 8, marginLeft: -28, flexShrink: 0 }} />
               <span style={{ fontSize: "1.2rem", color: "#555" }}>{activity.card_time}</span>
             </div>
 
-            {/* Card */}
             <div style={{ display: "flex", gap: 15, padding: 20, backgroundColor: "white", borderRadius: 12, boxShadow: "0px 4px 8px rgba(0,0,0,0.2)", position: "relative" }}>
-              {/* Grey image placeholder square */}
-              <div style={{ width: 120, height: 120, backgroundColor: "#e0e0e0", borderRadius: 8, flexShrink: 0 }} />
-
-              {/* Text content */}
+              {activity.image ? (
+                <img src={activity.image} alt={activity.location_name} style={{ width: 120, height: 120, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />
+              ) : (
+                <div style={{ width: 120, height: 120, backgroundColor: "#e0e0e0", borderRadius: 8, flexShrink: 0 }} />
+              )}
               <div style={{ flex: 1 }}>
                 <h2 style={{ marginTop: 0, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span>{activity.location_name}</span>
@@ -347,8 +360,6 @@ const ItineraryDetails = () => {
         ))}
       </div>
 
-      <div style={{ display: "flex", gap: 15, padding: 60, backgroundColor: "transparent", borderRadius: 12, position: "relative" }}></div>
-
       {/* Add/Edit Event Modal */}
       {showEventModal && (
         <div style={{ position: "fixed", top: 0, left: 0, width: "100vw", height: "100vh", backgroundColor: "rgba(0,0,0,0.5)", display: "flex", justifyContent: "center", alignItems: "center", zIndex: 1000 }}>
@@ -361,35 +372,33 @@ const ItineraryDetails = () => {
 
             {/* Input Fields */}
             <div style={{ display: "grid", gap: 20 }}>
-              {/* Post from bookmark */}
-              <button
-                onClick={handleAddFromPost}
-                style={{ display: "flex", alignItems: "center", backgroundColor: "#f9f9f9", borderRadius: 12, padding: 15, boxShadow: "0px 2px 6px rgba(0,0,0,0.15)", border: "none", cursor: "pointer", fontSize: "1.2rem", textAlign: "left" }}
-              >
+              {/* Add post from bookmark */}
+              <button onClick={handleAddFromPost} style={{ display: "flex", alignItems: "center", backgroundColor: "#f9f9f9", borderRadius: 12, padding: 15, boxShadow: "0px 2px 6px rgba(0,0,0,0.15)", border: "none", cursor: "pointer", fontSize: "1.2rem", textAlign: "left" }}>
                 <FontAwesomeIcon icon={faBookmark} style={{ marginRight: 10, fontSize: "150%" }} />
                 Add post from bookmark folder
               </button>
 
-              {/* Bookmark Squares */}
               {showSquares && (
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 120px)", gridGap: 20, justifyContent: "center", marginTop: 20 }}>
-                  {Array.from({ length: 9 }).map((_, index) => (
-                    <div key={index} style={{ width: 120, height: 120, backgroundColor: "grey", borderRadius: 12, boxShadow: "0 2px 6px rgba(0,0,0,0.2)" }} />
-                  ))}
+                  {posts.length > 0 ? (
+                    posts.slice(0, 9).map((post) => (
+                      <img key={post.post_id} src={post.imageUrl || (post.media?.[0]?.data ? `data:${post.media[0].type};base64,${post.media[0].data}` : '')} alt={post.post_name || 'Post'} style={{ width: 120, height: 120, objectFit: "cover", borderRadius: 12, boxShadow: "0 2px 6px rgba(0,0,0,0.2)", cursor: "pointer" }} onClick={() => { setLocationName(post.post_name); setLocationAddress(post.location); setShowSquares(false); }} />
+                    ))
+                  ) : (
+                    <div>No posts available</div>
+                  )}
                 </div>
               )}
-              
+
               {/* Or */}
               <div style={{ textAlign: "center", fontWeight: "bold", color: "#555" }}>or</div>
 
               {/* Upload Image */}
-              <button
-                onClick={() => console.log("Upload image clicked")}
-                style={{ display: "flex", alignItems: "center", backgroundColor: "#f9f9f9", borderRadius: 12, padding: 15, boxShadow: "0px 2px 6px rgba(0,0,0,0.15)", border: "none", cursor: "pointer", fontSize: "1.2rem", textAlign: "left" }}
-              >
-                <FontAwesomeIcon icon={faImage} style={{ marginRight: 10, fontSize: "150%" }} />
-                Upload image
-              </button>
+              <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} id="uploadImageInput" />
+              <label htmlFor="uploadImageInput" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, backgroundColor: "#f9f9f9", borderRadius: 12, padding: 15, boxShadow: "0px 2px 6px rgba(0,0,0,0.15)", fontSize: "1.2rem" }}>
+                <FontAwesomeIcon icon={faImage} /> Upload image
+              </label>
+              {uploadedImage && <img src={uploadedImage} alt="Preview" style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 12, marginTop: 10 }} />}
 
               {/* Time */}
               <div style={{ display: "flex", alignItems: "center", backgroundColor: "#f9f9f9", borderRadius: 12, padding: 15, boxShadow: "0px 2px 6px rgba(0,0,0,0.15)" }}>
