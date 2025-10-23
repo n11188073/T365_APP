@@ -385,7 +385,28 @@ useEffect(() => {
             
             
             
-            {/* Image placeholder or actual image */}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            {/* Card image */}
             <div
               style={{
                 width: 120,
@@ -420,9 +441,24 @@ useEffect(() => {
 
               ) : (
                 // fallback grey box if image not yet loaded
-                <div style={{ width: "100%", height: "100%", backgroundColor: "#ff2020ff" }} />
+                <div style={{ width: "100%", height: "100%", backgroundColor: "#grey" }} />
               )}
             </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
               {/* Text content */}
@@ -477,14 +513,80 @@ useEffect(() => {
 
 
 
+
+
+
+
+
+
+
+
+
+
               {/* Bookmark Squares */}
-              {showSquares && (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 120px)", gridGap: 20, justifyContent: "center", marginTop: 20 }}>
-                  {Array.from({ length: 9 }).map((_, index) => (
-                    <div key={index} style={{ width: 120, height: 120, backgroundColor: "grey", borderRadius: 12, boxShadow: "0 2px 6px rgba(0,0,0,0.2)" }} />
-                  ))}
-                </div>
-              )}
+{/* Bookmark Squares */}
+{showSquares && (
+  <div
+    style={{
+      display: "grid",
+      gridTemplateColumns: "repeat(3, 120px)",
+      gridGap: 20,
+      justifyContent: "center",
+      marginTop: 20,
+    }}
+  >
+    {Object.values(images).slice(0, 9).map((img, index) => (
+      <div
+        key={index}
+        style={{
+          width: 120,
+          height: 120,
+          borderRadius: 12,
+          boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+          overflow: "hidden",
+          backgroundColor: "#e0e0e0",
+        }}
+      >
+        {img ? (
+          <img
+            src={`data:${img.type};base64,${img.data}`}
+            alt={img.filename || "Bookmark image"}
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        ) : (
+          <div style={{ width: "100%", height: "100%", backgroundColor: "#e0e0e0" }} />
+        )}
+      </div>
+    ))}
+  </div>
+)}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
               
               {/* Or */}
               <div style={{ textAlign: "center", fontWeight: "bold", color: "#555" }}>or</div>
