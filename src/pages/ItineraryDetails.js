@@ -263,23 +263,35 @@ useEffect(() => {
 
   const dates = generateDates();
 
-  const handleAddFromPost = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/bookmarkPosts?itinerary_id=${id}`, {
-        method: "GET",
-        credentials: "include",
-      });
-      const data = await res.json();
-      if (data.success) {
-        console.log("Bookmarks:", data.bookmarks);
-        setShowSquares(prev => !prev);
-      } else {
-        console.error("Error:", data.error);
-      }
-    } catch (err) {
-      console.error("Fetch error:", err);
+const [bookmarkImages, setBookmarkImages] = useState([]);
+
+const handleAddFromPost = async () => {
+  try {
+    const res = await fetch(`${API_BASE}/bookmarkPosts?itinerary_id=${id}`, {
+      method: "GET",
+      credentials: "include",
+    });
+    const data = await res.json();
+    if (data.success) {
+      // Filter posts that belong to current itinerary_id
+      const filteredPosts = data.bookmarks.filter(
+        (b) => b.itinerary_id.toString() === id.toString()
+      );
+
+      // Map post_id -> image from your `images` object
+      const filteredImages = filteredPosts.map(
+        (b) => images[b.post_id]
+      ).filter(Boolean); // remove null/undefined
+
+      setBookmarkImages(filteredImages);
+      setShowSquares(true);
+    } else {
+      console.error("Error:", data.error);
     }
-  };
+  } catch (err) {
+    console.error("Fetch error:", err);
+  }
+};
 
   return (
     <div style={{ padding: 20, height: "100vh", overflowY: "auto" }}>
@@ -527,42 +539,40 @@ useEffect(() => {
 {/* Bookmark Squares */}
 {showSquares && (
   <div
-    style={{
-      display: "grid",
-      gridTemplateColumns: "repeat(3, 120px)",
-      gridGap: 20,
-      justifyContent: "center",
-      marginTop: 20,
-    }}
-  >
-    {Object.values(images).slice(0, 9).map((img, index) => (
-      <div
-        key={index}
-        style={{
-          width: 120,
-          height: 120,
-          borderRadius: 12,
-          boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
-          overflow: "hidden",
-          backgroundColor: "#e0e0e0",
-        }}
-      >
-        {img ? (
-          <img
-            src={`data:${img.type};base64,${img.data}`}
-            alt={img.filename || "Bookmark image"}
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-          />
-        ) : (
-          <div style={{ width: "100%", height: "100%", backgroundColor: "#e0e0e0" }} />
-        )}
-      </div>
-    ))}
-  </div>
+  style={{
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fill, 120px)", // fill as many 120px squares per row as possible
+    gridGap: 20,                                      // gap between squares
+    justifyContent: "start",                          // align items to left
+    marginTop: 20,
+  }}
+>
+  {bookmarkImages.slice(0, 9).map((img, index) => (
+    <div
+      key={index}
+      style={{
+        width: 120,
+        height: 120,
+        borderRadius: 12,
+        boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+        overflow: "hidden",
+        backgroundColor: "#e0e0e0",
+      }}
+    >
+      {img ? (
+        <img
+          src={`data:${img.type};base64,${img.data}`}
+          alt={img.filename || "Bookmark image"}
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+        />
+      ) : (
+        <div style={{ width: "100%", height: "100%", backgroundColor: "#e0e0e0" }} />
+      )}
+    </div>
+  ))}
+</div>
+
 )}
-
-
-
 
 
 
