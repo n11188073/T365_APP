@@ -1,4 +1,5 @@
 // src/pages/ItineraryDetails.js
+import axios from "axios";
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -48,7 +49,9 @@ const ItineraryDetails = () => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [weather, setWeather] = useState(null);
 
-  const [showSquares, setShowSquares] = useState(false); // Bookmark squares toggle
+  const [showSquares, setShowSquares] = useState(false);
+  const [images, setImages] = useState({});
+
 
   const getWeatherColor = (main) => {
     switch (main) {
@@ -109,6 +112,50 @@ const ItineraryDetails = () => {
     };
     fetchCards();
   }, [id]);
+
+
+
+
+
+
+
+
+//const [images, setImages] = useState({}); // store images by post_id
+const image = images[8];
+
+
+useEffect(() => {
+  const fetchImages = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/posts");
+      const posts = res.data.posts || [];
+
+      // Map post_id -> first media image
+      const imageMap = {};
+      for (const post of posts) {
+        if (post.media && post.media.length > 0) {
+          imageMap[post.post_id] = post.media[0];
+        }
+      }
+      setImages(imageMap);
+    } catch (err) {
+      console.error("Error fetching images:", err);
+    }
+  };
+
+  fetchImages();
+}, []);
+
+
+
+
+
+
+
+
+
+
+
 
   useEffect(() => {
     if (!selectedDate) return setFilteredActivities(activities);
@@ -323,10 +370,60 @@ const ItineraryDetails = () => {
               <span style={{ fontSize: "1.2rem", color: "#555" }}>{activity.card_time}</span>
             </div>
 
+
+
+
+
+
+
+
+
+
+
             {/* Card */}
             <div style={{ display: "flex", gap: 15, padding: 20, backgroundColor: "white", borderRadius: 12, boxShadow: "0px 4px 8px rgba(0,0,0,0.2)", position: "relative" }}>
-              {/* Grey image placeholder square */}
-              <div style={{ width: 120, height: 120, backgroundColor: "#e0e0e0", borderRadius: 8, flexShrink: 0 }} />
+            
+            
+            
+            {/* Image placeholder or actual image */}
+            <div
+              style={{
+                width: 120,
+                height: 120,
+                backgroundColor: "#e0e0e0",
+                borderRadius: 8,
+                flexShrink: 0,
+                overflow: "hidden",
+              }}
+            >
+              {image ? (
+                <div
+                  style={{
+                    width: 120,
+                    height: 120,
+                    backgroundColor: "#e0e0e0",
+                    borderRadius: 8,
+                    flexShrink: 0,
+                    overflow: "hidden",
+                  }}
+                >
+                  {images[activity.post_id || 8] ? (
+                    <img
+                      src={`data:${images[activity.post_id || 8].type};base64,${images[activity.post_id || 8].data}`}
+                      alt={images[activity.post_id || 8].filename || "Post image"}
+                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    />
+                  ) : (
+                    <div style={{ width: "100%", height: "100%", backgroundColor: "#e0e0e0" }} />
+                  )}
+                </div>
+
+              ) : (
+                // fallback grey box if image not yet loaded
+                <div style={{ width: "100%", height: "100%", backgroundColor: "#ff2020ff" }} />
+              )}
+            </div>
+
 
               {/* Text content */}
               <div style={{ flex: 1 }}>
@@ -369,6 +466,16 @@ const ItineraryDetails = () => {
                 <FontAwesomeIcon icon={faBookmark} style={{ marginRight: 10, fontSize: "150%" }} />
                 Add post from bookmark folder
               </button>
+
+
+
+
+
+
+
+
+
+
 
               {/* Bookmark Squares */}
               {showSquares && (
