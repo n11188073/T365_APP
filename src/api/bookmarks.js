@@ -1,93 +1,100 @@
-const express = require('express');
-const router = express.Router();
-const { dbRun, dbAll } = require('../db'); // your sqlite helpers
-const authenticate = require('../middleware/authenticate'); // your auth middleware
+const express = require("express");
+const jwt = require("jsonwebtoken");
 
-// Add a bookmark
-router.post('/add', authenticate, async (req, res) => {
-  const { post_id, itinerary_id } = req.body;
-  const user_id = req.user?.id;
+module.exports = (db) => {
+  const router = express.Router();
+  const JWT_SECRET = process.env.JWT_SECRET || "supersecretkey";
 
-  if (!post_id || !itinerary_id || !user_id) {
-    return res.status(400).json({ error: 'Missing post_id, itinerary_id, or user_id' });
-  }
+  const authenticate = (req, res, next) => {
+    const token = req.cookies?.auth_token;
+    if (!token) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
 
-  try {
-    console.log('Adding bookmark:', { post_id, itinerary_id, user_id });
+    try {
+      req.user = jwt.verify(token, JWT_SECRET);
+      next();
+    } catch (err) {
+      console.error("JWT verification failed:", err);
+      res.status(401).json({ error: "Invalid token" });
+    }
+  };
 
-    await dbRun(
-      `INSERT OR IGNORE INTO bookmark_posts_itineraries (post_id, itinerary_id, user_id)
-       VALUES (?, ?, ?)`,
-      [post_id, itinerary_id, user_id]
-    );
 
-    // Return updated list of bookmarked itineraries for this post
-    const bookmarks = await dbAll(
-      `SELECT itinerary_id FROM bookmark_posts_itineraries
-       WHERE post_id = ? AND user_id = ?`,
-      [post_id, user_id]
-    );
+  router.get("/post/:post_id", authenticate, (req, res) => {
+    const { post_id } = req.params;
+    const user_id = req.user?.id;
 
-    res.json({ success: true, bookmarks: bookmarks.map(b => b.itinerary_id) });
-  } catch (err) {
-    console.error('Error adding bookmark:', err);
-    res.status(500).json({ error: 'Failed to add bookmark' });
-  }
-});
+    if (!post_id) {
+      return res.status(400).json({ error: "Missing post_id" });
+    }
 
-// Remove a bookmark
-router.post('/remove', authenticate, async (req, res) => {
-  const { post_id, itinerary_id } = req.body;
-  const user_id = req.user?.id;
+    const sql = `
+      SELECT itinerary_id 
+      FROM bookmark_posts_itineraries 
+      WHERE post_id = ? AND user_id = ?
+    `;
 
-  if (!post_id || !itinerary_id || !user_id) {
-    return res.status(400).json({ error: 'Missing post_id, itinerary_id, or user_id' });
-  }
+    db.all(sql, [post_id, user_id], (err, rows) => {
+      if (err) {
+        console.error("Error fetching bookmarks:", err);
+        return res.status(500).json({ error: "Failed to fetch bookmarks" });
+      }
+      res.json(rows);
+    });
+  });
 
-  try {
-    console.log('Removing bookmark:', { post_id, itinerary_id, user_id });
+  router.post("/add", authenticate, (req, res) => {
+    const { post_id, itinerary_id } = req.body;
+    const user_id = req.user?.id;
 
-    await dbRun(
-      `DELETE FROM bookmark_posts_itineraries
-       WHERE post_id = ? AND itinerary_id = ? AND user_id = ?`,
-      [post_id, itinerary_id, user_id]
-    );
+    if (!post_id || !itinerary_id) {
+      return res.status(400).json({ error: "Missing post_id or itinerary_id" });
+    }
 
-    // Return updated list of bookmarked itineraries for this post
-    const bookmarks = await dbAll(
-      `SELECT itinerary_id FROM bookmark_posts_itineraries
-       WHERE post_id = ? AND user_id = ?`,
-      [post_id, user_id]
-    );
+    const sql = `
+      INSERT INTO bookmark_posts_itineraries (post_id, itinerary_id, user_id)
+      VALUES (?, ?, ?)
+    `;
 
-    res.json({ success: true, bookmarks: bookmarks.map(b => b.itinerary_id) });
-  } catch (err) {
-    console.error('Error removing bookmark:', err);
-    res.status(500).json({ error: 'Failed to remove bookmark' });
-  }
-});
+    db.run(sql, [post_id, itinerary_id, user_id], function (err) {
+      if (err) {
+        console.error("Error adding bookmark:", err);
+        return res.status(500).json({ error: "Failed to add bookmark" });
+      }
 
-// Fetch bookmarks for a post
-router.get('/post/:post_id', authenticate, async (req, res) => {
-  const { post_id } = req.params;
-  const user_id = req.user?.id;
+      console.log(
+        `Inserted bookmark: id=${this.lastID}, post_id=${post_id}, itinerary_id=${itinerary_id}, user_id=${user_id}`
+      );
+      res.json({ success: true, id: this.lastID });
+    });
+  });
 
-  if (!post_id || !user_id) {
-    return res.status(400).json({ error: 'Missing post_id or user_id' });
-  }
+  router.post("/remove", authenticate, (req, res) => {
+    const { post_id, itinerary_id } = req.body;
+    const user_id = req.user?.id;
 
-  try {
-    const bookmarks = await dbAll(
-      `SELECT itinerary_id FROM bookmark_posts_itineraries
-       WHERE post_id = ? AND user_id = ?`,
-      [post_id, user_id]
-    );
+    if (!post_id || !itinerary_id) {
+      return res.status(400).json({ error: "Missing post_id or itinerary_id" });
+    }
 
-    res.json({ bookmarks: bookmarks.map(b => b.itinerary_id) });
-  } catch (err) {
-    console.error('Error fetching bookmarks:', err);
-    res.status(500).json({ error: 'Failed to fetch bookmarks' });
-  }
-});
+    const sql = `
+      DELETE FROM bookmark_posts_itineraries
+      WHERE post_id = ? AND itinerary_id = ? AND user_id = ?
+    `;
 
-module.exports = router;
+    db.run(sql, [post_id, itinerary_id, user_id], function (err) {
+      if (err) {
+        console.error("Error removing bookmark:", err);
+        return res.status(500).json({ error: "Failed to remove bookmark" });
+      }
+
+      console.log(
+        `Deleted rows: ${this.changes} for user_id=${user_id}, post_id=${post_id}, itinerary_id=${itinerary_id}`
+      );
+      res.json({ success: true });
+    });
+  });
+
+  return router;
+};

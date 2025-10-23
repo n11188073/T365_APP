@@ -47,7 +47,8 @@ export const SAMPLE_POSTS = [
     lat: 51.5007, lng: -0.1246,
     tags: 'uk big ben river thames landmark',
     imageUrl: 'https://images.unsplash.com/photo-1505761671935-60b3a7427bad?auto=format&fit=crop&w=1200&q=80'
-  },
+  }
+  ,
   {
     post_id: 'demo-2',
     post_name: 'Shibuya Crossing',
@@ -194,7 +195,6 @@ export const SAMPLE_POSTS = [
   }
 ];
 
-
 // Helper: build Google Maps link
 const mapHrefFor = (post) => {
   const { lat, lng, location } = post || {};
@@ -213,7 +213,10 @@ const Home = ({
   setCarouselIndex,
   handleSearch,
   searchQuery,
-  onBookmarkClick
+  onBookmarkClick,
+  setSelectedPost,      
+  setShowBookmarkModal, 
+  setPostBookmarks,
 }) => {
 
   const navigate = useNavigate();
@@ -384,11 +387,10 @@ const App = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [carouselIndex, setCarouselIndex] = useState({});
 
-  const [showBookmarkModal, setShowBookmarkModal] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
-
+  const [showBookmarkModal, setShowBookmarkModal] = useState(false);
+  const [postBookmarks, setPostBookmarks] = useState([]);
   const [itineraries, setItineraries] = useState([]);
-  const [selectedItinerary, setSelectedItinerary] = useState(null);
 
   const fetchPosts = async () => {
     try {
@@ -413,7 +415,7 @@ const fetchItineraries = async () => {
     const data = await res.json();
 
     if (Array.isArray(data.itineraries)) {
-      setItineraries(data.itineraries);
+      setItineraries(data.itineraries.map(it => ({ ...it, itinerary_id: Number(it.itinerary_id) })));
     } else {
       console.error("Unexpected itineraries response:", data);
     }
@@ -422,6 +424,32 @@ const fetchItineraries = async () => {
   }
 };
 
+const openBookmarkModal = async (post) => {
+  setSelectedPost(post);
+  setShowBookmarkModal(true);
+
+  setPostBookmarks(null);
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/bookmarks/post/${post.post_id}`, {
+      credentials: "include",
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      // Convert all itinerary_ids to numbers to match itineraries state
+      setPostBookmarks(data.map((b) => Number(b.itinerary_id)));
+    } else {
+      setPostBookmarks([]);
+    }
+    console.log("postBookmarks:", postBookmarks);
+    console.log("itineraries:", itineraries.map(it => it.itinerary_id));
+
+  } catch (err) {
+    console.error("Error fetching post bookmarks:", err);
+    setPostBookmarks([]);
+  }
+};
 
   useEffect(() => {
     fetchPosts();
@@ -430,7 +458,7 @@ const fetchItineraries = async () => {
   useEffect(() => {
     if (showBookmarkModal) {
       document.body.style.overflow = "hidden";
-      fetchItineraries(); // Fetch when modal opens
+      fetchItineraries(); 
     } else {
       document.body.style.overflow = "";
     }
@@ -479,10 +507,10 @@ const fetchItineraries = async () => {
               setCarouselIndex={setCarouselIndex}
               handleSearch={handleSearch}
               searchQuery={searchQuery}
-              onBookmarkClick={(post) => {
-                setSelectedPost(post);
-                setShowBookmarkModal(true);
-              }}
+              setSelectedPost={setSelectedPost}
+              setShowBookmarkModal={setShowBookmarkModal}
+              setPostBookmarks={setPostBookmarks}
+              onBookmarkClick={openBookmarkModal}
             />
           }
         />
@@ -539,8 +567,11 @@ const fetchItineraries = async () => {
       {/* Bookmark Modal */}
       {showBookmarkModal && (
         <>
+          {/* Overlay */}
           <div
-            onClick={() => setShowBookmarkModal(false)}
+            onClick={() => {
+              setShowBookmarkModal(false);
+            }}
             style={{
               position: "fixed",
               top: 0,
@@ -551,6 +582,8 @@ const fetchItineraries = async () => {
               zIndex: 9999,
             }}
           />
+
+          {/* Modal Content */}
           <div
             style={{
               position: "fixed",
@@ -569,6 +602,7 @@ const fetchItineraries = async () => {
               boxSizing: "border-box",
             }}
           >
+            {/* Close button */}
             <div
               style={{
                 display: "flex",
@@ -578,30 +612,18 @@ const fetchItineraries = async () => {
             >
               <span
                 style={{ color: "gray", cursor: "pointer" }}
-                onClick={() => setShowBookmarkModal(false)}
-              >
-                Cancel
-              </span>
-              <span
-                style={{
-                  color: "dodgerblue",
-                  cursor: "pointer",
-                  fontWeight: "bold",
-                }}
                 onClick={() => {
-                  if (!selectedItinerary) {
-                    return;
-                  }
-                  alert(`Saved "${selectedPost?.post_name}" to itinerary "${selectedItinerary.title}"`);
                   setShowBookmarkModal(false);
                 }}
               >
-                Save
+                Close
               </span>
             </div>
+
             <h3 style={{ marginBottom: "10px", textAlign: "center" }}>
               Select an Itinerary to save post to
             </h3>
+
             <div
               style={{
                 flex: 1,
@@ -610,84 +632,104 @@ const fetchItineraries = async () => {
                 padding: "10px",
               }}
             >
-            {itineraries.length === 0 ? (
-              <p style={{ color: "gray", textAlign: "center" }}>No itineraries found.</p>
-            ) : (
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: "15px",
-                }}
-              >
-                {itineraries.map((it) => {
-                  const isSelected = Array.isArray(selectedItinerary)
-                    ? selectedItinerary.some((sel) => sel.itinerary_id === it.itinerary_id)
-                    : false;
+              {itineraries.length === 0 ? (
+                <p style={{ color: "gray", textAlign: "center" }}>
+                  No itineraries found.
+                </p>
+              ) : postBookmarks === null ? (
+                <p style={{ color: "gray", textAlign: "center" }}>Loading bookmarks…</p>
+              ) : (
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: "15px",
+                  }}
+                >
+                  {itineraries.map((it) => {
+                    const isSelected = postBookmarks.includes(it.itinerary_id);
 
-                  return (
-                    <div
-                      key={it.itinerary_id}
-                      onClick={() => {
-                        setSelectedItinerary((prev) => {
-                          if (!Array.isArray(prev)) return [it];
-                          const alreadySelected = prev.some(
-                            (sel) => sel.itinerary_id === it.itinerary_id
-                          );
-                          if (alreadySelected) {
-                            return prev.filter(
-                              (sel) => sel.itinerary_id !== it.itinerary_id
-                            );
-                          } else {
-                            return [...prev, it];
+                    return (
+                      <div
+                        key={it.itinerary_id}
+                        onClick={async () => {
+                          if (postBookmarks === null) return;
+                          console.log(`Clicked itinerary card: ${it.itinerary_id}`);
+                          if (!selectedPost) {
+                            console.log("No selected post found — skipping");
+                            return;
                           }
-                        });
-                      }}
-                      style={{
-                        width: "80%",
-                        backgroundColor: isSelected ? "#e6f0ff" : "white",
-                        borderRadius: "16px",
-                        boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
-                        padding: "16px 20px",
-                        cursor: "pointer",
-                        transition: "all 0.2s ease",
-                        border: "none",
-                      }}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.boxShadow = "0 6px 14px rgba(0,0,0,0.15)")
-                      }
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.boxShadow = "0 4px 10px rgba(0,0,0,0.1)")
-                      }
-                    >
-                      <strong
+                          const alreadySelected = postBookmarks.includes(it.itinerary_id);
+                          console.log(`alreadySelected = ${alreadySelected}, post_id = ${selectedPost.post_id}`);
+                          try {
+                            if (alreadySelected) {
+                              const res = await fetch(`${BACKEND_URL}/api/bookmarks/remove`, {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                credentials: "include",
+                                body: JSON.stringify({
+                                  post_id: selectedPost.post_id,
+                                  itinerary_id: it.itinerary_id,
+                                }),
+                              });
+                              if (res.ok) {
+                                setPostBookmarks((prev) => prev.filter(id => id !== it.itinerary_id));
+                              }
+                            } else {
+                              const res = await fetch(`${BACKEND_URL}/api/bookmarks/add`, {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                credentials: "include",
+                                body: JSON.stringify({
+                                  post_id: selectedPost.post_id,
+                                  itinerary_id: it.itinerary_id,
+                                }),
+                              });
+                              if (res.ok) {
+                                setPostBookmarks((prev) => [...prev, it.itinerary_id]); 
+                              }
+                            }
+                          } catch (err) {
+                            console.error("Error updating bookmark:", err);
+                          }
+                        }}
                         style={{
-                          display: "block",
-                          fontSize: "1.1em",
-                          marginBottom: "4px",
-                          color: "#333",
+                          width: "80%",
+                          backgroundColor: isSelected ? "#e6f0ff" : "white",
+                          borderRadius: "16px",
+                          boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+                          padding: "16px 20px",
+                          cursor: postBookmarks === null ? "not-allowed" : "pointer", // change 2
+                          transition: "all 0.2s ease",
+                          border: "none",
+                        }}
+                        onMouseEnter={(e) => {
+                          if (postBookmarks !== null) e.currentTarget.style.boxShadow = "0 6px 14px rgba(0,0,0,0.15)";
+                        }}
+                        onMouseLeave={(e) => {
+                          if (postBookmarks !== null) e.currentTarget.style.boxShadow = "0 4px 10px rgba(0,0,0,0.1)";
                         }}
                       >
-                        {it.title}
-                      </strong>
-                      <div style={{ fontSize: "0.9em", color: "#555" }}>
-                        {it.destination || "Unknown destination"}
+                        <strong style={{ display: "block", fontSize: "1.1em", marginBottom: "4px", color: "#333" }}>
+                          {it.title}
+                        </strong>
+                        <div style={{ fontSize: "0.9em", color: "#555" }}>
+                          {it.destination || "Unknown destination"}
+                        </div>
+                        <div style={{ fontSize: "0.8em", color: "gray", marginTop: "2px" }}>
+                          {it.date_start ? `${it.date_start} → ${it.date_end || "?"}` : "No date set"}
+                        </div>
                       </div>
-                      <div style={{ fontSize: "0.8em", color: "gray", marginTop: "2px" }}>
-                        {it.date_start
-                          ? `${it.date_start} → ${it.date_end || "?"}`
-                          : "No date set"}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         </>
       )}
+
     </Router>
   );
 };

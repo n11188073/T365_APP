@@ -84,7 +84,7 @@ module.exports = (db) => {
       notes,
       order_index,
       card_time,
-      card_date, // <-- added
+      card_date, 
     } = req.body;
 
     if (!itinerary_id) {
@@ -203,6 +203,28 @@ module.exports = (db) => {
     }
   });
 
+  // bookmarkPosts must be above '/:id'
+  router.get("/bookmarkPosts", authenticate, async (req, res) => {
+    try {
+      const itineraryId = req.query.itinerary_id; // ?itinerary_id=6
+
+      if (!itineraryId) {
+        return res.status(400).json({ success: false, error: "Missing itinerary ID" });
+      }
+
+      // Fetch all bookmarks for this itinerary
+      const rows = await dbAll(
+        `SELECT * FROM bookmark_posts_itineraries WHERE itinerary_id = ? ORDER BY saved_at DESC`,
+        [itineraryId]
+      );
+
+      res.json({ success: true, bookmarks: rows });
+    } catch (err) {
+      console.error("Error fetching bookmark posts:", err);
+      res.status(500).json({ success: false, error: "Database error" });
+    }
+  });
+
   router.get('/:id', authenticate, async (req, res) => {
     try {
       const { id } = req.params;
@@ -250,6 +272,37 @@ module.exports = (db) => {
       res.status(500).json({ error: 'Database error' });
     }
   });
+
+  // GET /itineraries/media/:media_id
+router.get('/media/:media_id', authenticate, async (req, res) => {
+  try {
+    const { media_id } = req.params;
+    const rows = await dbAll('SELECT type, data FROM media WHERE id = ?', [media_id]);
+
+    if (!rows || rows.length === 0) {
+      return res.status(404).json({ error: 'Media not found' });
+    }
+
+    const media = rows[0];
+
+    // data might be stored as object { type: 'Buffer', data: [...] } in sqlite
+    let buffer;
+    if (media.data instanceof Buffer) {
+      buffer = media.data;
+    } else if (media.data.data) {
+      buffer = Buffer.from(media.data.data);
+    } else {
+      return res.status(500).json({ error: 'Invalid media data' });
+    }
+
+    res.setHeader('Content-Type', media.type); // e.g., 'image/jpeg'
+    res.send(buffer);
+  } catch (err) {
+    console.error('Error fetching media:', err);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
 
   return router;
 };
