@@ -53,6 +53,7 @@ const ItineraryDetails = () => {
   const [images, setImages] = useState({});
   const [editingPostId, setEditingPostId] = useState(null);
 
+  const [, setBookmarkImages] = useState([]);
 
 
   const getWeatherColor = (main) => {
@@ -115,17 +116,6 @@ const ItineraryDetails = () => {
     fetchCards();
   }, [id]);
 
-
-
-
-
-
-
-
-//const [images, setImages] = useState({}); // store images by post_id
-const image = images[8];
-
-
 useEffect(() => {
   const fetchImages = async () => {
     try {
@@ -147,17 +137,6 @@ useEffect(() => {
 
   fetchImages();
 }, []);
-
-
-
-
-
-
-
-
-
-
-
 
   useEffect(() => {
     if (!selectedDate) return setFilteredActivities(activities);
@@ -212,8 +191,6 @@ const handleSaveCard = async () => {
     console.error(err);
   }
 };
-
-
 
 const handleUpdateCard = async () => {
   try {
@@ -289,8 +266,6 @@ const handleUpdateCard = async () => {
   };
 
   const dates = generateDates();
-
-const [bookmarkImages, setBookmarkImages] = useState([]);
 
 const handleAddFromPost = async () => {
   try {
@@ -488,14 +463,14 @@ const handleAddFromPost = async () => {
                   }}
                 >
                   {Object.entries(images).map(([postId, img]) => {
-                    const isSelected = postId === (editingPostId?.toString() || "");
+                    //const isSelected = postId === (editingPostId?.toString() || "");
                     return (
                       <div
                 key={postId}
                 onClick={(e) => {
                   e.preventDefault();
                   console.log("Selected post clicked:", postId);
-                  setEditingPostId(postId); // just highlight selected
+                  setEditingPostId(postId); 
                 }}
                 style={{
                   width: 120,
