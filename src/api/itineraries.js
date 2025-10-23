@@ -273,5 +273,36 @@ module.exports = (db) => {
     }
   });
 
+  // GET /itineraries/media/:media_id
+router.get('/media/:media_id', authenticate, async (req, res) => {
+  try {
+    const { media_id } = req.params;
+    const rows = await dbAll('SELECT type, data FROM media WHERE id = ?', [media_id]);
+
+    if (!rows || rows.length === 0) {
+      return res.status(404).json({ error: 'Media not found' });
+    }
+
+    const media = rows[0];
+
+    // data might be stored as object { type: 'Buffer', data: [...] } in sqlite
+    let buffer;
+    if (media.data instanceof Buffer) {
+      buffer = media.data;
+    } else if (media.data.data) {
+      buffer = Buffer.from(media.data.data);
+    } else {
+      return res.status(500).json({ error: 'Invalid media data' });
+    }
+
+    res.setHeader('Content-Type', media.type); // e.g., 'image/jpeg'
+    res.send(buffer);
+  } catch (err) {
+    console.error('Error fetching media:', err);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
+
   return router;
 };
