@@ -30,27 +30,31 @@ const Login = () => {
     fetchMe();
   }, []);
 
-  const handleSuccess = async (credentialResponse) => {
-    try {
-      const token = credentialResponse.credential;
-      const res = await fetch(`${API_BASE}/api/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ token }),
-      });
+const handleSuccess = async (credentialResponse) => {
+  try {
+    const token = credentialResponse.credential;
+    const res = await fetch(`${API_BASE}/api/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ token }),
+    });
 
-      const data = await res.json();
-      if (res.ok) {
-        setUser(data.user);
-        console.log("Logged in successfully:", data.user);
-      } else {
-        console.error("Login failed:", data.error);
-      }
-    } catch (err) {
-      console.error("Login error:", err);
+    const data = await res.json();
+    if (res.ok) {
+      localStorage.setItem("user", JSON.stringify(data.user));
+      setUser(data.user);
+
+      console.log("Logged in successfully:", data.user);
+      window.location.reload();
+    } else {
+      console.error("Login failed:", data.error);
     }
-  };
+  } catch (err) {
+    console.error("Login error:", err);
+  }
+};
+
 
   const handleError = () => {
     console.error("Google Login Failed");

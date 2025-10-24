@@ -36,6 +36,8 @@ const Profile = () => {
 
   // Fetch user posts
   useEffect(() => {
+    console.log(JSON.parse(localStorage.getItem("user")));
+
     if (!userId) return;
     const fetchUserPosts = async () => {
       try {
